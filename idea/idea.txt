@@ -1,0 +1,134 @@
+Mola programming language (Modular Language)
+
+a compiled programming language with some simple OOP (should resemble C, but with more pleasant syntax and abstractions)
+
+OOP: type {...}
+OOP type may have: fields and methods, constructor/destructor
+
+NO pointers, complex types will be references to objects.
+
+1. Mola 1-type modules: code written in mola. can be imported into another program (has its own scope) (will be compiled with the importer program)
+2. Mola 2-type modules: code written in C++. must have a mola shell program which loads in. then same as 1-type modules.
+
+simple types (default pass by value):
+	bool,
+	int(long long), integer(unlimited), 
+	float(long double), 
+	char(ascii), string(sequence of char),
+	letter(unicode), unicode(sequence of char)
+	
+complex types (default pass by ref):
+	array, map
+	
+importing system: 
+	1. importing a builtin module: 				import builtin gameengine/physics
+	2. importing a module at a relative path:	import relative ../../library/gameengine/physics
+
+modules are treated as namespace objects where the dot operator selects certain object from the namespace
+
+mola projects have to be structured into modules, which are tree-like structures
+
+GC: present, good!
+
+Error handling: try/catch
+
+Functions: created at the global level. have access to any type/function/global variable created by this module (and available at the time of calling)
+and any type/function/global variable experted by any imported modules
+
+MoLaVM !!!!!!!!!!!!!
+
+EVERYTHING IS AN OBJECT!
+
+What does it mean to assign? object1 -> value1 = object2 -> value2?
+1. value1 becomes a copy of value2: 		object1 -> copy(value2), object2 -> value2
+2. object1 becomes a reference to value2:	object1, object2 -> value2
+
+for basic types (like bool, int, string), we would like the first case to be chosen
+for complex types (like custom) we would like the second case to be chosen, so that array1 = array2 means just that array1 references the same object as array2
+
+first case is permanently available: x copies y
+second case is permanently available: x refs y
+
+
+FUNCTION ARGUMENTS
+can either be passed by reference / by value
+
+
+===========
+(Almost) LL(1) grammar:
+
+program 					-> 	module_stmt (
+									import_stmt | 
+									export_stmt | 
+									global_variable_stmt |
+									function_stmt |
+									type_stmt |
+									method_stmt |
+									constructor_stmt |
+									destructor_stmt |
+									stmt
+								)*
+
+module_stmt					-> 	'module' identifier
+
+import_stmt					->	'import' ('builtin' | 'relative') module_path ('as' identifier)?
+				
+export_stmt 				-> 	'export' expr 'as' identifier (',' expr 'as' identifier)*
+
+global_variable_stmt		->  'global' identifier
+
+function_stmt				-> 	'function' identifier '(' parameter_list ')' block_stmt
+
+parameter_list				->	(('copy' | 'ref' | 'pass') identifier (',' ('copy' | 'ref' | 'pass') identifier)*)?
+
+type_stmt					->  'type' identifier '{' 'public:' member_list 'private:' member_list '}'
+
+member_list					->	((identifier | identifier '()') (',' (identifier | identifier '()'))*)?
+
+method_stmt:				->	'method' identifier '(' parameter_list ')' 'of' identifier block_stmt
+constructor_stmt			->  'constructor' '(' parameter_list ')' 'of' identifier block_stmt
+destructor_stmt				->  'destructor' 'of' identifier block_stmt
+
+stmt						-> 	expr |
+								block_stmt |
+								while_stmt |
+								for_stmt |
+								if_stmt |
+								continue_stmt |
+								break_stmt |
+								return_stmt |
+								assignment_stmt |
+
+block_stmt					->	'{' stmt* '}'
+while_stmt					->  'while' expr stmt
+for_stmt					->  'for' expr? ';' expr? ';' (expr | ';') stmt
+if_stmt						->	'if' expr stmt ('else' stmt)? 							// 'if' always gets paired with the closest 'else' 
+continue_stmt				-> 	'continue'
+break_stmt					->	'break'	
+return_stmt					->	'return' ('copy' | 'ref' | 'pass') expr	
+assignment_stmt				-> 	expr ('copies' | 'refs') expr
+
+expr						->  assignment
+assignment					->	assignment = inline_if | inline_if 
+inline_if					->	'when' inline_if 'then' inline_if 'else' inline_if | logical_or
+logical_or 					->  logical_or 'or' logical_and | logical_and
+logical_and					->	logical_and 'and' bitwise_or | bitwise_or
+bitwise_or					->  bitwise_or '|' bitwise_xor | bitwise_xor
+bitwise_xor					->  bitwise_xor '^' bitwise_and | bitwise_and
+bitwise_and					->  bitwise_and '&' equality | equality
+equality					->  equality ('==' | '!=') relational | relational
+relational					->  relational ('<' | '>' | '<=' | '>=') sum | sum
+sum							->  sum ('+' | '-') bitwise_shift | bitwise_shift
+bitwise_shift				-> 	bitwise_shift ('lshift' | 'rshift') term | term
+term						->  term ('*' | '/' | '%') prefix_op | prefix_op
+prefix_op					->  ('++' | '--' | '+' | '-' | 'not' | '~') prefix_op
+primary						->	primary ('++' | '--') |
+								primary '(' expr_list ')' |
+								primary '.' identifier | elementary
+elementary					->	'(' expr ')' | literal
+literal						->	bool | char | int | float | string | identifier | 'null'
+
+
+expr_list					->  (expr (',' expr)*)?
+
+identifier_list				->  (identifier (',' identifier)*)?

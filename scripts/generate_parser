@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd src/front &&
+bison -d rules.y -v &&
+flex rules.l &&
+echo "Generated parser successfully"

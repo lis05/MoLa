@@ -1,0 +1,138 @@
+// grammar tests
+
+import a as a
+import a.a.a.a as a
+import "aaa.aaa/aaaa@aaa" as a
+
+export a as a
+export a as a, a as a, a as a
+
+global a
+global a, a, a, a, a
+
+function a() {}
+function a(a, a, a) {}
+function a(copy a, ref a, pass a, a) {}
+function a(copy a, ref a, pass a, a) {
+    a = a; b = b;
+    c = c();
+    d.d.d.d.d:d:d()[x]
+}
+
+type a {x, y, z(), b(), z, d}
+
+constructor (copy a, ref a, pass a, a) of a {a=a+a-a*a}
+constructor of a {a=a+a-a*a}
+
+destructor of a {a=a+a-a*a}
+
+{}
+{{{}}{}{}{{}{}}} // more BRACKETS!
+{a=a}
+{a;;;;;;;;;;}
+
+while a a
+while a < 5 a = a
+while a = a a refs a
+
+for a;a;a {}
+for ;a;a {}
+for a;a; {}
+for a;;a {}
+for a;; {}
+for ;a; {}
+for ;;a {}
+for ;; {}
+
+if a a
+if a a else a
+if a a else if a a else if a a else a
+
+continue
+
+break
+
+return a
+return copy a
+return ref a
+return pass a
+
+a copies a
+a refs a
+
+try {} catch 1 as a {}
+try {} finally catch as a {}
+try {} catch 1 as a {} finally catch as a {}
+try {} catch 1 as a {} catch 2 as a {} finally catch as a {}
+
+signal a because a
+
+var a
+var a, a, a, a, a, a
+var a = a, a = a+a-a=a, a = a()[a[0]], a, a, a, a = a
+
+a = a
+a = a = a
+
+when a then a else a
+
+new a
+new a()
+new a(a, a, a, a)
+
+a or a
+a or a or (a = a)
+
+a and a
+
+a ^ a
+
+a & a
+
+a | a
+
+a == a
+a != a
+
+a <= a
+a >= a
+a < a
+a > a
+
+a + a
+a - a
+
+a lshift a
+a rshift a
+
+a * a
+a / a
+a % a
+
++ a
+- a
+not a 
+~ a
+
+a()
+a(a, a, a, a)
+a[a]
+a[a * b lshift -a]
+a.a.a.a
+a.a:a.a:a:a:a()()()():a:a.a
+
+(a)
+(a+a)
+
+null
+true
+false
+'a'
+'\n'
+123
+-12321321
+123123.12321
+12321e12321.12312
+"a"
+"aaa'a'a'a'a'a\n\t\'\""
+a
