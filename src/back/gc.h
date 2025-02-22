@@ -16,17 +16,22 @@ struct MolaFunctionValue;
 struct CFunctionValue;
 struct ModuleValue;
 
-void gcDeclareGarbage(struct Object *unit);
-void gcDeclareGarbage(struct BoolValue *unit);
-void gcDeclareGarbage(struct IntValue *unit);
-void gcDeclareGarbage(struct CharValue *unit);
-void gcDeclareGarbage(struct FloatValue *unit);
-void gcDeclareGarbage(struct StringValue *unit);
-void gcDeclareGarbage(struct ArrayValue *unit);
-void gcDeclareGarbage(struct TypeValue *unit);
-void gcDeclareGarbage(struct InstanceValue *unit);
-void gcDeclareGarbage(struct MolaFunctionValue *unit);
-void gcDeclareGarbage(struct CFunctionValue *unit);
-void gcDeclareGarbage(struct ModuleValue *unit);
+void gcDeclareGarbageObject(struct Object *unit);
+void gcDeclareGarbageBoolValue(struct BoolValue *unit);
+void gcDeclareGarbageIntValue(struct IntValue *unit);
+void gcDeclareGarbageCharValue(struct CharValue *unit);
+void gcDeclareGarbageFloatValue(struct FloatValue *unit);
+void gcDeclareGarbageStringValue(struct StringValue *unit);
+void gcDeclareGarbageArrayValue(struct ArrayValue *unit);
+void gcDeclareGarbageTypeValue(struct TypeValue *unit);
+void gcDeclareGarbageInstanceValue(struct InstanceValue *unit);
+void gcDeclareGarbageMolaFunctionValue(struct MolaFunctionValue *unit);
+void gcDeclareGarbageCFunctionValue(struct CFunctionValue *unit);
+void gcDeclareGarbageModuleValue(struct ModuleValue *unit);
+
+struct VM;
+
+void gcInit(struct VM *vm);
+void gcRunCycle(struct VM *vm);
 
 #endif

@@ -8,8 +8,8 @@
 struct Object;
 
 typedef struct Env {
-    map_t(ident, Object *) exported_objects;
-    
+    map_t(ident, struct Object *) exported_objects;
+
 } Env;
 
 #endif
