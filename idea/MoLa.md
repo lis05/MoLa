@@ -173,11 +173,10 @@ Global variables are stored in the module's environment.
 ## VM
 To execute a program, it first has to be converted to a list of simple instructions, which will be then executed by the VM.
 
-An instruction is an structure that conttains details of how some action has to be executed. A MoLaVM instruction is made of:
+An instruction is an structure that contains details of how some action has to be executed. A MoLaVM instruction is made of:
 - Instruction code. Denoted as `inscode(ins)`.
 - The name of the file which caused the instruction to be generated. Denoted as `insfile(ins)`.
 - The line number in the file which caused the instruction to be generated. Denoted as `insline(ins)`.
-- A pointer to the environment of the module where the instruction has been generated. Denoted as `insenv(ins)`.
 - Arguments of the instruction, packed into it during its creation. Denoted as `insarg_i(int)`, where i is the index of the argument.
 
 Instructions of a module are stored in a single list. Instructions from new modules are appended to the end of the list. A module structure stores the absolute offset of the first instruction of that module in the list.
@@ -207,9 +206,16 @@ Pops an object from the stack. Signals an InternalError if the stack is empty.
 
 Swaps two top elements on the stack. Signals an InternalError if there are less than 2 objects on the stack.
 
-#### `SWITCH_ENV env?`
+#### `CREATE_ENV`
+Creates a new environment. The environment gets assigned an id, which is later used to switch to that environment. 
+This id is assigned during runtime. The root program get's assigned the id of 0.
 
-Switches the current environment to the environment of the module where this instruction is located. If env is provided, switches to env instead. 
+#### `SWITCH_ENV_INS`
+Switches the current environment to the environment of the module where this instruction is located.
+
+#### `SWITCH_ENV_OBJ`
+- The stack must contain an object which is a function.
+Switches the current environment to the environment of the function located on the stack.
 
 #### `IMPORT_MODULE module_path identifier`
 - `module_path` is the path to the module we want to import.
@@ -220,10 +226,9 @@ Imports a module.
 1. Checks whether `module_path` is correct. Otherwise signals InvalidModulePathError.
 2. Checks whether there is no global variable with the name `identifier` in the current environment. If there is, signals NameAlreadyTakenError.
 3. Checks whether the module at `module_path` has already been imported (directly or indirectly). If such, `identifier` becomes a reference to that module structure, and the instruction terminates.
-4. Otherwise, creates a new environment.
-5. Generates instructions and appends them to the end of the instructions list.
-6. Executes the instructions of the module in the new environment.
-7. Creates a module structure containing the environment under the name of `identifier`, as well as the absolute offset to the instructions in the imported module.
+4. Generates instructions and appends them to the end of the instructions list. All generated instructions receive a new env_id.
+5. Executes the instructions of the module in the new environment.
+6. Creates a module structure containing the environment under the name of `identifier`, as well as the absolute offset to the instructions in the imported module.
 
 #### `EXPORT_OBJECT identifier`
 - `identifier` is the name under which we want to export the object on the stack.
@@ -231,7 +236,7 @@ Imports a module.
 
 Exports the objects on the stack under the name `identifier` by adding it to the current environment. Throws an InternalError if the stack is empty. If there's already an object exported with the given name, throws NameAlreadyTakenError.
 
-#### `CREATE_GLOBAL identifier`
+#### `CREATE_GLOBAL n identifier`
 - `identifier` is the name of the global variable we want to create.
 
 Creates a global variable in the current environment, initially with value `null`. Throws NameAlreadyTakenError if there's already an accessible object with the same name in the environment.
@@ -577,6 +582,8 @@ Instructions have a number preceding them. This is used as a marker for the posi
 
 If we want to specify that a jump instruction has to jump at a specific place, we can use the number of the line, preceding it with REL or ABS: JUMP REL@3 or JUMP ABS@3
 
+#### Each program is started with a `CREATE_ENV` instruction.
+
 #### `'import' module_path 'as' indetifier`
 ```
 1   IMPORT_MODULE module_path identifier
@@ -607,9 +614,9 @@ n   EXPORT_OBJECT name_n
 4   
 ```
 
-#### `'type' identifier '{' 'public:' pubf_1 ... pubf_n pubm_1 ... pubm_k 'private:' privf_1 ... privf_m privm_1 ... privm_l '}'`
+#### `'type' identifier '{' f_1 ... f_n m_1 ... m_k'}'`
 ```
-1   CREATE_TYPE identifier m n l k privf_1 ... privf_m pubf_1 ... pubf_n privm_1 ... privm_l pubm_1 ... pubm_k
+1   CREATE_TYPE identifier n k f_1 ... f_n m_1 ... m_k
 ```
 
 #### `'method' name '(' mode_1 arg_1, ..., mode_n ')' 'of' type_name block_stmt`

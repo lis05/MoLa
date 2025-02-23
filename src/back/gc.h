@@ -31,6 +31,11 @@ void gcDeclareGarbageModuleValue(struct ModuleValue *unit);
 
 struct VM;
 
+#define CHECKPHASE_THRESHOLD       100000
+#define GC_CYCLE_THRESHOLD         6
+#define GC_CYCLE_CHECKPHASES_LIMIT 100
+int CHECKPHASE_RATIO();
+
 void gcInit(struct VM *vm);
 void gcRunCycle(struct VM *vm);
 
