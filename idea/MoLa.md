@@ -223,8 +223,8 @@ Switches the current environment to the environment of the function located on t
 
 Imports a module.
 
-1. Checks whether `module_path` is correct. Otherwise signals InvalidModulePathError.
-2. Checks whether there is no global variable with the name `identifier` in the current environment. If there is, signals NameAlreadyTakenError.
+1. Checks whether `module_path` is correct. Otherwise signals ImportError.
+2. Checks whether there is no global variable with the name `identifier` in the current environment. If there is, signals NameCollisionError.
 3. Checks whether the module at `module_path` has already been imported (directly or indirectly). If such, `identifier` becomes a reference to that module structure, and the instruction terminates.
 4. Generates instructions and appends them to the end of the instructions list. All generated instructions receive a new env_id.
 5. Executes the instructions of the module in the new environment.
@@ -234,12 +234,12 @@ Imports a module.
 - `identifier` is the name under which we want to export the object on the stack.
 - the stack must contain an object.
 
-Exports the objects on the stack under the name `identifier` by adding it to the current environment. Throws an InternalError if the stack is empty. If there's already an object exported with the given name, throws NameAlreadyTakenError.
+Exports the objects on the stack under the name `identifier` by adding it to the current environment. Throws an InternalError if the stack is empty. If there's already an object exported with the given name, throws NameCollisionError.
 
-#### `CREATE_GLOBAL n identifier`
+#### `CREATE_GLOBAL identifier`
 - `identifier` is the name of the global variable we want to create.
 
-Creates a global variable in the current environment, initially with value `null`. Throws NameAlreadyTakenError if there's already an accessible object with the same name in the environment.
+Creates a global variable in the current environment, initially with value `null`. Throws NameCollisionError if there's already an accessible object with the same name in the environment.
 
 #### `CREATE_FUNCTION identifier mode_1 arg_1 ... mode_n arg_n`
 - `identifier` is the name of the function.
@@ -250,7 +250,7 @@ Creates a new function object under the given name. The object will have a list 
 1. (Absolute) position of the second next instruction (after this one) in its module.
 2. A pointer to the module structure (which contains the absolute module offset).
 
-Signals a NameAlreadyTakesError if an accessible object with the given name already exists. Signals a InvalidArgumentNameError if there are duplicate argument names. 
+Signals a NameCollisionError if an accessible object with the given name already exists. Signals a DuplicateNameError if there are duplicate argument names. 
 
 #### `CREATE_TYPE identifier f m name_1 ... name_n`
 - `identifier` is the name of the type.
@@ -260,7 +260,7 @@ Signals a NameAlreadyTakesError if an accessible object with the given name alre
 
 Creates a new type under the given name. The type object contains the information about what fields and methods it has.
 
-Signals a NameAlreadyTakenError if an accessible object with the given name already exists, or a InvalidMemberNameError, if there are duplicate field/method names.
+Signals a NameCollisionError if an accessible object with the given name already exists, or a DuplicateNameError, if there are duplicate field/method names.
 
 #### `CREATE_METHOD identifier mode_1 arg_1 ... mode_n arg_n`
 - `identifier` is the name of the function.
@@ -274,7 +274,7 @@ Note: 'this' special argument has to be passed as a normal argument; it is not a
 
 The method object will have a list of modifiers and argument names, which will be used when calling the function. The object will also have a pointer to the next instruction (after the current one), which is where the method body will be generated. The type will receive a pointer to this method.
 
-Signals an InternalError if the stack is empty. Signals a ValueError the object on the stack is not a type object. Signals a MethodAlreadyDefinedError if the method has already been defined. Signals an InvalidMethodNameError if the type object didn't declare a method with such name. Signals an InvalidArgumentNameError if there are duplicate argument names. 
+Signals an InternalError if the stack is empty. Signals a ValueError the object on the stack is not a type object. Signals a NameCollisionError if the method has already been defined. Signals an NameError if the type object didn't declare a method with such name. Signals an DuplicateNameError if there are duplicate argument names. 
 
 Note: this is used to create constructor / destructor as well. In those cases, `identifier` becomes `constructor` / `destructor` respectively.
 
@@ -337,7 +337,7 @@ Signals an InternalError if the stack is empty, or ValueError if the object x on
 
 Creates a new variable with name `identifier`, pointing to the object on the stack.
 
-Signals a NameError if an accessible object with the given name already exists, InternalError if the stack is empty.
+Signals a NameCollisionError if an accessible object with the given name already exists, InternalError if the stack is empty.
 
 #### `COPY_BY_VALUE`
 - the stack must contain an object.

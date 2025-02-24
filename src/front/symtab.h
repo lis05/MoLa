@@ -22,4 +22,6 @@ ident   symtabInsert(Symtab *root, char *str);
 ident   symtabLookup(Symtab *root, char *str);
 void    symtabDestroy(Symtab *root);
 
+char *symtabIdentToString(ident value);
+
 #endif

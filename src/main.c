@@ -4,7 +4,7 @@ int main() {
     printf("... Starting parser ...\n");
     initParser();
     parserSetFilename("/home/lis05/Projects/mola/tests/parser.txt");
-    Node *res = runParser();
+    AstNode *res = runParser();
     printf("... Parsing complete ...\n");
     return 0;
 }

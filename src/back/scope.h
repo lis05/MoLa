@@ -8,14 +8,14 @@
 struct Object;
 
 typedef struct Scope {
-    map_t(ident, Object *) map;
+    map_t(ident, struct Object *) map;
     struct Scope *parent;
     int           can_access_parent : 1;
 } Scope;
 
 Scope         *scopeCreate(int can_access_parent, Scope *parent);
-void           scopeInsert(ident name, struct Object *obj);
-struct Object *scopeRecursiveLookup(ident name);    // NULL if the object is missing
+void           scopeInsert(Scope *scope, ident name, struct Object *obj);
+struct Object *scopeRecursiveLookup(Scope *scope, ident name);    // NULL if the object is missing
 void           scopeDestroy(Scope *scope);
 
 #endif

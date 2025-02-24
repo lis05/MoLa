@@ -8,8 +8,11 @@
 struct Object;
 
 typedef struct Env {
-    map_t(ident, struct Object *) exported_objects;
-
+    map_t(ident, struct Object *) exported_objects, globals;    // globals are global variables, functions, and types
 } Env;
+
+size_t      envGenAvailableId();
+struct Env *envGetById(size_t id);
+void        envCreate();
 
 #endif

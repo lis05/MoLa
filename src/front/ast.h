@@ -162,17 +162,17 @@
 #define IDENTIFIER_OPTION               99
 #define METHOD_PATH_OPTION              100
 
-typedef uint64_t ident;
+typedef uint64_t ident;    // in reality, only least significant half of the bits is used.
 
 /**
- * @brief Node representing a grammar nonterminal.
+ * @brief AstNode representing a grammar nonterminal.
  */
-typedef struct Node {
+typedef struct AstNode {
     int type : 8;
     int flag : 8;
 
-    size_t        n_nodes;
-    struct Node **nodes;
+    size_t           n_nodes;
+    struct AstNode **nodes;
 
     size_t lineno;
     char  *filename;
@@ -185,10 +185,10 @@ typedef struct Node {
         char   *string_value;
         ident   identifier_value;
     };
-} Node;
+} AstNode;
 
-typedef Node *nodeptr;
-typedef char *charptr;
-Node         *make(int type, int flag, size_t lineno, size_t n_nodes, ...);
+typedef AstNode *nodeptr;
+typedef char    *charptr;
+AstNode         *make(int type, int flag, size_t lineno, size_t n_nodes, ...);
 
 #endif

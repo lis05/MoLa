@@ -75,7 +75,7 @@
     int yylex();
     void yyerror(const char *str);
 
-    Node *node_result;
+    AstNode *node_result;
 
 #line 81 "rules.tab.c"
 

@@ -2,13 +2,13 @@
 
 char filename[1024];
 
-extern int   lineno;
-extern int   column;
-extern FILE *yyin;
-extern char *yytext;
-extern int   yyleng;
-extern Node *node_result;
-extern int   yyparse();
+extern int      lineno;
+extern int      column;
+extern FILE    *yyin;
+extern char    *yytext;
+extern int      yyleng;
+extern AstNode *node_result;
+extern int      yyparse();
 
 extern Symtab *lex_symtab;
 
@@ -27,7 +27,7 @@ void parserSetFilename(char *str) {
     strcpy(filename, str);
 }
 
-static void propagateFilename(Node *root, char *const f) {
+static void propagateFilename(AstNode *root, char *const f) {
     if (root == NULL) {
         return;
     }
@@ -42,7 +42,7 @@ void initParser() {
     lex_symtab = symtabCreate();
 }
 
-Node *runParser() {
+AstNode *runParser() {
     yyin   = openFilename();
     lineno = 1;
     column = 1;

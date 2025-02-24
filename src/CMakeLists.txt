@@ -5,8 +5,11 @@ back/alloc.h
 back/api.h
 back/cmap.c
 back/cmap.h
+back/cvector.h
 back/env.c
 back/env.h
+back/error.c
+back/error.h
 back/gc.c
 back/gc.h
 back/gen.c

@@ -1,8 +1,12 @@
 #include "symtab.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define TRIE_CHILDREN (26 + 26 + 1 + 10)    // a-zA-Z_0-9
+// otherwise the world explodes
+#define MAX_IDENTS 10000
+
+static char *ident2str[MAX_IDENTS];
 
 static Symtab *newNode() {
     Symtab *node = (Symtab *)malloc(sizeof(Symtab));
@@ -54,7 +58,14 @@ ident symtabInsert(Symtab *root, char *str) {
     }
 
     if (node->value == -1) {
-        node->value = root->value++;
+        if (root->value + 1 >= MAX_IDENTS) {
+            // rough and ready
+            fprintf(stderr, "Stupid error: too many identifiers\n");
+            exit(1);
+        }
+
+        node->value            = root->value++;
+        ident2str[node->value] = strdup(str);
     }
     return node->value;
 }
@@ -92,4 +103,13 @@ void symtabDestroy(Symtab *root) {
     }
 
     free(root);
+}
+
+char *symtabIdentToString(ident value) {
+    if (value >= MAX_IDENTS) {
+        fprintf(stderr, "Stupid error: identifier too big\n");
+        exit(1);
+    }
+
+    return ident2str[value];
 }

@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void  parserSetFilename(char *str);
-void  initParser();
-Node *runParser();
-void  printError(char *msg);
+void     parserSetFilename(char *str);
+void     initParser();
+AstNode *runParser();
+void     printError(char *msg);
 
 #endif
