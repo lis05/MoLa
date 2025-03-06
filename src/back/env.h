@@ -14,5 +14,6 @@ typedef struct Env {
 size_t      envGenAvailableId();
 struct Env *envGetById(size_t id);
 void        envCreate();
+void        envInit();
 
 #endif

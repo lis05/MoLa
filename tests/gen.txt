@@ -1,0 +1,3 @@
+import a as a
+import a.a.a as a
+import ^^a.a.a as a

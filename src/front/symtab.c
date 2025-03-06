@@ -1,4 +1,5 @@
 #include "symtab.h"
+#include "../util.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,8 @@ ident symtabInsert(Symtab *root, char *str) {
     assert(str != NULL);
     assert(*str != '\0');
 
-    Symtab *node = root;
+    Symtab *node    = root;
+    char   *origstr = str;
     while (*str != '\0') {
         int pos = getpos(*str);
         str++;
@@ -64,8 +66,9 @@ ident symtabInsert(Symtab *root, char *str) {
             exit(1);
         }
 
-        node->value            = root->value++;
-        ident2str[node->value] = strdup(str);
+        node->value = root->value++;
+        molalog("New ident %d[%s]\n", node->value, origstr);
+        ident2str[node->value] = strdup(origstr);
     }
     return node->value;
 }

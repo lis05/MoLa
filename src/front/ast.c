@@ -4,10 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 
-AstNode *make(int type, int flag, size_t lineno, size_t n_nodes, ...) {
+AstNode *make(int type, int option, size_t lineno, size_t n_nodes, ...) {
     AstNode *node = (AstNode *)malloc(sizeof(AstNode));
     node->type    = type;
-    node->flag    = flag;
+    node->option  = option;
     node->lineno  = lineno;
     node->n_nodes = n_nodes;
 

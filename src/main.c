@@ -1,11 +1,19 @@
 #include "api.h"
 
 int main() {
-    printf("... Starting parser ...\n");
+    molalog("Starting parser\n");
     initParser();
-    parserSetFilename("/home/lis05/Projects/mola/tests/parser.txt");
-    AstNode *res = runParser();
-    printf("... Parsing complete ...\n");
+    parserSetFilename("/home/lis05/Projects/mola/tests/gen.txt");
+    AstNode *ast = runParser();
+    molalog("Parsing complete\n");
+
+    envInit();
+    ivec instructions = genCompile(ast);
+    molalog("Generated %d instructions\n", cvector_size(instructions));
+
+    for (int i = 0; i < cvector_size(instructions); i++) {
+        genPrintInstrShort(&instructions[i]);
+    }
     return 0;
 }
 

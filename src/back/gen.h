@@ -3,7 +3,6 @@
 
 #include "../front/symtab.h"
 #include "../util.h"
-#include "cvector.h"
 #include "gen.h"
 
 enum InstructionCode {
@@ -94,6 +93,8 @@ typedef struct Instruction {
         char   *string_arg1;
     };
 } Instruction;
+
+void genPrintInstrShort(Instruction *instr);
 
 /*
 continue and break statements will initially have rel_offset equal to 0.

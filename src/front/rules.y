@@ -35,12 +35,13 @@
 %token <num> AS
 %token <num> LSHIFT RSHIFT
 %token <num> EQ NE LE GE
-%token <num> '{' '}' '+' '-' '*' '/' '%' '~' '(' ')'
+%token <num> '{' '}' '+' '-' '*' '/' '%' '~' '(' ')' '^'
 
 %type <node> program
 %type <node> import_stmt
 %type <node> module_path
 %type <node> module_path_compact
+%type <node> module_path_upwards
 %type <node> export_stmt
 %type <node> export_item_list
 %type <node> export_item
@@ -103,7 +104,7 @@ program:
         node_result = $$;
     }
     | program global_variable_stmt {
-        $$ = make(PROGRAM_NODE, DEFAULT_OPTION, $1->lineno, 2, $1, $2);
+        $$ = make(PROGRAM_NODE, GLOBAL_VARIABLE_OPTION, $1->lineno, 2, $1, $2);
         node_result = $$;
     }
     | program function_stmt {
@@ -143,20 +144,34 @@ import_stmt:
     ;
 
 module_path:
-    module_path_compact {
+    module_path_upwards module_path_compact {
+        $$ = make(MODULE_PATH_NODE, MODULE_PATH_COMPACT_OPTION, $1->lineno, 2, $1, $2);
+    }
+    | module_path_compact {
         $$ = make(MODULE_PATH_NODE, MODULE_PATH_COMPACT_OPTION, $1->lineno, 1, $1);
     }
     | STRING {
         $$ = make(MODULE_PATH_NODE, MODULE_PATH_STRING_OPTION, $1->lineno, 1, $1);
     }
+    ;
+
+module_path_upwards:
+    '^' module_path_upwards {
+        $$ = make(MODULE_PATH_UPWARDS_NODE, LIST_RECURSIVE_OPTION, $1, 1, $2);
+    }
+    | '^' {
+        $$ = make(MODULE_PATH_UPWARDS_NODE, LIST_BASE_ITEM_OPTION, $1, 0);
+    }
+    ;
 
 module_path_compact:
-    module_path_compact '.' IDENTIFIER {
+    IDENTIFIER '.' module_path_compact {
         $$ = make(MODULE_PATH_COMPACT_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $3);
     }
     | IDENTIFIER {
         $$ = make(MODULE_PATH_COMPACT_NODE, LIST_BASE_ITEM_OPTION, $1->lineno, 1, $1);
     }
+    ;
 
 export_stmt:
     EXPORT export_item_list {
