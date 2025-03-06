@@ -46,6 +46,35 @@ void genPrintInstrShort(Instruction *instr) {
         printf("\n");
         return;
     }
+    case CREATE_GLOBAL_IC : {
+        printf("%-20s    ", "CREATE_GLOBAL_IC");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        printf("\n");
+        return;
+    }
+    case CREATE_SCOPE_IC : {
+        printf("%-20s    ", "CREATE_SCOPE_IC");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf(instr->flags ? "WITH_PARENT_ACCESS" : "WITHOUT_PARENT_ACCESS");
+
+        printf("\n");
+        return;
+    }
+    case DESTROY_SCOPE_IC : {
+        printf("%-20s    ", "DESTROY_SCOPE_IC");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
     default : {
         printf("%-20s    ", "INVALID");
         printf("lineno=%-4d ", instr->lineno);
@@ -611,93 +640,139 @@ Instruction genCreateInstructionNEW(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-#define pushall(dest, src)                                                                                             \
-    for (int i = 0; i < cvector_size(src); i++) {                                                                      \
-        cvector_push_back(dest, src[i]);                                                                               \
+ilist ilistCreate() {
+    ilist res;
+    res.head = res.tail = NULL;
+    res.size            = 0;
+    return res;
+}
+
+static void __inodeLink(inode *first, inode *second) {
+    first->next = second;
+}
+
+void ilistLink(ilist *first, ilist *second) {
+    first->size += second->size;
+    if (first->head == NULL) {
+        first->head  = second->head;
+        first->tail  = second->tail;
+        second->head = second->tail = NULL;
+        return;
     }
 
-static ivec gen(AstNode *node);
+    if (second->head == NULL) {
+        return;
+    }
+
+    __inodeLink(first->tail, second->head);
+    first->tail  = second->tail;
+    second->head = second->tail = NULL;
+}
+
+void ilistAppend(ilist *list, Instruction ins) {
+    inode *node = malloc(sizeof(inode));
+    node->ins   = ins;
+    node->next  = NULL;
+
+    if (list->head == NULL) {
+        list->head = list->tail = node;
+        list->size              = 1;
+        return;
+    }
+
+    list->tail->next = node;
+    list->tail       = node;
+    list->size++;
+}
+
+void ilistDestroy(ilist *list) {
+    inode *node = list->head;
+    while (node != NULL) {
+        inode *prev = node;
+        node        = node->next;
+        free(prev);
+    }
+}
+
+static ilist gen(AstNode *node);
 
 static size_t curEnvId;
 #define info(node) (node)->filename, (node)->lineno
 
-ivec genCompile(AstNode *node) {
+ilist genCompile(AstNode *node) {
     assert(node != NULL);
 
     // we assume that node is the root node of the entire program
-    curEnvId    = envGenAvailableId();
-    ivec result = NULL;
+    curEnvId     = envGenAvailableId();
+    ilist result = ilistCreate();
 
     // will create an env with id curEnvId
-    cvector_push_back(result, genCreateInstructionCREATE_ENV(info(node)));
+    ilistAppend(&result, genCreateInstructionCREATE_ENV(info(node)));
 
-    ivec tail = gen(node);
-    pushall(result, tail);
-    cvector_free(tail);
+    ilist tail = gen(node);
+    ilistLink(&result, &tail);
 
     return result;
 }
 
-static ivec gen_program(AstNode *node);
-static ivec gen_import_stmt(AstNode *node);
-static ivec gen_export_stmt(AstNode *node);
-static ivec gen_export_item_list(AstNode *node);
-static ivec gen_export_item(AstNode *node);
-static ivec gen_global_variable_stmt(AstNode *node);
-static ivec gen_function_stmt(AstNode *node);
-static ivec gen_parameter_list(AstNode *node);
-static ivec gen_parameter_item(AstNode *node);
-static ivec gen_type_stmt(AstNode *node);
-static ivec gen_member_list(AstNode *node);
-static ivec gen_member_item(AstNode *node);
-static ivec gen_method_stmt(AstNode *node);
-static ivec gen_constructor_stmt(AstNode *node);
-static ivec gen_destructor_stmt(AstNode *node);
-static ivec gen_stmt(AstNode *node);
-static ivec gen_block_stmt(AstNode *node);
-static ivec gen_stmt_list(AstNode *node);
-static ivec gen_while_stmt(AstNode *node);
-static ivec gen_for_stmt(AstNode *node);
-static ivec gen_if_stmt(AstNode *node);
-static ivec gen_continue_stmt(AstNode *node);
-static ivec gen_break_stmt(AstNode *node);
-static ivec gen_return_stmt(AstNode *node);
-static ivec gen_assignment_stmt(AstNode *node);
-static ivec gen_try_catch_stmt(AstNode *node);
-static ivec gen_catch_item_list(AstNode *node);
-static ivec gen_catch_item(AstNode *node);
-static ivec gen_signal_stmt(AstNode *node);
-static ivec gen_var_stmt(AstNode *node);
-static ivec gen_assignment_item_list(AstNode *node);
-static ivec gen_assignment_item(AstNode *node);
-static ivec gen_expr(AstNode *node);
-static ivec gen_assignment(AstNode *node);
-static ivec gen_inline_if(AstNode *node);
-static ivec gen_new(AstNode *node);
-static ivec gen_logical_or(AstNode *node);
-static ivec gen_logical_and(AstNode *node);
-static ivec gen_bitwise_or(AstNode *node);
-static ivec gen_bitwise_xor(AstNode *node);
-static ivec gen_bitwise_and(AstNode *node);
-static ivec gen_equality(AstNode *node);
-static ivec gen_relational(AstNode *node);
-static ivec gen_sum(AstNode *node);
-static ivec gen_bitwise_shift(AstNode *node);
-static ivec gen_term(AstNode *node);
-static ivec gen_prefix_op(AstNode *node);
-static ivec gen_primary(AstNode *node);
-static ivec gen_elementary(AstNode *node);
-static ivec gen_literal(AstNode *node);
-static ivec gen_module_path(AstNode *node);
-static ivec gen_module_path_upwards(AstNode *node);
-static ivec gen_module_path_compact(AstNode *node);
-static ivec gen_expr_list(AstNode *node);
-static ivec gen_identifier_list(AstNode *node);
+static ilist gen_program(AstNode *node);
+static ilist gen_import_stmt(AstNode *node);
+static ilist gen_export_stmt(AstNode *node);
+static ilist gen_global_variable_stmt(AstNode *node);
+static ilist gen_function_stmt(AstNode *node);
+static ilist gen_parameter_list(AstNode *node);
+static ilist gen_parameter_item(AstNode *node);
+static ilist gen_type_stmt(AstNode *node);
+static ilist gen_member_list(AstNode *node);
+static ilist gen_member_item(AstNode *node);
+static ilist gen_method_stmt(AstNode *node);
+static ilist gen_constructor_stmt(AstNode *node);
+static ilist gen_destructor_stmt(AstNode *node);
+static ilist gen_stmt(AstNode *node);
+static ilist gen_block_stmt(AstNode *node);
+static ilist gen_stmt_list(AstNode *node);
+static ilist gen_while_stmt(AstNode *node);
+static ilist gen_for_stmt(AstNode *node);
+static ilist gen_if_stmt(AstNode *node);
+static ilist gen_continue_stmt(AstNode *node);
+static ilist gen_break_stmt(AstNode *node);
+static ilist gen_return_stmt(AstNode *node);
+static ilist gen_assignment_stmt(AstNode *node);
+static ilist gen_try_catch_stmt(AstNode *node);
+static ilist gen_catch_item_list(AstNode *node);
+static ilist gen_catch_item(AstNode *node);
+static ilist gen_signal_stmt(AstNode *node);
+static ilist gen_var_stmt(AstNode *node);
+static ilist gen_assignment_item_list(AstNode *node);
+static ilist gen_assignment_item(AstNode *node);
+static ilist gen_expr(AstNode *node);
+static ilist gen_assignment(AstNode *node);
+static ilist gen_inline_if(AstNode *node);
+static ilist gen_new(AstNode *node);
+static ilist gen_logical_or(AstNode *node);
+static ilist gen_logical_and(AstNode *node);
+static ilist gen_bitwise_or(AstNode *node);
+static ilist gen_bitwise_xor(AstNode *node);
+static ilist gen_bitwise_and(AstNode *node);
+static ilist gen_equality(AstNode *node);
+static ilist gen_relational(AstNode *node);
+static ilist gen_sum(AstNode *node);
+static ilist gen_bitwise_shift(AstNode *node);
+static ilist gen_term(AstNode *node);
+static ilist gen_prefix_op(AstNode *node);
+static ilist gen_primary(AstNode *node);
+static ilist gen_elementary(AstNode *node);
+static ilist gen_literal(AstNode *node);
+static ilist gen_module_path(AstNode *node);
+static ilist gen_module_path_upwards(AstNode *node);
+static ilist gen_module_path_compact(AstNode *node);
+static ilist gen_expr_list(AstNode *node);
+static ilist gen_identifier_list(AstNode *node);
 
-static ivec gen(AstNode *node) {
+static ilist gen(AstNode *node) {
     assert(node != NULL);
-    ivec output = NULL;
-    ivec temp   = NULL;
+    ilist output = ilistCreate();
+    ilist temp;
 
     switch (node->type) {
     case PROGRAM_NODE : {
@@ -708,12 +783,6 @@ static ivec gen(AstNode *node) {
     }
     case EXPORT_STMT_NODE : {
         return gen_export_stmt(node);
-    }
-    case EXPORT_ITEM_LIST_NODE : {
-        return gen_export_item_list(node);
-    }
-    case EXPORT_ITEM_NODE : {
-        return gen_export_item(node);
     }
     case GLOBAL_VARIABLE_STMT_NODE : {
         return gen_global_variable_stmt(node);
@@ -866,13 +935,14 @@ static ivec gen(AstNode *node) {
         return gen_identifier_list(node);
     }
     default : {
-        return NULL;
+        return ilistCreate();
     }
     }
 }
 
-static ivec gen_program(AstNode *node) {
-    ivec output = NULL, temp = NULL;
+static ilist gen_program(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
     switch (node->option) {
     case NO_OPTION : {
@@ -883,7 +953,7 @@ static ivec gen_program(AstNode *node) {
 
         <
         */
-        return NULL;
+        return ilistCreate();
         break;
     }
     default : {
@@ -901,12 +971,10 @@ static ivec gen_program(AstNode *node) {
         AstNode *something = node->nodes[1];
 
         temp = gen(program);
-        pushall(output, temp);
-        cvector_free(temp);
+        ilistLink(&output, &temp);
 
         temp = gen(something);
-        pushall(output, temp);
-        cvector_free(temp);
+        ilistLink(&output, &temp);
 
         return output;
         break;
@@ -968,8 +1036,9 @@ static void constructModulePath(AstNode *node, charvec *res) {
     }
 }
 
-static ivec gen_import_stmt(AstNode *node) {
-    ivec output = NULL, temp = NULL;
+static ilist gen_import_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
     /*
     > IMPORT module_path AS IDENTIFIER
@@ -983,15 +1052,15 @@ static ivec gen_import_stmt(AstNode *node) {
     constructModulePath(node->nodes[0], &module_path);
     cvector_push_back(module_path, '\0');    // for copying
 
-    cvector_push_back(
-    output,
-    genCreateInstructionIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
+    ilistAppend(&output,
+                genCreateInstructionIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
 
     return output;
 }
 
-static ivec gen_export_stmt(AstNode *node) {
-    ivec output = NULL, temp = NULL;
+static ilist gen_export_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
     /*
     > EXPORT e1 as n1, ..., ek as nk
@@ -1007,11 +1076,9 @@ static ivec gen_export_stmt(AstNode *node) {
     while (list != NULL) {
         AstNode *export_item = list->nodes[0];
         temp                 = gen(export_item->nodes[0]);
-        pushall(output, temp);
-        cvector_free(temp);
+        ilistLink(&output, &temp);
 
-        cvector_push_back(output,
-                          genCreateInstructionEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
+        ilistAppend(&output, genCreateInstructionEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
 
         if (list->n_nodes == 2) {
             list = list->nodes[1];
@@ -1024,112 +1091,196 @@ static ivec gen_export_stmt(AstNode *node) {
     return output;
 }
 
-static ivec gen_export_item_list(AstNode *node) {}
+static ilist gen_global_variable_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ivec gen_export_item(AstNode *node) {}
+    /*
+    > GLOBAL a, b, c, d
 
-static ivec gen_global_variable_stmt(AstNode *node) {}
+    < CREATE_GLOBAL a
+    ...
+    < CREATE_GLOBAL d
+    */
 
-static ivec gen_function_stmt(AstNode *node) {}
+    AstNode *list = node->nodes[0];
+    while (list != NULL) {
+        AstNode *global_item = list->nodes[0];
 
-static ivec gen_parameter_list(AstNode *node) {}
+        ilistAppend(&output, genCreateInstructionCREATE_GLOBAL(info(node), global_item->identifier_value));
 
-static ivec gen_parameter_item(AstNode *node) {}
-
-static ivec gen_type_stmt(AstNode *node) {}
-
-static ivec gen_member_list(AstNode *node) {}
-
-static ivec gen_member_item(AstNode *node) {}
-
-static ivec gen_method_stmt(AstNode *node) {}
-
-static ivec gen_constructor_stmt(AstNode *node) {}
-
-static ivec gen_destructor_stmt(AstNode *node) {}
-
-static ivec gen_stmt(AstNode *node) {}
-
-static ivec gen_block_stmt(AstNode *node) {}
-
-static ivec gen_stmt_list(AstNode *node) {}
-
-static ivec gen_while_stmt(AstNode *node) {}
-
-static ivec gen_for_stmt(AstNode *node) {}
-
-static ivec gen_if_stmt(AstNode *node) {}
-
-static ivec gen_continue_stmt(AstNode *node) {}
-
-static ivec gen_break_stmt(AstNode *node) {}
-
-static ivec gen_return_stmt(AstNode *node) {}
-
-static ivec gen_assignment_stmt(AstNode *node) {}
-
-static ivec gen_try_catch_stmt(AstNode *node) {}
-
-static ivec gen_catch_item_list(AstNode *node) {}
-
-static ivec gen_catch_item(AstNode *node) {}
-
-static ivec gen_signal_stmt(AstNode *node) {}
-
-static ivec gen_var_stmt(AstNode *node) {}
-
-static ivec gen_assignment_item_list(AstNode *node) {}
-
-static ivec gen_assignment_item(AstNode *node) {}
-
-static ivec gen_expr(AstNode *node) {
-    ivec output = NULL, temp = NULL;
-
-    cvector_push_back(output, genCreateInstructionLOAD_NULL(info(node)));
+        if (list->n_nodes == 2) {
+            list = list->nodes[1];
+        }
+        else {
+            list = NULL;
+        }
+    }
 
     return output;
 }
 
-static ivec gen_assignment(AstNode *node) {}
+static ilist gen_function_stmt(AstNode *node) {}
 
-static ivec gen_inline_if(AstNode *node) {}
+static ilist gen_parameter_list(AstNode *node) {}
 
-static ivec gen_new(AstNode *node) {}
+static ilist gen_parameter_item(AstNode *node) {}
 
-static ivec gen_logical_or(AstNode *node) {}
+static ilist gen_type_stmt(AstNode *node) {}
 
-static ivec gen_logical_and(AstNode *node) {}
+static ilist gen_member_list(AstNode *node) {}
 
-static ivec gen_bitwise_or(AstNode *node) {}
+static ilist gen_member_item(AstNode *node) {}
 
-static ivec gen_bitwise_xor(AstNode *node) {}
+static ilist gen_method_stmt(AstNode *node) {}
 
-static ivec gen_bitwise_and(AstNode *node) {}
+static ilist gen_constructor_stmt(AstNode *node) {}
 
-static ivec gen_equality(AstNode *node) {}
+static ilist gen_destructor_stmt(AstNode *node) {}
 
-static ivec gen_relational(AstNode *node) {}
+static ilist gen_stmt(AstNode *node) {
+    // i wish all code was like this....
 
-static ivec gen_sum(AstNode *node) {}
+    /*
 
-static ivec gen_bitwise_shift(AstNode *node) {}
+    > something OR something ';'
 
-static ivec gen_term(AstNode *node) {}
+    < gen(something)
 
-static ivec gen_prefix_op(AstNode *node) {}
+    */
 
-static ivec gen_primary(AstNode *node) {}
+    return gen(node->nodes[0]);
+}
 
-static ivec gen_elementary(AstNode *node) {}
+static ilist gen_block_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+    /*
+    > '{' stmt '}'
+    < CREATE_SCOPE WITH_PARENT_ACCESS
+    < gen(stmt)
+    < DESTROY_SCOPE
 
-static ivec gen_literal(AstNode *node) {}
+    or
 
-static ivec gen_module_path(AstNode *node) {}
+    > '{' '}'
+    <
+    */
 
-static ivec gen_module_path_upwards(AstNode *node) {}
+    if (node->n_nodes == 1) {
+        ilistAppend(&output, genCreateInstructionCREATE_SCOPE(info(node), 1));
 
-static ivec gen_module_path_compact(AstNode *node) {}
+        temp = gen(node->nodes[0]);
+        ilistLink(&output, &temp);
 
-static ivec gen_expr_list(AstNode *node) {}
+        ilistAppend(&output, genCreateInstructionDESTROY_SCOPE(info(node)));
+        return output;
+    }
 
-static ivec gen_identifier_list(AstNode *node) {}
+    return ilistCreate();
+}
+
+static ilist gen_stmt_list(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+    /*
+    > s1 ... sn
+    < gen(s1)
+    ...
+    < gen(sn)
+    */
+
+    while (node != NULL) {
+        temp = gen(node->nodes[0]);
+        ilistLink(&output, &temp);
+
+        if (node->n_nodes == 2) {
+            node = node->nodes[1];
+        }
+        else {
+            node = NULL;
+        }
+    }
+    return output;
+}
+
+static ilist gen_while_stmt(AstNode *node) {}
+
+static ilist gen_for_stmt(AstNode *node) {}
+
+static ilist gen_if_stmt(AstNode *node) {}
+
+static ilist gen_continue_stmt(AstNode *node) {}
+
+static ilist gen_break_stmt(AstNode *node) {}
+
+static ilist gen_return_stmt(AstNode *node) {}
+
+static ilist gen_assignment_stmt(AstNode *node) {}
+
+static ilist gen_try_catch_stmt(AstNode *node) {}
+
+static ilist gen_catch_item_list(AstNode *node) {}
+
+static ilist gen_catch_item(AstNode *node) {}
+
+static ilist gen_signal_stmt(AstNode *node) {}
+
+static ilist gen_var_stmt(AstNode *node) {}
+
+static ilist gen_assignment_item_list(AstNode *node) {}
+
+static ilist gen_assignment_item(AstNode *node) {}
+
+static ilist gen_expr(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    ilistAppend(&output, genCreateInstructionLOAD_NULL(info(node)));
+
+    return output;
+}
+
+static ilist gen_assignment(AstNode *node) {}
+
+static ilist gen_inline_if(AstNode *node) {}
+
+static ilist gen_new(AstNode *node) {}
+
+static ilist gen_logical_or(AstNode *node) {}
+
+static ilist gen_logical_and(AstNode *node) {}
+
+static ilist gen_bitwise_or(AstNode *node) {}
+
+static ilist gen_bitwise_xor(AstNode *node) {}
+
+static ilist gen_bitwise_and(AstNode *node) {}
+
+static ilist gen_equality(AstNode *node) {}
+
+static ilist gen_relational(AstNode *node) {}
+
+static ilist gen_sum(AstNode *node) {}
+
+static ilist gen_bitwise_shift(AstNode *node) {}
+
+static ilist gen_term(AstNode *node) {}
+
+static ilist gen_prefix_op(AstNode *node) {}
+
+static ilist gen_primary(AstNode *node) {}
+
+static ilist gen_elementary(AstNode *node) {}
+
+static ilist gen_literal(AstNode *node) {}
+
+static ilist gen_module_path(AstNode *node) {}
+
+static ilist gen_module_path_upwards(AstNode *node) {}
+
+static ilist gen_module_path_compact(AstNode *node) {}
+
+static ilist gen_expr_list(AstNode *node) {}
+
+static ilist gen_identifier_list(AstNode *node) {}

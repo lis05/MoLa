@@ -171,12 +171,22 @@ Instruction genCreateInstructionNEW(char *filename, size_t lineno, ident name);
 
 struct AstNode;
 
-/*
-New instructions will be appended to the instructions list when modules are imported.
-For this reason, they will be stored in vectors, which can append new instructions faster.
-*/
-typedef cvector_vector_type(Instruction) ivec;    // Instruction*
+typedef struct inode {
+    Instruction ins;
 
-ivec genCompile(struct AstNode *node);
+    struct inode *next;
+} inode;
+
+typedef struct ilist {
+    inode *head, *tail;
+    size_t size;
+} ilist;
+
+ilist ilistCreate();
+void  ilistLink(ilist *first, ilist *second);    // first -> second
+void  ilistAppend(ilist *list, Instruction ins);
+void  ilistDestroy(ilist *list);
+
+ilist genCompile(struct AstNode *node);
 
 #endif

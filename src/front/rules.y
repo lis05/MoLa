@@ -338,7 +338,7 @@ block_stmt:
     ;
 
 stmt_list:
-    stmt_list stmt {
+    stmt stmt_list {
         $$ = make(STMT_LIST_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $2);
     }
     | stmt {

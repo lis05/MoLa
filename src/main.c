@@ -8,12 +8,15 @@ int main() {
     molalog("Parsing complete\n");
 
     envInit();
-    ivec instructions = genCompile(ast);
-    molalog("Generated %d instructions\n", cvector_size(instructions));
+    ilist instructions = genCompile(ast);
+    molalog("Generated %d instructions\n", instructions.size);
 
-    for (int i = 0; i < cvector_size(instructions); i++) {
-        genPrintInstrShort(&instructions[i]);
+    inode *node = instructions.head;
+    while (node != NULL) {
+        genPrintInstrShort(&node->ins);
+        node = node->next;
     }
+
     return 0;
 }
 
