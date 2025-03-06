@@ -8,7 +8,7 @@ static void printIdent(ident id) {
 }
 
 void genPrintInstrShort(Instruction *instr) {
-    molalog(""); 
+    molalog("");
     if (instr == NULL) {
         printf("NULL\n");
         return;
@@ -31,6 +31,17 @@ void genPrintInstrShort(Instruction *instr) {
         printf("module_path=%s\t", instr->string_arg1);
         printf("import_as=");
         printIdent(instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case EXPORT_OBJECT_IC : {
+        printf("%-20s    ", "EXPORT_OBJECT_IC");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("export_as=");
+        printIdent(instr->ident_arg1);
 
         printf("\n");
         return;
@@ -972,15 +983,46 @@ static ivec gen_import_stmt(AstNode *node) {
     constructModulePath(node->nodes[0], &module_path);
     cvector_push_back(module_path, '\0');    // for copying
 
-    ivec res = NULL;
     cvector_push_back(
-    res,
+    output,
     genCreateInstructionIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
 
-    return res;
+    return output;
 }
 
-static ivec gen_export_stmt(AstNode *node) {}
+static ivec gen_export_stmt(AstNode *node) {
+    ivec output = NULL, temp = NULL;
+
+    /*
+    > EXPORT e1 as n1, ..., ek as nk
+
+    < gen(e1)
+    < EXPORT_OBJECT n1
+    ...
+    < gen(ek)
+    < EXPORT_OBJECT nk
+    */
+
+    AstNode *list = node->nodes[0];
+    while (list != NULL) {
+        AstNode *export_item = list->nodes[0];
+        temp                 = gen(export_item->nodes[0]);
+        pushall(output, temp);
+        cvector_free(temp);
+
+        cvector_push_back(output,
+                          genCreateInstructionEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
+
+        if (list->n_nodes == 2) {
+            list = list->nodes[1];
+        }
+        else {
+            list = NULL;
+        }
+    }
+
+    return output;
+}
 
 static ivec gen_export_item_list(AstNode *node) {}
 
@@ -1040,7 +1082,13 @@ static ivec gen_assignment_item_list(AstNode *node) {}
 
 static ivec gen_assignment_item(AstNode *node) {}
 
-static ivec gen_expr(AstNode *node) {}
+static ivec gen_expr(AstNode *node) {
+    ivec output = NULL, temp = NULL;
+
+    cvector_push_back(output, genCreateInstructionLOAD_NULL(info(node)));
+
+    return output;
+}
 
 static ivec gen_assignment(AstNode *node) {}
 

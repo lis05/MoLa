@@ -51,7 +51,7 @@ Grammar
 
    19 export_stmt: EXPORT export_item_list
 
-   20 export_item_list: export_item_list ',' export_item
+   20 export_item_list: export_item ',' export_item_list
    21                 | export_item
 
    22 export_item: expr AS IDENTIFIER
@@ -1629,16 +1629,16 @@ State 78
 State 79
 
    19 export_stmt: EXPORT export_item_list •
-   20 export_item_list: export_item_list • ',' export_item
-
-    ','  shift, and go to state 143
 
     $default  reduce using rule 19 (export_stmt)
 
 
 State 80
 
-   21 export_item_list: export_item •
+   20 export_item_list: export_item • ',' export_item_list
+   21                 | export_item •
+
+    ','  shift, and go to state 143
 
     $default  reduce using rule 21 (export_item_list)
 
@@ -2923,7 +2923,7 @@ State 142
 
 State 143
 
-   20 export_item_list: export_item_list ',' • export_item
+   20 export_item_list: export_item ',' • export_item_list
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2940,25 +2940,26 @@ State 143
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    export_item    go to state 206
-    expr           go to state 81
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
+    export_item_list  go to state 206
+    export_item       go to state 80
+    expr              go to state 81
+    assignment        go to state 56
+    inline_if         go to state 57
+    new               go to state 58
+    logical_or        go to state 59
+    logical_and       go to state 60
+    bitwise_or        go to state 61
+    bitwise_xor       go to state 62
+    bitwise_and       go to state 63
+    equality          go to state 64
+    relational        go to state 65
+    sum               go to state 66
+    bitwise_shift     go to state 67
+    term              go to state 68
+    prefix_op         go to state 69
+    primary           go to state 70
+    elementary        go to state 71
+    literal           go to state 72
 
 
 State 144
@@ -3786,7 +3787,7 @@ State 205
 
 State 206
 
-   20 export_item_list: export_item_list ',' export_item •
+   20 export_item_list: export_item ',' export_item_list •
 
     $default  reduce using rule 20 (export_item_list)
 

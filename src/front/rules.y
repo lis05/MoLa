@@ -180,7 +180,7 @@ export_stmt:
     ;
 
 export_item_list:
-    export_item_list ',' export_item {
+    export_item ',' export_item_list {
         $$ = make(EXPORT_ITEM_LIST_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $3);
     }  
     | export_item {
@@ -190,7 +190,7 @@ export_item_list:
 
 export_item:
     expr AS IDENTIFIER {
-        $$ = make(EXPORT_ITEM_LIST_NODE, DEFAULT_OPTION, $1->lineno, 1, $1);
+        $$ = make(EXPORT_ITEM_LIST_NODE, DEFAULT_OPTION, $1->lineno, 2, $1, $3);
     }
     ;
 

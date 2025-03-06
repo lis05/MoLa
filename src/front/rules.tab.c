@@ -705,8 +705,8 @@ static const yytype_int16 yypact[] =
      -96,   -96,   -96,    11,   -96,   -96,   -96,   -96,   -96,   -96,
      -96,   -96,   -96,   -96,   -96,    54,   -96,    26,   -96,    62,
       67,    61,    69,    81,    35,   -37,    60,    70,    55,   -96,
-      -6,   -96,   -96,   -96,    59,    73,    92,   141,   -96,    90,
-     -96,   111,    94,   -96,    99,   108,   102,   153,    21,   155,
+      -6,   -96,   -96,   -96,    59,    73,    92,   141,   -96,   -96,
+      90,   111,    94,   -96,    99,   108,   102,   153,    21,   155,
       64,    64,    64,   -96,   101,   -96,   105,    91,   138,   507,
      507,   136,   106,   134,   -30,   -96,   -96,    11,   469,   -96,
      -96,   -96,   113,   -96,    64,    64,    64,   585,   585,   585,
@@ -768,7 +768,7 @@ static const yytype_uint8 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -96,   -96,   -96,   -96,   139,   -75,   -96,   -96,    72,   -96,
+     -96,   -96,   -96,   -96,   139,   -75,   -96,    72,   -96,   -96,
       68,   -96,   -95,    -4,   -96,   -96,   -24,   -96,   -96,   -96,
      -21,   -22,   -96,   -96,   -96,   -96,   -96,   -96,   -96,   -96,
      -96,    52,   -96,   -96,   -96,    57,   -96,    -7,   107,   -96,
@@ -952,7 +952,7 @@ static const yytype_int8 yystos[] =
      109,    63,    36,    58,    51,    92,    59,   109,   109,   110,
      114,   115,   116,   117,   118,   119,   119,   120,   120,   120,
      120,   121,   121,   122,   122,   123,   123,   123,    59,   109,
-     127,     8,   109,     8,    77,     8,    80,     8,    82,    59,
+     127,     8,   109,     8,    77,     8,    79,     8,    82,    59,
       84,     8,    87,    88,    84,    93,     8,     8,     8,    59,
       62,    93,   109,   107,   109,    27,    28,   103,   109,    32,
       92,   109,    63,    63,   109,   112,   127,    59,    62,    70,
@@ -1895,7 +1895,7 @@ yyreduce:
 #line 1896 "rules.tab.c"
     break;
 
-  case 21: /* export_item_list: export_item_list ',' export_item  */
+  case 21: /* export_item_list: export_item ',' export_item_list  */
 #line 183 "rules.y"
                                      {
         (yyval.node) = make(EXPORT_ITEM_LIST_NODE, LIST_RECURSIVE_OPTION, (yyvsp[-2].node)->lineno, 2, (yyvsp[-2].node), (yyvsp[0].node));
@@ -1914,7 +1914,7 @@ yyreduce:
   case 23: /* export_item: expr AS IDENTIFIER  */
 #line 192 "rules.y"
                        {
-        (yyval.node) = make(EXPORT_ITEM_LIST_NODE, DEFAULT_OPTION, (yyvsp[-2].node)->lineno, 1, (yyvsp[-2].node));
+        (yyval.node) = make(EXPORT_ITEM_LIST_NODE, DEFAULT_OPTION, (yyvsp[-2].node)->lineno, 2, (yyvsp[-2].node), (yyvsp[0].node));
     }
 #line 1920 "rules.tab.c"
     break;
