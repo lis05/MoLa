@@ -286,6 +286,8 @@ Creates a new scope. The access to the parent scope is determined by the `access
 #### `DESTROY_SCOPE`
 Destroys the current scope. Signals an InternalError if there is no scope to destroy.
 
+Removes records from error handlers stack that were bound to this scope. (is it gonna work?)
+
 #### `JUMP_IF_FALSE offset`
 - `offset` is the relative offset of the instruction where the VM has to jump if the value on the stack is `false`.
 - the stack must contain an object.
