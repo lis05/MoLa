@@ -173,11 +173,10 @@ Global variables are stored in the module's environment.
 ## VM
 To execute a program, it first has to be converted to a list of simple instructions, which will be then executed by the VM.
 
-An instruction is an structure that conttains details of how some action has to be executed. A MoLaVM instruction is made of:
+An instruction is an structure that contains details of how some action has to be executed. A MoLaVM instruction is made of:
 - Instruction code. Denoted as `inscode(ins)`.
 - The name of the file which caused the instruction to be generated. Denoted as `insfile(ins)`.
 - The line number in the file which caused the instruction to be generated. Denoted as `insline(ins)`.
-- A pointer to the environment of the module where the instruction has been generated. Denoted as `insenv(ins)`.
 - Arguments of the instruction, packed into it during its creation. Denoted as `insarg_i(int)`, where i is the index of the argument.
 
 Instructions of a module are stored in a single list. Instructions from new modules are appended to the end of the list. A module structure stores the absolute offset of the first instruction of that module in the list.
@@ -207,9 +206,16 @@ Pops an object from the stack. Signals an InternalError if the stack is empty.
 
 Swaps two top elements on the stack. Signals an InternalError if there are less than 2 objects on the stack.
 
-#### `SWITCH_ENV env?`
+#### `CREATE_ENV`
+Creates a new environment. The environment gets assigned an id, which is later used to switch to that environment. 
+This id is assigned during runtime. The root program get's assigned the id of 0.
 
-Switches the current environment to the environment of the module where this instruction is located. If env is provided, switches to env instead. 
+#### `SWITCH_ENV_INS`
+Switches the current environment to the environment of the module where this instruction is located.
+
+#### `SWITCH_ENV_OBJ`
+- The stack must contain an object which is a function.
+Switches the current environment to the environment of the function located on the stack.
 
 #### `IMPORT_MODULE module_path identifier`
 - `module_path` is the path to the module we want to import.
@@ -217,24 +223,23 @@ Switches the current environment to the environment of the module where this ins
 
 Imports a module.
 
-1. Checks whether `module_path` is correct. Otherwise signals InvalidModulePathError.
-2. Checks whether there is no global variable with the name `identifier` in the current environment. If there is, signals NameAlreadyTakenError.
+1. Checks whether `module_path` is correct. Otherwise signals ImportError.
+2. Checks whether there is no global variable with the name `identifier` in the current environment. If there is, signals NameCollisionError.
 3. Checks whether the module at `module_path` has already been imported (directly or indirectly). If such, `identifier` becomes a reference to that module structure, and the instruction terminates.
-4. Otherwise, creates a new environment.
-5. Generates instructions and appends them to the end of the instructions list.
-6. Executes the instructions of the module in the new environment.
-7. Creates a module structure containing the environment under the name of `identifier`, as well as the absolute offset to the instructions in the imported module.
+4. Generates instructions and appends them to the end of the instructions list. All generated instructions receive a new env_id.
+5. Executes the instructions of the module in the new environment.
+6. Creates a module structure containing the environment under the name of `identifier`, as well as the absolute offset to the instructions in the imported module.
 
 #### `EXPORT_OBJECT identifier`
 - `identifier` is the name under which we want to export the object on the stack.
 - the stack must contain an object.
 
-Exports the objects on the stack under the name `identifier` by adding it to the current environment. Throws an InternalError if the stack is empty. If there's already an object exported with the given name, throws NameAlreadyTakenError.
+Exports the objects on the stack under the name `identifier` by adding it to the current environment. Throws an InternalError if the stack is empty. If there's already an object exported with the given name, throws NameCollisionError.
 
 #### `CREATE_GLOBAL identifier`
 - `identifier` is the name of the global variable we want to create.
 
-Creates a global variable in the current environment, initially with value `null`. Throws NameAlreadyTakenError if there's already an accessible object with the same name in the environment.
+Creates a global variable in the current environment, initially with value `null`. Throws NameCollisionError if there's already an accessible object with the same name in the environment.
 
 #### `CREATE_FUNCTION identifier mode_1 arg_1 ... mode_n arg_n`
 - `identifier` is the name of the function.
@@ -245,7 +250,7 @@ Creates a new function object under the given name. The object will have a list 
 1. (Absolute) position of the second next instruction (after this one) in its module.
 2. A pointer to the module structure (which contains the absolute module offset).
 
-Signals a NameAlreadyTakesError if an accessible object with the given name already exists. Signals a InvalidArgumentNameError if there are duplicate argument names. 
+Signals a NameCollisionError if an accessible object with the given name already exists. Signals a DuplicateNameError if there are duplicate argument names. 
 
 #### `CREATE_TYPE identifier f m name_1 ... name_n`
 - `identifier` is the name of the type.
@@ -255,7 +260,7 @@ Signals a NameAlreadyTakesError if an accessible object with the given name alre
 
 Creates a new type under the given name. The type object contains the information about what fields and methods it has.
 
-Signals a NameAlreadyTakenError if an accessible object with the given name already exists, or a InvalidMemberNameError, if there are duplicate field/method names.
+Signals a NameCollisionError if an accessible object with the given name already exists, or a DuplicateNameError, if there are duplicate field/method names.
 
 #### `CREATE_METHOD identifier mode_1 arg_1 ... mode_n arg_n`
 - `identifier` is the name of the function.
@@ -269,7 +274,7 @@ Note: 'this' special argument has to be passed as a normal argument; it is not a
 
 The method object will have a list of modifiers and argument names, which will be used when calling the function. The object will also have a pointer to the next instruction (after the current one), which is where the method body will be generated. The type will receive a pointer to this method.
 
-Signals an InternalError if the stack is empty. Signals a ValueError the object on the stack is not a type object. Signals a MethodAlreadyDefinedError if the method has already been defined. Signals an InvalidMethodNameError if the type object didn't declare a method with such name. Signals an InvalidArgumentNameError if there are duplicate argument names. 
+Signals an InternalError if the stack is empty. Signals a ValueError the object on the stack is not a type object. Signals a NameCollisionError if the method has already been defined. Signals an NameError if the type object didn't declare a method with such name. Signals an DuplicateNameError if there are duplicate argument names. 
 
 Note: this is used to create constructor / destructor as well. In those cases, `identifier` becomes `constructor` / `destructor` respectively.
 
@@ -332,7 +337,7 @@ Signals an InternalError if the stack is empty, or ValueError if the object x on
 
 Creates a new variable with name `identifier`, pointing to the object on the stack.
 
-Signals a NameError if an accessible object with the given name already exists, InternalError if the stack is empty.
+Signals a NameCollisionError if an accessible object with the given name already exists, InternalError if the stack is empty.
 
 #### `COPY_BY_VALUE`
 - the stack must contain an object.
@@ -577,6 +582,8 @@ Instructions have a number preceding them. This is used as a marker for the posi
 
 If we want to specify that a jump instruction has to jump at a specific place, we can use the number of the line, preceding it with REL or ABS: JUMP REL@3 or JUMP ABS@3
 
+#### Each program is started with a `CREATE_ENV` instruction.
+
 #### `'import' module_path 'as' indetifier`
 ```
 1   IMPORT_MODULE module_path identifier
@@ -607,9 +614,9 @@ n   EXPORT_OBJECT name_n
 4   
 ```
 
-#### `'type' identifier '{' 'public:' pubf_1 ... pubf_n pubm_1 ... pubm_k 'private:' privf_1 ... privf_m privm_1 ... privm_l '}'`
+#### `'type' identifier '{' f_1 ... f_n m_1 ... m_k'}'`
 ```
-1   CREATE_TYPE identifier m n l k privf_1 ... privf_m pubf_1 ... pubf_n privm_1 ... privm_l pubm_1 ... pubm_k
+1   CREATE_TYPE identifier n k f_1 ... f_n m_1 ... m_k
 ```
 
 #### `'method' name '(' mode_1 arg_1, ..., mode_n ')' 'of' type_name block_stmt`
@@ -700,22 +707,92 @@ If else part is absent:
 
 #### `continue`
 ```
-1   JUMP REL@X
+1   DESTROY_SCOPE
+#    ...
+k   DESTROY_SCOPE  
+#   JUMP REL@X  
 ```
 
-where X is the position of the condition expression in innermost loop that includes the current `continue`.
-
-#### `break`
+Continue is meaningful only in 2 cases: (innermost loops that contain continue)
 ```
-1   JUMP REL@X
+while ...           // X is after the condition expression 
+    ...
+    {... {...
+    continue;
+    ...} ...}
+    ...
 ```
 
-where X is the position of the end of the innermost loop that includes the current `break`.
+```
+for ...             // X is after the step expression
+    ...
+    {... {...
+    continue;
+    ...} ...}
+    ...
+```
 
-#### `'return' ('copy' | 'ref' | 'pass') expr`
-The stack must contain the return address. \
+In these cases, continue must destroy all the scopes where it is contained. 
+`k` is the number of such open scopes.
+
+Otherwise, the instruction is ignored.
+
+#### `break` 
+```
+1   DESTROY_SCOPE
+#    ...
+k   DESTROY_SCOPE  
+#   JUMP REL@X  
+```
+
+Break is meaningful only in 2 cases: (innermost loops that contain continue)
+```
+while ...           // X is after the condition expression 
+    ...
+    {... {...
+    break;
+    ...} ...}
+    ...
+// X is here
+```
+
+```
+for ...             
+    ...
+    {... {...
+    break;
+    ...} ...}
+    ...
+// X is here
+```
+
+In these cases, continue must destroy all the scopes where it is contained. 
+`k` is the number of such open scopes.
+
+Otherwise, the instruction is ignored.
+
+#### `'return' ('copy' | 'ref' | 'pass' | ) expr`
+The stack must contain the return address. 
+
+The return statement only makes sense in one case:
+```
+function f(...) {
+    ...
+    {... {...
+    return ...
+    ...} ...}
+    ...
+}
+```
+
+K is the number of open scopes that contain the return statement. 
+On all other situations return is ignored.
+
 If mode is `copy`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
 1   COPY_BY_VALUE
 2   SWAP
@@ -723,6 +800,9 @@ If mode is `copy`:
 ```
 If mode is `ref`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
 1   COPY_BY_REFERENCE
 2   SWAP
@@ -730,7 +810,20 @@ If mode is `ref`:
 ```
 If mode is `pass`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
+1   SWAP
+2   RETURN
+```
+If mode is absent:
+```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
+#   gen(expr)
+#   COPY_BY_AUTO
 1   SWAP
 2   RETURN
 ```
@@ -764,7 +857,7 @@ Error handlers are generated in reversed order. For a specific error handler (`c
 4   CREATE_VAR identifier
 #   gen(block_stmt)
 #   DESTROY_CATCH *total handlers - pos of this one*
-5   JUMP REL@*first instruction after the try-catch statement
+5   JUMP REL@*first instruction after the try-catch statement*
 6
 ```
 For a universal error handler (`catch * as identifier block_stmt`), the following is generated:

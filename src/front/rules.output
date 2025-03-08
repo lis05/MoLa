@@ -64,7 +64,7 @@ Grammar
    26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list ')' block_stmt
    27              | FUNCTION IDENTIFIER '(' ')' block_stmt
 
-   28 parameter_list: parameter_list ',' parameter_item
+   28 parameter_list: parameter_item ',' parameter_list
    29               | parameter_item
 
    30 parameter_item: COPY IDENTIFIER
@@ -104,7 +104,7 @@ Grammar
    56 block_stmt: '{' stmt_list '}'
    57           | '{' '}'
 
-   58 stmt_list: stmt_list stmt
+   58 stmt_list: stmt stmt_list
    59          | stmt
 
    60 while_stmt: WHILE expr stmt
@@ -2100,17 +2100,8 @@ State 106
 State 107
 
    55 stmt: stmt • ';'
-   59 stmt_list: stmt •
-
-    ';'  shift, and go to state 113
-
-    $default  reduce using rule 59 (stmt_list)
-
-
-State 108
-
-   56 block_stmt: '{' stmt_list • '}'
-   58 stmt_list: stmt_list • stmt
+   58 stmt_list: stmt • stmt_list
+   59          | stmt •
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2132,14 +2123,17 @@ State 108
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
     '{'         shift, and go to state 30
-    '}'         shift, and go to state 174
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
+    ';'         shift, and go to state 113
 
-    stmt             go to state 175
+    $default  reduce using rule 59 (stmt_list)
+
+    stmt             go to state 107
     block_stmt       go to state 44
+    stmt_list        go to state 174
     while_stmt       go to state 45
     for_stmt         go to state 46
     if_stmt          go to state 47
@@ -2168,6 +2162,13 @@ State 108
     primary          go to state 70
     elementary       go to state 71
     literal          go to state 72
+
+
+State 108
+
+   56 block_stmt: '{' stmt_list • '}'
+
+    '}'  shift, and go to state 175
 
 
 State 109
@@ -3055,16 +3056,17 @@ State 153
 
 State 154
 
-   28 parameter_list: parameter_list • ',' parameter_item
    40 constructor_stmt: CONSTRUCTOR '(' parameter_list • ')' OF IDENTIFIER block_stmt
 
     ')'  shift, and go to state 219
-    ','  shift, and go to state 220
 
 
 State 155
 
-   29 parameter_list: parameter_item •
+   28 parameter_list: parameter_item • ',' parameter_list
+   29               | parameter_item •
+
+    ','  shift, and go to state 220
 
     $default  reduce using rule 29 (parameter_list)
 
@@ -3471,19 +3473,16 @@ State 173
 
 State 174
 
-   56 block_stmt: '{' stmt_list '}' •
+   58 stmt_list: stmt stmt_list •
 
-    $default  reduce using rule 56 (block_stmt)
+    $default  reduce using rule 58 (stmt_list)
 
 
 State 175
 
-   55 stmt: stmt • ';'
-   58 stmt_list: stmt_list stmt •
+   56 block_stmt: '{' stmt_list '}' •
 
-    ';'  shift, and go to state 113
-
-    $default  reduce using rule 58 (stmt_list)
+    $default  reduce using rule 56 (block_stmt)
 
 
 State 176
@@ -3818,10 +3817,8 @@ State 209
 State 210
 
    26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list • ')' block_stmt
-   28 parameter_list: parameter_list • ',' parameter_item
 
     ')'  shift, and go to state 241
-    ','  shift, and go to state 220
 
 
 State 211
@@ -3852,11 +3849,9 @@ State 213
 
 State 214
 
-   28 parameter_list: parameter_list • ',' parameter_item
    39 method_stmt: METHOD IDENTIFIER '(' parameter_list • ')' OF IDENTIFIER block_stmt
 
     ')'  shift, and go to state 245
-    ','  shift, and go to state 220
 
 
 State 215
@@ -3896,14 +3891,15 @@ State 219
 
 State 220
 
-   28 parameter_list: parameter_list ',' • parameter_item
+   28 parameter_list: parameter_item ',' • parameter_list
 
     IDENTIFIER  shift, and go to state 150
     COPY        shift, and go to state 151
     REF         shift, and go to state 152
     PASS        shift, and go to state 153
 
-    parameter_item  go to state 247
+    parameter_list  go to state 247
+    parameter_item  go to state 155
 
 
 State 221
@@ -4382,7 +4378,7 @@ State 246
 
 State 247
 
-   28 parameter_list: parameter_list ',' parameter_item •
+   28 parameter_list: parameter_item ',' parameter_list •
 
     $default  reduce using rule 28 (parameter_list)
 

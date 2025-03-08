@@ -219,7 +219,7 @@ function_stmt:
     ;
 
 parameter_list:
-    parameter_list ',' parameter_item {
+    parameter_item ',' parameter_list {
         $$ = make(PARAMETER_LIST_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $3);
     }
     | parameter_item {
@@ -330,10 +330,10 @@ stmt:
 
 block_stmt:
     '{' stmt_list '}' {
-        $$ = make(BLOCK_STMT_NODE, $1, DEFAULT_OPTION, 1, $2);
+        $$ = make(BLOCK_STMT_NODE, DEFAULT_OPTION, $1, 1, $2);
     }
     | '{' '}' {
-        $$ = make(BLOCK_STMT_NODE, $1, DEFAULT_OPTION, 0);
+        $$ = make(BLOCK_STMT_NODE, DEFAULT_OPTION, $1, 0);
     }
     ;
 

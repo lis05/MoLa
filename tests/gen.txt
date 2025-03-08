@@ -1,12 +1,3 @@
-import a as a
-import a.a.a as a
-import ^^a.a.a as a
-
-export a as b, c as d, e as f
-export a as b, c as d, e as f
-
-global a, b, c, d
-
-{
-    a; a; {a; {}}; {}
+function f(copy a, ref b, pass c, d) {
+    a; a; {a;}
 }

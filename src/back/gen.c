@@ -16,7 +16,7 @@ void genPrintInstrShort(Instruction *instr) {
 
     switch (instr->code) {
     case CREATE_ENV_IC : {
-        printf("%-20s    ", "CREATE_ENV_IC");
+        printf("%-20s    ", "CREATE_ENV");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -24,7 +24,7 @@ void genPrintInstrShort(Instruction *instr) {
         return;
     }
     case IMPORT_MODULE_IC : {
-        printf("%-20s    ", "IMPORT_MODULE_IC");
+        printf("%-20s    ", "IMPORT_MODULE");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -36,7 +36,7 @@ void genPrintInstrShort(Instruction *instr) {
         return;
     }
     case EXPORT_OBJECT_IC : {
-        printf("%-20s    ", "EXPORT_OBJECT_IC");
+        printf("%-20s    ", "EXPORT_OBJECT");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -47,7 +47,7 @@ void genPrintInstrShort(Instruction *instr) {
         return;
     }
     case CREATE_GLOBAL_IC : {
-        printf("%-20s    ", "CREATE_GLOBAL_IC");
+        printf("%-20s    ", "CREATE_GLOBAL");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -58,7 +58,7 @@ void genPrintInstrShort(Instruction *instr) {
         return;
     }
     case CREATE_SCOPE_IC : {
-        printf("%-20s    ", "CREATE_SCOPE_IC");
+        printf("%-20s    ", "CREATE_SCOPE");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -68,7 +68,60 @@ void genPrintInstrShort(Instruction *instr) {
         return;
     }
     case DESTROY_SCOPE_IC : {
-        printf("%-20s    ", "DESTROY_SCOPE_IC");
+        printf("%-20s    ", "DESTROY_SCOPE");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case CREATE_FUNCTION_IC : {
+        printf("%-20s    ", "CREATE_FUNCTION");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        printf("    args: ");
+        for (int i = 0; i < instr->n_args; i++) {
+            ident arg = instr->args[i];
+            if (arg & COPY_MODE_FLAG) {
+                printf("COPY ");
+            }
+            else if (arg & REF_MODE_FLAG) {
+                printf("REF ");
+            }
+            else if (arg & PASS_MODE_FLAG) {
+                printf("PASS ");
+            }
+            printIdent((arg << 4) >> 4);
+            printf(", ");
+        }
+
+        printf("\n");
+        return;
+    }
+    case JUMP_IC : {
+        printf("%-20s    ", "JUMP");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("offset=%d", instr->int_arg1);
+
+        printf("\n");
+        return;
+    }
+    case RETURN_IC : {
+        printf("%-20s    ", "RETURN");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_NULL_IC : {
+        printf("%-20s    ", "LOAD_NULL");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
@@ -90,6 +143,7 @@ Instruction genCreateInstructionPOP(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = POP_IC;
     return res;
@@ -99,6 +153,7 @@ Instruction genCreateInstructionSWAP(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = SWAP_IC;
     return res;
@@ -108,6 +163,7 @@ Instruction genCreateInstructionCREATE_ENV(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = CREATE_ENV_IC;
     return res;
@@ -117,6 +173,7 @@ Instruction genCreateInstructionSWITCH_ENV_INS(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = SWITCH_ENV_INS_IC;
     return res;
@@ -126,6 +183,7 @@ Instruction genCreateInstructionSWITCH_ENV_OBJ(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = SWITCH_ENV_OBJ_IC;
     return res;
@@ -146,6 +204,7 @@ Instruction genCreateInstructionEXPORT_OBJECT(char *filename, size_t lineno, ide
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = EXPORT_OBJECT_IC;
     res.ident_arg1 = name;
@@ -156,6 +215,7 @@ Instruction genCreateInstructionCREATE_GLOBAL(char *filename, size_t lineno, ide
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = CREATE_GLOBAL_IC;
     res.ident_arg1 = name;
@@ -215,6 +275,7 @@ Instruction genCreateInstructionCREATE_SCOPE(char *filename, size_t lineno, int8
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code  = CREATE_SCOPE_IC;
     res.flags = access_mode;
@@ -225,6 +286,7 @@ Instruction genCreateInstructionDESTROY_SCOPE(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = DESTROY_SCOPE_IC;
     return res;
@@ -234,6 +296,7 @@ Instruction genCreateInstructionJUMP_IF_FALSE(char *filename, size_t lineno, int
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = JUMP_IF_FALSE_IC;
     res.int_arg1 = offset;
@@ -244,6 +307,7 @@ Instruction genCreateInstructionJUMP(char *filename, size_t lineno, int64_t offs
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = JUMP_IC;
     res.int_arg1 = offset;
@@ -254,6 +318,7 @@ Instruction genCreateInstructionRETURN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = RETURN_IC;
     return res;
@@ -263,6 +328,7 @@ Instruction genCreateInstructionREGISTER_CATCH(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = REGISTER_CATCH_IC;
     return res;
@@ -272,6 +338,7 @@ Instruction genCreateInstructionDESTROY_CATCH(char *filename, size_t lineno, int
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = DESTROY_CATCH_IC;
     res.int_arg1 = n;
@@ -282,6 +349,7 @@ Instruction genCreateInstructionSIGNAL_ERROR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = SIGNAL_ERROR_IC;
     return res;
@@ -291,6 +359,7 @@ Instruction genCreateInstructionCREATE_VAR(char *filename, size_t lineno, ident 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = CREATE_VAR_IC;
     res.ident_arg1 = name;
@@ -301,6 +370,7 @@ Instruction genCreateInstructionCOPY_BY_VALUE(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = COPY_BY_VALUE_IC;
     return res;
@@ -310,6 +380,7 @@ Instruction genCreateInstructionCOPY_BY_REFERENCE(char *filename, size_t lineno)
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = COPY_BY_REFERENCE_IC;
     return res;
@@ -319,6 +390,7 @@ Instruction genCreateInstructionCOPY_BY_AUTO(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = COPY_BY_AUTO_IC;
     return res;
@@ -328,6 +400,7 @@ Instruction genCreateInstructionASSIGNMENT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = ASSIGNMENT_IC;
     return res;
@@ -337,6 +410,7 @@ Instruction genCreateInstructionLOGICAL_OR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LOGICAL_OR_IC;
     return res;
@@ -346,6 +420,7 @@ Instruction genCreateInstructionLOGICAL_AND(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LOGICAL_AND_IC;
     return res;
@@ -355,6 +430,7 @@ Instruction genCreateInstructionBITWISE_OR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = BITWISE_OR_IC;
     return res;
@@ -364,6 +440,7 @@ Instruction genCreateInstructionBITWISE_XOR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = BITWISE_XOR_IC;
     return res;
@@ -373,6 +450,7 @@ Instruction genCreateInstructionBITWISE_AND(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = BITWISE_AND_IC;
     return res;
@@ -382,6 +460,7 @@ Instruction genCreateInstructionEQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = EQUAL_IC;
     return res;
@@ -391,6 +470,7 @@ Instruction genCreateInstructionNOT_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = NOT_EQUAL_IC;
     return res;
@@ -400,6 +480,7 @@ Instruction genCreateInstructionLESS_THAN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LESS_THAN_IC;
     return res;
@@ -409,6 +490,7 @@ Instruction genCreateInstructionLESS_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LESS_EQUAL_IC;
     return res;
@@ -418,6 +500,7 @@ Instruction genCreateInstructionGREATER_THAN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = GREATER_THAN_IC;
     return res;
@@ -427,6 +510,7 @@ Instruction genCreateInstructionGREATER_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = GREATER_EQUAL_IC;
     return res;
@@ -436,6 +520,7 @@ Instruction genCreateInstructionADDITION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = ADDITION_IC;
     return res;
@@ -445,6 +530,7 @@ Instruction genCreateInstructionSUBTRACTION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = SUBTRACTION_IC;
     return res;
@@ -454,6 +540,7 @@ Instruction genCreateInstructionLSHIFT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LSHIFT_IC;
     return res;
@@ -463,6 +550,7 @@ Instruction genCreateInstructionRSHIFT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = RSHIFT_IC;
     return res;
@@ -472,6 +560,7 @@ Instruction genCreateInstructionMULTIPLICATION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = MULTIPLICATION_IC;
     return res;
@@ -481,6 +570,7 @@ Instruction genCreateInstructionDIVISION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = DIVISION_IC;
     return res;
@@ -490,6 +580,7 @@ Instruction genCreateInstructionREMAINDER(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = REMAINDER_IC;
     return res;
@@ -499,6 +590,7 @@ Instruction genCreateInstructionNEGATION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = NEGATION_IC;
     return res;
@@ -508,6 +600,7 @@ Instruction genCreateInstructionINVERTION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = INVERTION_IC;
     return res;
@@ -517,6 +610,7 @@ Instruction genCreateInstructionLOGICAL_NOT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LOGICAL_NOT_IC;
     return res;
@@ -526,6 +620,7 @@ Instruction genCreateInstructionCALL(char *filename, size_t lineno, int64_t n) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = CALL_IC;
     res.int_arg1 = n;
@@ -536,6 +631,7 @@ Instruction genCreateInstructionACCESS(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = ACCESS_IC;
     return res;
@@ -545,6 +641,7 @@ Instruction genCreateInstructionLOAD_BOOL(char *filename, size_t lineno, int8_t 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = LOAD_BOOL_IC;
     res.int_arg1 = value;
@@ -555,6 +652,7 @@ Instruction genCreateInstructionLOAD_CHAR(char *filename, size_t lineno, char va
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code      = LOAD_CHAR_IC;
     res.char_arg1 = value;
@@ -565,6 +663,7 @@ Instruction genCreateInstructionLOAD_INT(char *filename, size_t lineno, int64_t 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = LOAD_INT_IC;
     res.int_arg1 = value;
@@ -575,6 +674,7 @@ Instruction genCreateInstructionLOAD_FLOAT(char *filename, size_t lineno, double
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = LOAD_FLOAT_IC;
     res.float_arg1 = value;
@@ -585,6 +685,7 @@ Instruction genCreateInstructionLOAD_STRING(char *filename, size_t lineno, char 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code        = LOAD_STRING_IC;
     res.string_arg1 = value;
@@ -595,6 +696,7 @@ Instruction genCreateInstructionLOAD_NULL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code = LOAD_NULL_IC;
     return res;
@@ -604,6 +706,7 @@ Instruction genCreateInstructionLOAD(char *filename, size_t lineno, ident name) 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = LOAD_IC;
     res.ident_arg1 = name;
@@ -614,6 +717,7 @@ Instruction genCreateInstructionLOAD_FIELD(char *filename, size_t lineno, ident 
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = LOAD_FIELD_IC;
     res.ident_arg1 = name;
@@ -624,6 +728,7 @@ Instruction genCreateInstructionLOAD_METHOD(char *filename, size_t lineno, ident
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code       = LOAD_METHOD_IC;
     res.ident_arg1 = name;
@@ -634,6 +739,7 @@ Instruction genCreateInstructionNEW(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.n_args   = 0;
 
     res.code     = NEW_IC;
     res.int_arg1 = name;
@@ -1120,7 +1226,64 @@ static ilist gen_global_variable_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_function_stmt(AstNode *node) {}
+static ilist gen_function_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    > FUNCTION name '(' m1 p1 ... mn pn ')' block_stmt
+
+    < CREATE_FUNCTION name m1 p1 ... mn pn
+    < JUMP REL@1
+    < gen(block_stmt)
+    < RETURN
+    1
+    */
+
+    struct AstNode *name       = node->nodes[0];
+    struct AstNode *args       = (node->n_nodes == 2) ? NULL : node->nodes[1];
+    struct AstNode *block_stmt = node->nodes[node->n_nodes - 1];
+
+    cvector_vector_type(ident) params = NULL;
+    while (args != NULL) {
+        struct AstNode *item = args->nodes[0];
+        ident value = item->nodes[0]->identifier_value;
+
+        if (item->option == PARAM_COPY_MODE_OPTION) {
+            value ^= COPY_MODE_FLAG;
+        }
+        else if (item->option == PARAM_REF_MODE_OPTION) {
+            value ^= REF_MODE_FLAG;
+        }
+        else if (item->option == PARAM_PASS_MODE_OPTION) {
+            value ^= PASS_MODE_FLAG;
+        }
+        else {
+            value ^= AUTO_MODE_FLAG;
+        }
+
+        cvector_push_back(params, value);
+
+        if (args->n_nodes == 2) {
+            args = args->nodes[1];
+        }
+        else {
+            args = NULL;
+        }
+    }
+    size_t n_args = cvector_size(params);
+    ident *margs  = malloc(sizeof(ident) * n_args);
+    memcpy(margs, params, sizeof(ident) * n_args);
+    cvector_free(params);
+
+    ilistAppend(&output, genCreateInstructionCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
+    ilist block = gen(block_stmt);
+    ilistAppend(&output, genCreateInstructionJUMP(info(node), block.size + 2));
+    ilistLink(&output, &block);
+    ilistAppend(&output, genCreateInstructionRETURN(info(node)));
+
+    return output;
+}
 
 static ilist gen_parameter_list(AstNode *node) {}
 

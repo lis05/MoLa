@@ -707,22 +707,92 @@ If else part is absent:
 
 #### `continue`
 ```
-1   JUMP REL@X
+1   DESTROY_SCOPE
+#    ...
+k   DESTROY_SCOPE  
+#   JUMP REL@X  
 ```
 
-where X is the position of the condition expression in innermost loop that includes the current `continue`.
-
-#### `break`
+Continue is meaningful only in 2 cases: (innermost loops that contain continue)
 ```
-1   JUMP REL@X
+while ...           // X is after the condition expression 
+    ...
+    {... {...
+    continue;
+    ...} ...}
+    ...
 ```
 
-where X is the position of the end of the innermost loop that includes the current `break`.
+```
+for ...             // X is after the step expression
+    ...
+    {... {...
+    continue;
+    ...} ...}
+    ...
+```
 
-#### `'return' ('copy' | 'ref' | 'pass') expr`
-The stack must contain the return address. \
+In these cases, continue must destroy all the scopes where it is contained. 
+`k` is the number of such open scopes.
+
+Otherwise, the instruction is ignored.
+
+#### `break` 
+```
+1   DESTROY_SCOPE
+#    ...
+k   DESTROY_SCOPE  
+#   JUMP REL@X  
+```
+
+Break is meaningful only in 2 cases: (innermost loops that contain continue)
+```
+while ...           // X is after the condition expression 
+    ...
+    {... {...
+    break;
+    ...} ...}
+    ...
+// X is here
+```
+
+```
+for ...             
+    ...
+    {... {...
+    break;
+    ...} ...}
+    ...
+// X is here
+```
+
+In these cases, continue must destroy all the scopes where it is contained. 
+`k` is the number of such open scopes.
+
+Otherwise, the instruction is ignored.
+
+#### `'return' ('copy' | 'ref' | 'pass' | ) expr`
+The stack must contain the return address. 
+
+The return statement only makes sense in one case:
+```
+function f(...) {
+    ...
+    {... {...
+    return ...
+    ...} ...}
+    ...
+}
+```
+
+K is the number of open scopes that contain the return statement. 
+On all other situations return is ignored.
+
 If mode is `copy`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
 1   COPY_BY_VALUE
 2   SWAP
@@ -730,6 +800,9 @@ If mode is `copy`:
 ```
 If mode is `ref`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
 1   COPY_BY_REFERENCE
 2   SWAP
@@ -737,7 +810,20 @@ If mode is `ref`:
 ```
 If mode is `pass`:
 ```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
 #   gen(expr)
+1   SWAP
+2   RETURN
+```
+If mode is absent:
+```
+#   DESTROY_SCOPE
+    ...
+K   DESTROY_SCOPE
+#   gen(expr)
+#   COPY_BY_AUTO
 1   SWAP
 2   RETURN
 ```
@@ -771,7 +857,7 @@ Error handlers are generated in reversed order. For a specific error handler (`c
 4   CREATE_VAR identifier
 #   gen(block_stmt)
 #   DESTROY_CATCH *total handlers - pos of this one*
-5   JUMP REL@*first instruction after the try-catch statement
+5   JUMP REL@*first instruction after the try-catch statement*
 6
 ```
 For a universal error handler (`catch * as identifier block_stmt`), the following is generated:
