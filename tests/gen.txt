@@ -1,3 +1,1 @@
-function f(copy a, ref b, pass c, d) {
-    a; a; {a;}
-}
+a()

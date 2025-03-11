@@ -976,15 +976,22 @@ where INS is the instruction that executed operation op
 
 #### `A '(' B_1, ..., B_n ')'
 ```
-#   gen(A)
 #   gen(B_1)
     ...
 #   gen(B_n)
+#   gen(A)
 #   SWITCH_ENV *env of the function A*
 #   CREATE_SCOPE WITHOUT_PARENT_ACCESS
 #   CALL n
 #   DESTROY_SCOPE   
 #   SWITCH_ENV
+```
+
+#### `A '[' B ']'
+```
+#   gen(A)
+#   gen(B)
+#   ACCESS
 ```
 
 #### `A '.' name`

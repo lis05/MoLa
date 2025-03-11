@@ -12,9 +12,11 @@ int main() {
     molalog("Generated %d instructions\n", instructions.size);
 
     inode *node = instructions.head;
+    int64_t pos = 0;
     while (node != NULL) {
-        genPrintInstrShort(&node->ins);
+        genPrintInstrShort(pos, &node->ins);
         node = node->next;
+        pos++;
     }
 
     return 0;

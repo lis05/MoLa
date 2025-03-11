@@ -7,8 +7,8 @@ static void printIdent(ident id) {
     printf("%d[%s]", id, symtabIdentToString(id));
 }
 
-void genPrintInstrShort(Instruction *instr) {
-    molalog("");
+void genPrintInstrShort(int64_t pos, Instruction *instr) {
+    molalog("%-6d", pos);
     if (instr == NULL) {
         printf("NULL\n");
         return;
@@ -102,12 +102,22 @@ void genPrintInstrShort(Instruction *instr) {
         printf("\n");
         return;
     }
+    case JUMP_IF_FALSE_IC : {
+        printf("%-20s    ", "JUMP_IF_FALSE");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("offset=%d (abs=%d)", instr->int_arg1, pos + instr->int_arg1);
+
+        printf("\n");
+        return;
+    }
     case JUMP_IC : {
         printf("%-20s    ", "JUMP");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
 
-        printf("offset=%d", instr->int_arg1);
+        printf("offset=%d (abs=%d)", instr->int_arg1, pos + instr->int_arg1);
 
         printf("\n");
         return;
@@ -116,6 +126,17 @@ void genPrintInstrShort(Instruction *instr) {
         printf("%-20s    ", "RETURN");
         printf("lineno=%-4d ", instr->lineno);
         printf("n_args=%-4d ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_IC : {
+        printf("%-20s    ", "LOAD");
+        printf("lineno=%-4d ", instr->lineno);
+        printf("n_args=%-4d ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
 
         printf("\n");
         return;
@@ -139,7 +160,7 @@ void genPrintInstrShort(Instruction *instr) {
     }
 }
 
-Instruction genCreateInstructionPOP(char *filename, size_t lineno) {
+Instruction genInsPOP(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -149,7 +170,7 @@ Instruction genCreateInstructionPOP(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionSWAP(char *filename, size_t lineno) {
+Instruction genInsSWAP(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -159,7 +180,7 @@ Instruction genCreateInstructionSWAP(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionCREATE_ENV(char *filename, size_t lineno) {
+Instruction genInsCREATE_ENV(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -169,7 +190,7 @@ Instruction genCreateInstructionCREATE_ENV(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionSWITCH_ENV_INS(char *filename, size_t lineno) {
+Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -179,7 +200,7 @@ Instruction genCreateInstructionSWITCH_ENV_INS(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionSWITCH_ENV_OBJ(char *filename, size_t lineno) {
+Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -189,7 +210,7 @@ Instruction genCreateInstructionSWITCH_ENV_OBJ(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionIMPORT_MODULE(char *filename, size_t lineno, char *module_path, ident name) {
+Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, char *module_path, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -200,7 +221,7 @@ Instruction genCreateInstructionIMPORT_MODULE(char *filename, size_t lineno, cha
     return res;
 }
 
-Instruction genCreateInstructionEXPORT_OBJECT(char *filename, size_t lineno, ident name) {
+Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -211,7 +232,7 @@ Instruction genCreateInstructionEXPORT_OBJECT(char *filename, size_t lineno, ide
     return res;
 }
 
-Instruction genCreateInstructionCREATE_GLOBAL(char *filename, size_t lineno, ident name) {
+Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -222,7 +243,7 @@ Instruction genCreateInstructionCREATE_GLOBAL(char *filename, size_t lineno, ide
     return res;
 }
 
-Instruction genCreateInstructionCREATE_FUNCTION(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
+Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -234,13 +255,13 @@ Instruction genCreateInstructionCREATE_FUNCTION(char *filename, size_t lineno, i
     return res;
 }
 
-Instruction genCreateInstructionCREATE_TYPE(char  *filename,
-                                            size_t lineno,
-                                            ident  name,
-                                            size_t n_fields,
-                                            ident *fields,
-                                            size_t n_methods,
-                                            ident *methods) {
+Instruction genInsCREATE_TYPE(char  *filename,
+                              size_t lineno,
+                              ident  name,
+                              size_t n_fields,
+                              ident *fields,
+                              size_t n_methods,
+                              ident *methods) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -259,7 +280,7 @@ Instruction genCreateInstructionCREATE_TYPE(char  *filename,
     return res;
 }
 
-Instruction genCreateInstructionCREATE_METHOD(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
+Instruction genInsCREATE_METHOD(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -271,7 +292,7 @@ Instruction genCreateInstructionCREATE_METHOD(char *filename, size_t lineno, ide
     return res;
 }
 
-Instruction genCreateInstructionCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode) {
+Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -282,7 +303,7 @@ Instruction genCreateInstructionCREATE_SCOPE(char *filename, size_t lineno, int8
     return res;
 }
 
-Instruction genCreateInstructionDESTROY_SCOPE(char *filename, size_t lineno) {
+Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -292,7 +313,7 @@ Instruction genCreateInstructionDESTROY_SCOPE(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset) {
+Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -303,7 +324,7 @@ Instruction genCreateInstructionJUMP_IF_FALSE(char *filename, size_t lineno, int
     return res;
 }
 
-Instruction genCreateInstructionJUMP(char *filename, size_t lineno, int64_t offset) {
+Instruction genInsJUMP(char *filename, size_t lineno, int64_t offset) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -314,7 +335,7 @@ Instruction genCreateInstructionJUMP(char *filename, size_t lineno, int64_t offs
     return res;
 }
 
-Instruction genCreateInstructionRETURN(char *filename, size_t lineno) {
+Instruction genInsRETURN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -324,7 +345,7 @@ Instruction genCreateInstructionRETURN(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionREGISTER_CATCH(char *filename, size_t lineno) {
+Instruction genInsREGISTER_CATCH(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -334,7 +355,7 @@ Instruction genCreateInstructionREGISTER_CATCH(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionDESTROY_CATCH(char *filename, size_t lineno, int64_t n) {
+Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t n) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -345,7 +366,7 @@ Instruction genCreateInstructionDESTROY_CATCH(char *filename, size_t lineno, int
     return res;
 }
 
-Instruction genCreateInstructionSIGNAL_ERROR(char *filename, size_t lineno) {
+Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -355,7 +376,7 @@ Instruction genCreateInstructionSIGNAL_ERROR(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionCREATE_VAR(char *filename, size_t lineno, ident name) {
+Instruction genInsCREATE_VAR(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -366,7 +387,7 @@ Instruction genCreateInstructionCREATE_VAR(char *filename, size_t lineno, ident 
     return res;
 }
 
-Instruction genCreateInstructionCOPY_BY_VALUE(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_VALUE(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -376,7 +397,7 @@ Instruction genCreateInstructionCOPY_BY_VALUE(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionCOPY_BY_REFERENCE(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_REFERENCE(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -386,7 +407,7 @@ Instruction genCreateInstructionCOPY_BY_REFERENCE(char *filename, size_t lineno)
     return res;
 }
 
-Instruction genCreateInstructionCOPY_BY_AUTO(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_AUTO(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -396,7 +417,7 @@ Instruction genCreateInstructionCOPY_BY_AUTO(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionASSIGNMENT(char *filename, size_t lineno) {
+Instruction genInsASSIGNMENT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -406,7 +427,7 @@ Instruction genCreateInstructionASSIGNMENT(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLOGICAL_OR(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_OR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -416,7 +437,7 @@ Instruction genCreateInstructionLOGICAL_OR(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLOGICAL_AND(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_AND(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -426,7 +447,7 @@ Instruction genCreateInstructionLOGICAL_AND(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionBITWISE_OR(char *filename, size_t lineno) {
+Instruction genInsBITWISE_OR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -436,7 +457,7 @@ Instruction genCreateInstructionBITWISE_OR(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionBITWISE_XOR(char *filename, size_t lineno) {
+Instruction genInsBITWISE_XOR(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -446,7 +467,7 @@ Instruction genCreateInstructionBITWISE_XOR(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionBITWISE_AND(char *filename, size_t lineno) {
+Instruction genInsBITWISE_AND(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -456,7 +477,7 @@ Instruction genCreateInstructionBITWISE_AND(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionEQUAL(char *filename, size_t lineno) {
+Instruction genInsEQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -466,7 +487,7 @@ Instruction genCreateInstructionEQUAL(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionNOT_EQUAL(char *filename, size_t lineno) {
+Instruction genInsNOT_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -476,7 +497,7 @@ Instruction genCreateInstructionNOT_EQUAL(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLESS_THAN(char *filename, size_t lineno) {
+Instruction genInsLESS_THAN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -486,7 +507,7 @@ Instruction genCreateInstructionLESS_THAN(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLESS_EQUAL(char *filename, size_t lineno) {
+Instruction genInsLESS_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -496,7 +517,7 @@ Instruction genCreateInstructionLESS_EQUAL(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionGREATER_THAN(char *filename, size_t lineno) {
+Instruction genInsGREATER_THAN(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -506,7 +527,7 @@ Instruction genCreateInstructionGREATER_THAN(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionGREATER_EQUAL(char *filename, size_t lineno) {
+Instruction genInsGREATER_EQUAL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -516,7 +537,7 @@ Instruction genCreateInstructionGREATER_EQUAL(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionADDITION(char *filename, size_t lineno) {
+Instruction genInsADDITION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -526,7 +547,7 @@ Instruction genCreateInstructionADDITION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionSUBTRACTION(char *filename, size_t lineno) {
+Instruction genInsSUBTRACTION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -536,7 +557,7 @@ Instruction genCreateInstructionSUBTRACTION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLSHIFT(char *filename, size_t lineno) {
+Instruction genInsLSHIFT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -546,7 +567,7 @@ Instruction genCreateInstructionLSHIFT(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionRSHIFT(char *filename, size_t lineno) {
+Instruction genInsRSHIFT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -556,7 +577,7 @@ Instruction genCreateInstructionRSHIFT(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionMULTIPLICATION(char *filename, size_t lineno) {
+Instruction genInsMULTIPLICATION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -566,7 +587,7 @@ Instruction genCreateInstructionMULTIPLICATION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionDIVISION(char *filename, size_t lineno) {
+Instruction genInsDIVISION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -576,7 +597,7 @@ Instruction genCreateInstructionDIVISION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionREMAINDER(char *filename, size_t lineno) {
+Instruction genInsREMAINDER(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -586,7 +607,17 @@ Instruction genCreateInstructionREMAINDER(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionNEGATION(char *filename, size_t lineno) {
+Instruction genInsPOSITIVE(char *filename, size_t lineno) {
+    Instruction res;
+    res.filename = filename;
+    res.lineno   = lineno;
+    res.n_args   = 0;
+
+    res.code = POSITIVE_IC;
+    return res;
+}
+
+Instruction genInsNEGATION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -596,7 +627,7 @@ Instruction genCreateInstructionNEGATION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionINVERTION(char *filename, size_t lineno) {
+Instruction genInsINVERTION(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -606,7 +637,7 @@ Instruction genCreateInstructionINVERTION(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLOGICAL_NOT(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_NOT(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -616,7 +647,7 @@ Instruction genCreateInstructionLOGICAL_NOT(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionCALL(char *filename, size_t lineno, int64_t n) {
+Instruction genInsCALL(char *filename, size_t lineno, int64_t n) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -627,7 +658,7 @@ Instruction genCreateInstructionCALL(char *filename, size_t lineno, int64_t n) {
     return res;
 }
 
-Instruction genCreateInstructionACCESS(char *filename, size_t lineno) {
+Instruction genInsACCESS(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -637,7 +668,7 @@ Instruction genCreateInstructionACCESS(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLOAD_BOOL(char *filename, size_t lineno, int8_t value) {
+Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int8_t value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -648,7 +679,7 @@ Instruction genCreateInstructionLOAD_BOOL(char *filename, size_t lineno, int8_t 
     return res;
 }
 
-Instruction genCreateInstructionLOAD_CHAR(char *filename, size_t lineno, char value) {
+Instruction genInsLOAD_CHAR(char *filename, size_t lineno, char value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -659,7 +690,7 @@ Instruction genCreateInstructionLOAD_CHAR(char *filename, size_t lineno, char va
     return res;
 }
 
-Instruction genCreateInstructionLOAD_INT(char *filename, size_t lineno, int64_t value) {
+Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -670,7 +701,7 @@ Instruction genCreateInstructionLOAD_INT(char *filename, size_t lineno, int64_t 
     return res;
 }
 
-Instruction genCreateInstructionLOAD_FLOAT(char *filename, size_t lineno, double value) {
+Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, double value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -681,7 +712,7 @@ Instruction genCreateInstructionLOAD_FLOAT(char *filename, size_t lineno, double
     return res;
 }
 
-Instruction genCreateInstructionLOAD_STRING(char *filename, size_t lineno, char *value) {
+Instruction genInsLOAD_STRING(char *filename, size_t lineno, char *value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -692,7 +723,7 @@ Instruction genCreateInstructionLOAD_STRING(char *filename, size_t lineno, char 
     return res;
 }
 
-Instruction genCreateInstructionLOAD_NULL(char *filename, size_t lineno) {
+Instruction genInsLOAD_NULL(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -702,7 +733,7 @@ Instruction genCreateInstructionLOAD_NULL(char *filename, size_t lineno) {
     return res;
 }
 
-Instruction genCreateInstructionLOAD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -713,7 +744,7 @@ Instruction genCreateInstructionLOAD(char *filename, size_t lineno, ident name) 
     return res;
 }
 
-Instruction genCreateInstructionLOAD_FIELD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD_FIELD(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -724,7 +755,7 @@ Instruction genCreateInstructionLOAD_FIELD(char *filename, size_t lineno, ident 
     return res;
 }
 
-Instruction genCreateInstructionLOAD_METHOD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD_METHOD(char *filename, size_t lineno, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -735,14 +766,13 @@ Instruction genCreateInstructionLOAD_METHOD(char *filename, size_t lineno, ident
     return res;
 }
 
-Instruction genCreateInstructionNEW(char *filename, size_t lineno, ident name) {
+Instruction genInsNEW(char *filename, size_t lineno) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
     res.n_args   = 0;
 
-    res.code     = NEW_IC;
-    res.int_arg1 = name;
+    res.code = NEW_IC;
     return res;
 }
 
@@ -813,7 +843,7 @@ ilist genCompile(AstNode *node) {
     ilist result = ilistCreate();
 
     // will create an env with id curEnvId
-    ilistAppend(&result, genCreateInstructionCREATE_ENV(info(node)));
+    ilistAppend(&result, genInsCREATE_ENV(info(node)));
 
     ilist tail = gen(node);
     ilistLink(&result, &tail);
@@ -895,12 +925,6 @@ static ilist gen(AstNode *node) {
     }
     case FUNCTION_STMT_NODE : {
         return gen_function_stmt(node);
-    }
-    case PARAMETER_LIST_NODE : {
-        return gen_parameter_list(node);
-    }
-    case PARAMETER_ITEM_NODE : {
-        return gen_parameter_item(node);
     }
     case TYPE_STMT_NODE : {
         return gen_type_stmt(node);
@@ -1046,6 +1070,11 @@ static ilist gen(AstNode *node) {
     }
 }
 
+static int64_t ctx_open_scopes_since_function = 0;
+static int     ctx_is_inside_function         = 0;
+
+static cvector_vector_type(int64_t) ctx_open_scopes_since_loop = NULL;
+
 static ilist gen_program(AstNode *node) {
     ilist output = ilistCreate();
     ilist temp;
@@ -1158,8 +1187,7 @@ static ilist gen_import_stmt(AstNode *node) {
     constructModulePath(node->nodes[0], &module_path);
     cvector_push_back(module_path, '\0');    // for copying
 
-    ilistAppend(&output,
-                genCreateInstructionIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
+    ilistAppend(&output, genInsIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
 
     return output;
 }
@@ -1184,7 +1212,7 @@ static ilist gen_export_stmt(AstNode *node) {
         temp                 = gen(export_item->nodes[0]);
         ilistLink(&output, &temp);
 
-        ilistAppend(&output, genCreateInstructionEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
+        ilistAppend(&output, genInsEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
 
         if (list->n_nodes == 2) {
             list = list->nodes[1];
@@ -1213,7 +1241,7 @@ static ilist gen_global_variable_stmt(AstNode *node) {
     while (list != NULL) {
         AstNode *global_item = list->nodes[0];
 
-        ilistAppend(&output, genCreateInstructionCREATE_GLOBAL(info(node), global_item->identifier_value));
+        ilistAppend(&output, genInsCREATE_GLOBAL(info(node), global_item->identifier_value));
 
         if (list->n_nodes == 2) {
             list = list->nodes[1];
@@ -1246,8 +1274,8 @@ static ilist gen_function_stmt(AstNode *node) {
 
     cvector_vector_type(ident) params = NULL;
     while (args != NULL) {
-        struct AstNode *item = args->nodes[0];
-        ident value = item->nodes[0]->identifier_value;
+        struct AstNode *item  = args->nodes[0];
+        ident           value = item->nodes[0]->identifier_value;
 
         if (item->option == PARAM_COPY_MODE_OPTION) {
             value ^= COPY_MODE_FLAG;
@@ -1276,18 +1304,21 @@ static ilist gen_function_stmt(AstNode *node) {
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
-    ilistAppend(&output, genCreateInstructionCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
-    ilist block = gen(block_stmt);
-    ilistAppend(&output, genCreateInstructionJUMP(info(node), block.size + 2));
+    ilistAppend(&output, genInsCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
+
+    ctx_is_inside_function         = 1;
+    ctx_open_scopes_since_function = 0;
+    ilist block                    = gen(block_stmt);
+    ctx_is_inside_function         = 0;
+
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+
     ilistLink(&output, &block);
-    ilistAppend(&output, genCreateInstructionRETURN(info(node)));
+
+    ilistAppend(&output, genInsRETURN(info(node)));
 
     return output;
 }
-
-static ilist gen_parameter_list(AstNode *node) {}
-
-static ilist gen_parameter_item(AstNode *node) {}
 
 static ilist gen_type_stmt(AstNode *node) {}
 
@@ -1331,12 +1362,21 @@ static ilist gen_block_stmt(AstNode *node) {
     */
 
     if (node->n_nodes == 1) {
-        ilistAppend(&output, genCreateInstructionCREATE_SCOPE(info(node), 1));
+        ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
+
+        if (!cvector_empty(ctx_open_scopes_since_loop)) {
+            (*cvector_back(ctx_open_scopes_since_loop))++;
+        }
 
         temp = gen(node->nodes[0]);
+
+        if (!cvector_empty(ctx_open_scopes_since_loop)) {
+            (*cvector_back(ctx_open_scopes_since_loop))--;
+        }
+
         ilistLink(&output, &temp);
 
-        ilistAppend(&output, genCreateInstructionDESTROY_SCOPE(info(node)));
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
         return output;
     }
 
@@ -1367,15 +1407,95 @@ static ilist gen_stmt_list(AstNode *node) {
     return output;
 }
 
-static ilist gen_while_stmt(AstNode *node) {}
+static ilist gen_while_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    > while e s
+
+    1 gen(e)
+    < JUMP_IF_FALSE REL@2
+    < gen(s)
+    < JUMP REL@1
+    2
+
+    also we have to handle continue/break statements
+    they are JUMP statements with offset=0 and LOOP_CONTINUE_FLAG / LOOP_BREAK_FLAG
+    */
+
+    cvector_push_back(ctx_open_scopes_since_loop, 0);
+
+    ilist e = gen(node->nodes[0]);
+    ilist s = gen(node->nodes[1]);
+
+    ilistLink(&output, &e);
+    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), s.size + 2));
+    ilistLink(&output, &s);
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)s.size + 1 + e.size)));
+
+    cvector_pop_back(ctx_open_scopes_since_loop);
+
+    int64_t offset = 0;
+    for (inode *nd = output.head; nd->next != NULL; nd = nd->next, offset++) {
+        Instruction *ins = &nd->ins;
+        if (ins->code != JUMP_IC || ins->int_arg1 != 0) {
+            continue;
+        }
+
+        if (ins->flags == LOOP_CONTINUE_FLAG) {
+            ins->int_arg1 = -offset;
+        }
+        else if (ins->flags == LOOP_BREAK_FLAG) {
+            ins->int_arg1 = (int64_t)output.size - offset;
+        }
+        else {
+            molalog("Strange instruction (JUMP, offset = 0)\n");
+        }
+    }
+
+    return output;
+}
 
 static ilist gen_for_stmt(AstNode *node) {}
 
 static ilist gen_if_stmt(AstNode *node) {}
 
-static ilist gen_continue_stmt(AstNode *node) {}
+static ilist gen_continue_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ilist gen_break_stmt(AstNode *node) {}
+    if (cvector_empty(ctx_open_scopes_since_loop)) {
+        return output;
+    }
+
+    for (int64_t i = 0; i < *cvector_back(ctx_open_scopes_since_loop); i++) {
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+    }
+    Instruction i = genInsJUMP(info(node), 0);
+    i.flags       = LOOP_CONTINUE_FLAG;    // will be handled later
+    ilistAppend(&output, i);
+
+    return output;
+}
+
+static ilist gen_break_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (cvector_empty(ctx_open_scopes_since_loop)) {
+        return output;
+    }
+
+    for (int64_t i = 0; i < *cvector_back(ctx_open_scopes_since_loop); i++) {
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+    }
+    Instruction i = genInsJUMP(info(node), 0);
+    i.flags       = LOOP_BREAK_FLAG;    // will be handled later
+    ilistAppend(&output, i);
+
+    return output;
+}
 
 static ilist gen_return_stmt(AstNode *node) {}
 
@@ -1396,47 +1516,609 @@ static ilist gen_assignment_item_list(AstNode *node) {}
 static ilist gen_assignment_item(AstNode *node) {}
 
 static ilist gen_expr(AstNode *node) {
+    return gen_assignment(node->nodes[0]);    // satisfaction
+}
+
+static ilist gen_assignment(AstNode *node) {
     ilist output = ilistCreate();
     ilist temp;
 
-    ilistAppend(&output, genCreateInstructionLOAD_NULL(info(node)));
+    if (node->option == INLINE_IF_OPTION) {
+        return gen_inline_if(node->nodes[0]);
+    }
+
+    /*
+    > A = B
+
+    < gen(B)
+    < COPY_BY_AUTO
+    < gen(A)
+    < ASSIGNMENT
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_assignment(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsCOPY_BY_AUTO(info(node)));
+
+    temp = gen_inline_if(A);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsASSIGNMENT(info(node)));
 
     return output;
 }
 
-static ilist gen_assignment(AstNode *node) {}
+static ilist gen_inline_if(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ilist gen_inline_if(AstNode *node) {}
+    if (node->option == NEW_OPTION) {
+        return gen_new(node->nodes[0]);
+    }
 
-static ilist gen_new(AstNode *node) {}
+    /*
+    > when A then B else C
 
-static ilist gen_logical_or(AstNode *node) {}
+    < gen(A)
+    < JUMP_IF_FALSE REL@1
+    < gen(B)
+    < JUMP REL@2
+    1 gen(C)
+    2
+    */
 
-static ilist gen_logical_and(AstNode *node) {}
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+    AstNode *C = node->nodes[2];
 
-static ilist gen_bitwise_or(AstNode *node) {}
+    ilist a = gen_new(A);
+    ilist b = gen_new(B);
+    ilist c = gen_new(C);
 
-static ilist gen_bitwise_xor(AstNode *node) {}
+    ilistLink(&output, &a);
+    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), b.size + 2));
+    ilistLink(&output, &b);
+    ilistAppend(&output, genInsJUMP(info(node), c.size + 1));
+    ilistLink(&output, &c);
 
-static ilist gen_bitwise_and(AstNode *node) {}
+    return output;
+}
 
-static ilist gen_equality(AstNode *node) {}
+static ilist gen_new(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ilist gen_relational(AstNode *node) {}
+    if (node->option == LOGICAL_OR_OPTION) {
+        return gen_logical_or(node->nodes[0]);
+    }
 
-static ilist gen_sum(AstNode *node) {}
+    /*
+    > new A (B1 ... Bn)
 
-static ilist gen_bitwise_shift(AstNode *node) {}
+    < gen(A)
+    < gen(B1)
+    ...
+    < gen(Bn)
+    < NEW
+    */
 
-static ilist gen_term(AstNode *node) {}
+    temp = gen_logical_or(node->nodes[0]);
+    ilistLink(&output, &temp);
 
-static ilist gen_prefix_op(AstNode *node) {}
+    if (node->n_nodes == 2) {
+        temp = gen_expr_list(node->nodes[1]);    // expr_list of B1 ... Bn
+        ilistLink(&output, &temp);
+    }
 
-static ilist gen_primary(AstNode *node) {}
+    ilistAppend(&output, genInsNEW(info(node)));
 
-static ilist gen_elementary(AstNode *node) {}
+    return output;
+}
 
-static ilist gen_literal(AstNode *node) {}
+static ilist gen_logical_or(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == LOGICAL_AND_OPTION) {
+        return gen_logical_and(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_logical_or(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_logical_and(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsLOGICAL_OR(info(node)));
+
+    return output;
+}
+
+static ilist gen_logical_and(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == BITWISE_OR_OPTION) {
+        return gen_bitwise_or(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_logical_and(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_bitwise_or(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsLOGICAL_AND(info(node)));
+
+    return output;
+}
+
+static ilist gen_bitwise_or(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == BITWISE_XOR_OPTION) {
+        return gen_bitwise_xor(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_bitwise_or(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_bitwise_xor(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsBITWISE_XOR(info(node)));
+
+    return output;
+}
+
+static ilist gen_bitwise_xor(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == BITWISE_AND_OPTION) {
+        return gen_bitwise_and(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_bitwise_xor(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_bitwise_and(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsBITWISE_XOR(info(node)));
+
+    return output;
+}
+
+static ilist gen_bitwise_and(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == EQUALITY_OPTION) {
+        return gen_equality(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_bitwise_and(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_equality(B);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsBITWISE_AND(info(node)));
+
+    return output;
+}
+
+static ilist gen_equality(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == RELATIONAL_OPTION) {
+        return gen_relational(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_equality(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_relational(B);
+    ilistLink(&output, &temp);
+
+    if (node->option == EQUAL_OPTION) {
+        ilistAppend(&output, genInsEQUAL(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsNOT_EQUAL(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_relational(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == SUM_OPTION) {
+        return gen_sum(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_relational(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_sum(B);
+    ilistLink(&output, &temp);
+
+    if (node->option == LESS_EQUAL_OPTION) {
+        ilistAppend(&output, genInsLESS_EQUAL(info(node)));
+    }
+    else if (node->option == GREATER_EQUAL_OPTION) {
+        ilistAppend(&output, genInsGREATER_EQUAL(info(node)));
+    }
+    else if (node->option == LESS_THAN_OPTION) {
+        ilistAppend(&output, genInsLESS_THAN(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsGREATER_THAN(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_sum(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == BITWISE_SHIFT_OPTION) {
+        return gen_bitwise_shift(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_sum(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_bitwise_shift(B);
+    ilistLink(&output, &temp);
+
+    if (node->option == ADDITION_OPTION) {
+        ilistAppend(&output, genInsADDITION(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsSUBTRACTION(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_bitwise_shift(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == TERM_OPTION) {
+        return gen_term(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_bitwise_shift(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_term(B);
+    ilistLink(&output, &temp);
+
+    if (node->option == LSHIFT_OPTION) {
+        ilistAppend(&output, genInsLSHIFT(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsRSHIFT(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_term(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == PREFIX_OP_OPTION) {
+        return gen_prefix_op(node->nodes[0]);
+    }
+
+    /*
+    > A op B
+
+    < gen(A)
+    < gen(B)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    temp = gen_term(A);
+    ilistLink(&output, &temp);
+
+    temp = gen_prefix_op(B);
+    ilistLink(&output, &temp);
+
+    if (node->option == MULTIPLICATION_OPTION) {
+        ilistAppend(&output, genInsMULTIPLICATION(info(node)));
+    }
+    else if (node->option == DIVISION_OPTION) {
+        ilistAppend(&output, genInsDIVISION(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsREMAINDER(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_prefix_op(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == PRIMARY_OPTION) {
+        return gen_primary(node->nodes[0]);
+    }
+
+    /*
+    > op A
+
+    < gen(A)
+    < INS corresponding to op
+    */
+
+    AstNode *A = node->nodes[0];
+
+    temp = gen_prefix_op(A);
+    ilistLink(&output, &temp);
+
+    if (node->option == POSITIVE_OPTION) {
+        ilistAppend(&output, genInsPOSITIVE(info(node)));
+    }
+    else if (node->option == NEGATIVE_OPTION) {
+        ilistAppend(&output, genInsNEGATION(info(node)));
+    }
+    else if (node->option == NOT_OPTION) {
+        ilistAppend(&output, genInsLOGICAL_NOT(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsINVERTION(info(node)));
+    }
+
+    return output;
+}
+
+static ilist gen_primary(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    if (node->option == ELEMENTARY_OPTION) {
+        return gen_elementary(node->nodes[0]);
+    }
+
+    if (node->option == CALL_OPTION) {
+        /*
+        < A (B1 ... Bn)
+
+        > gen(B1)
+        ...
+        > gen(Bn)
+        > gen(A)
+        > SWITCH_ENV_OBJ
+        > CREATE_SCOPE WITHOUT_PARENT_ACCESS
+        > CALL n
+        > DESTROY_SCOPE
+        > SWITCH_ENV_INS
+        */
+
+        int64_t n = 0;
+        if (node->n_nodes == 2) {
+            temp = gen_expr_list(node->nodes[1]);
+            ilistLink(&output, &temp);
+
+            AstNode *args = node->nodes[1];
+
+            while (args != NULL) {
+                temp = gen(args->nodes[0]);
+                n++;
+
+                if (args->n_nodes == 2) {
+                    args = args->nodes[1];
+                }
+                else {
+                    args = NULL;
+                }
+            }
+        }
+
+        temp = gen_primary(node->nodes[0]);
+        ilistLink(&output, &temp);
+
+        ilistAppend(&output, genInsSWITCH_ENV_OBJ(info(node)));
+        ilistAppend(&output, genInsCREATE_SCOPE(info(node), 0));
+        ilistAppend(&output, genInsCALL(info(node), n));
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+        ilistAppend(&output, genInsSWITCH_ENV_INS(info(node)));
+
+        return output;
+    }
+
+    AstNode *A = node->nodes[0];
+    AstNode *B = node->nodes[1];
+
+    if (node->option == INDEX_OPTION) {
+        temp = gen_primary(A);
+        ilistLink(&output, &temp);
+
+        temp = gen_expr(B);
+        ilistLink(&output, &temp);
+
+        ilistAppend(&output, genInsACCESS(info(node)));
+
+        return output;
+    }
+
+    if (node->option == FIELD_OPTION) {
+        temp = gen_primary(A);
+        ilistLink(&output, &temp);
+
+        ilistAppend(&output, genInsLOAD_FIELD(info(node), B->identifier_value));
+
+        return output;
+    }
+
+    if (node->option == METHOD_OPTION) {
+        temp = gen_primary(A);
+        ilistLink(&output, &temp);
+
+        ilistAppend(&output, genInsLOAD_METHOD(info(node), B->identifier_value));
+
+        return output;
+    }
+
+    // womp womp no execution flow? skill issue noob
+}
+
+static ilist gen_elementary(AstNode *node) {
+    if (node->option == EXPR_OPTION) {
+        return gen_expr(node->nodes[0]);
+    }
+    return gen_literal(node->nodes[0]);
+}
+
+static ilist gen_literal(AstNode *node) {
+    ilist output = ilistCreate();
+    // if because switch is boring
+    if (node->option == NULL_OPTION) {
+        ilistAppend(&output, genInsLOAD_NULL(info(node)));
+        return output;
+    }
+    if (node->option == BOOL_OPTION) {
+        ilistAppend(&output, genInsLOAD_BOOL(info(node), node->bool_value));
+        return output;
+    }
+    if (node->option == CHAR_OPTION) {
+        ilistAppend(&output, genInsLOAD_CHAR(info(node), node->char_value));
+        return output;
+    }
+    if (node->option == INT_OPTION) {
+        ilistAppend(&output, genInsLOAD_INT(info(node), node->int_value));
+        return output;
+    }
+    if (node->option == FLOAT_OPTION) {
+        ilistAppend(&output, genInsLOAD_FLOAT(info(node), node->float_value));
+        return output;
+    }
+    if (node->option == STRING_OPTION) {
+        ilistAppend(&output, genInsLOAD_STRING(info(node), node->string_value));
+        return output;
+    }
+    if (node->option == IDENTIFIER_OPTION) {
+        ilistAppend(&output, genInsLOAD(info(node), node->identifier_value));
+        return output;
+    }
+}
 
 static ilist gen_module_path(AstNode *node) {}
 
@@ -1444,6 +2126,23 @@ static ilist gen_module_path_upwards(AstNode *node) {}
 
 static ilist gen_module_path_compact(AstNode *node) {}
 
-static ilist gen_expr_list(AstNode *node) {}
+static ilist gen_expr_list(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    while (node != NULL) {
+        temp = gen(node->nodes[0]);
+        ilistLink(&output, &temp);
+
+        if (node->n_nodes == 2) {
+            node = node->nodes[1];
+        }
+        else {
+            node = NULL;
+        }
+    }
+
+    return output;
+}
 
 static ilist gen_identifier_list(AstNode *node) {}

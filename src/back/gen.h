@@ -48,6 +48,7 @@ enum InstructionCode {
     MULTIPLICATION_IC,
     DIVISION_IC,
     REMAINDER_IC,
+    POSITIVE_IC,
     NEGATION_IC,
     INVERTION_IC,
     LOGICAL_NOT_IC,
@@ -81,8 +82,8 @@ typedef struct Instruction {
 
     size_t env_id;                    // set when the module is run (or imported)
 
-    int8_t   flags : 2;
-    size_t   n_args: sizeof(size_t) - 2;
+    int8_t   flags;
+    size_t   n_args;
     int64_t *args;
 
     union {
@@ -94,7 +95,7 @@ typedef struct Instruction {
     };
 } Instruction;
 
-void genPrintInstrShort(Instruction *instr);
+void genPrintInstrShort(int64_t pos, Instruction *instr);
 
 /*
 continue and break statements will initially have rel_offset equal to 0.
@@ -103,71 +104,72 @@ changing the rel_offset afterwards.
 */
 
 /* these consume any pointers. */
-Instruction genCreateInstructionPOP(char *filename, size_t lineno);
-Instruction genCreateInstructionSWAP(char *filename, size_t lineno);
-Instruction genCreateInstructionCREATE_ENV(char *filename, size_t lineno);
-Instruction genCreateInstructionSWITCH_ENV_INS(char *filename, size_t lineno);
-Instruction genCreateInstructionSWITCH_ENV_OBJ(char *filename, size_t lineno);
-Instruction genCreateInstructionIMPORT_MODULE(char *filename, size_t lineno, char *module_path, ident name);
-Instruction genCreateInstructionEXPORT_OBJECT(char *filename, size_t lineno, ident name);
-Instruction genCreateInstructionCREATE_GLOBAL(char *filename, size_t lineno, ident name);
+Instruction genInsPOP(char *filename, size_t lineno);
+Instruction genInsSWAP(char *filename, size_t lineno);
+Instruction genInsCREATE_ENV(char *filename, size_t lineno);
+Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno);
+Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno);
+Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, char *module_path, ident name);
+Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, ident name);
+Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, ident name);
 // first 4 bits of args are mode flags.
-Instruction genCreateInstructionCREATE_FUNCTION(char *filename, size_t lineno, ident name, size_t n_args, ident *args);
-Instruction genCreateInstructionCREATE_TYPE(char  *filename,
-                                            size_t lineno,
-                                            ident  name,
-                                            size_t n_fields,
-                                            ident *fields,
-                                            size_t n_methods,
-                                            ident *methods);
+Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, ident name, size_t n_args, ident *args);
+Instruction genInsCREATE_TYPE(char  *filename,
+                              size_t lineno,
+                              ident  name,
+                              size_t n_fields,
+                              ident *fields,
+                              size_t n_methods,
+                              ident *methods);
 // first 4 bits of args are mode flags.
-Instruction genCreateInstructionCREATE_METHOD(char *filename, size_t lineno, ident name, size_t n_args, ident *args);
-Instruction genCreateInstructionCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode);
-Instruction genCreateInstructionDESTROY_SCOPE(char *filename, size_t lineno);
-Instruction genCreateInstructionJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset);
-Instruction genCreateInstructionJUMP(char *filename, size_t lineno, int64_t offset);
-Instruction genCreateInstructionRETURN(char *filename, size_t lineno);
-Instruction genCreateInstructionREGISTER_CATCH(char *filename, size_t lineno);
-Instruction genCreateInstructionDESTROY_CATCH(char *filename, size_t lineno, int64_t n);
-Instruction genCreateInstructionSIGNAL_ERROR(char *filename, size_t lineno);
-Instruction genCreateInstructionCREATE_VAR(char *filename, size_t lineno, ident name);
-Instruction genCreateInstructionCOPY_BY_VALUE(char *filename, size_t lineno);
-Instruction genCreateInstructionCOPY_BY_REFERENCE(char *filename, size_t lineno);
-Instruction genCreateInstructionCOPY_BY_AUTO(char *filename, size_t lineno);
-Instruction genCreateInstructionASSIGNMENT(char *filename, size_t lineno);
-Instruction genCreateInstructionLOGICAL_OR(char *filename, size_t lineno);
-Instruction genCreateInstructionLOGICAL_AND(char *filename, size_t lineno);
-Instruction genCreateInstructionBITWISE_OR(char *filename, size_t lineno);
-Instruction genCreateInstructionBITWISE_XOR(char *filename, size_t lineno);
-Instruction genCreateInstructionBITWISE_AND(char *filename, size_t lineno);
-Instruction genCreateInstructionEQUAL(char *filename, size_t lineno);
-Instruction genCreateInstructionNOT_EQUAL(char *filename, size_t lineno);
-Instruction genCreateInstructionLESS_THAN(char *filename, size_t lineno);
-Instruction genCreateInstructionLESS_EQUAL(char *filename, size_t lineno);
-Instruction genCreateInstructionGREATER_THAN(char *filename, size_t lineno);
-Instruction genCreateInstructionGREATER_EQUAL(char *filename, size_t lineno);
-Instruction genCreateInstructionADDITION(char *filename, size_t lineno);
-Instruction genCreateInstructionSUBTRACTION(char *filename, size_t lineno);
-Instruction genCreateInstructionLSHIFT(char *filename, size_t lineno);
-Instruction genCreateInstructionRSHIFT(char *filename, size_t lineno);
-Instruction genCreateInstructionMULTIPLICATION(char *filename, size_t lineno);
-Instruction genCreateInstructionDIVISION(char *filename, size_t lineno);
-Instruction genCreateInstructionREMAINDER(char *filename, size_t lineno);
-Instruction genCreateInstructionNEGATION(char *filename, size_t lineno);
-Instruction genCreateInstructionINVERTION(char *filename, size_t lineno);
-Instruction genCreateInstructionLOGICAL_NOT(char *filename, size_t lineno);
-Instruction genCreateInstructionCALL(char *filename, size_t lineno, int64_t n);
-Instruction genCreateInstructionACCESS(char *filename, size_t lineno);
-Instruction genCreateInstructionLOAD_BOOL(char *filename, size_t lineno, int8_t value);
-Instruction genCreateInstructionLOAD_CHAR(char *filename, size_t lineno, char value);
-Instruction genCreateInstructionLOAD_INT(char *filename, size_t lineno, int64_t value);
-Instruction genCreateInstructionLOAD_FLOAT(char *filename, size_t lineno, double value);
-Instruction genCreateInstructionLOAD_STRING(char *filename, size_t lineno, char *value);
-Instruction genCreateInstructionLOAD_NULL(char *filename, size_t lineno);
-Instruction genCreateInstructionLOAD(char *filename, size_t lineno, ident name);
-Instruction genCreateInstructionLOAD_FIELD(char *filename, size_t lineno, ident name);
-Instruction genCreateInstructionLOAD_METHOD(char *filename, size_t lineno, ident name);
-Instruction genCreateInstructionNEW(char *filename, size_t lineno, ident name);
+Instruction genInsCREATE_METHOD(char *filename, size_t lineno, ident name, size_t n_args, ident *args);
+Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode);
+Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno);
+Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset);
+Instruction genInsJUMP(char *filename, size_t lineno, int64_t offset);
+Instruction genInsRETURN(char *filename, size_t lineno);
+Instruction genInsREGISTER_CATCH(char *filename, size_t lineno);
+Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t n);
+Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno);
+Instruction genInsCREATE_VAR(char *filename, size_t lineno, ident name);
+Instruction genInsCOPY_BY_VALUE(char *filename, size_t lineno);
+Instruction genInsCOPY_BY_REFERENCE(char *filename, size_t lineno);
+Instruction genInsCOPY_BY_AUTO(char *filename, size_t lineno);
+Instruction genInsASSIGNMENT(char *filename, size_t lineno);
+Instruction genInsLOGICAL_OR(char *filename, size_t lineno);
+Instruction genInsLOGICAL_AND(char *filename, size_t lineno);
+Instruction genInsBITWISE_OR(char *filename, size_t lineno);
+Instruction genInsBITWISE_XOR(char *filename, size_t lineno);
+Instruction genInsBITWISE_AND(char *filename, size_t lineno);
+Instruction genInsEQUAL(char *filename, size_t lineno);
+Instruction genInsNOT_EQUAL(char *filename, size_t lineno);
+Instruction genInsLESS_THAN(char *filename, size_t lineno);
+Instruction genInsLESS_EQUAL(char *filename, size_t lineno);
+Instruction genInsGREATER_THAN(char *filename, size_t lineno);
+Instruction genInsGREATER_EQUAL(char *filename, size_t lineno);
+Instruction genInsADDITION(char *filename, size_t lineno);
+Instruction genInsSUBTRACTION(char *filename, size_t lineno);
+Instruction genInsLSHIFT(char *filename, size_t lineno);
+Instruction genInsRSHIFT(char *filename, size_t lineno);
+Instruction genInsMULTIPLICATION(char *filename, size_t lineno);
+Instruction genInsDIVISION(char *filename, size_t lineno);
+Instruction genInsREMAINDER(char *filename, size_t lineno);
+Instruction genInsPOSITIVE(char *filename, size_t lineno);
+Instruction genInsNEGATION(char *filename, size_t lineno);
+Instruction genInsINVERTION(char *filename, size_t lineno);
+Instruction genInsLOGICAL_NOT(char *filename, size_t lineno);
+Instruction genInsCALL(char *filename, size_t lineno, int64_t n);
+Instruction genInsACCESS(char *filename, size_t lineno);
+Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int8_t value);
+Instruction genInsLOAD_CHAR(char *filename, size_t lineno, char value);
+Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t value);
+Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, double value);
+Instruction genInsLOAD_STRING(char *filename, size_t lineno, char *value);
+Instruction genInsLOAD_NULL(char *filename, size_t lineno);
+Instruction genInsLOAD(char *filename, size_t lineno, ident name);
+Instruction genInsLOAD_FIELD(char *filename, size_t lineno, ident name);
+Instruction genInsLOAD_METHOD(char *filename, size_t lineno, ident name);
+Instruction genInsNEW(char *filename, size_t lineno);
 
 struct AstNode;
 

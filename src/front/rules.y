@@ -702,7 +702,7 @@ literal:
     ;
 
 expr_list: 
-    expr_list ',' expr {
+    expr ',' expr_list {
         $$ = make(EXPR_LIST_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $3);
     }
     | expr {
