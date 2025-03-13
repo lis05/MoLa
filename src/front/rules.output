@@ -226,7 +226,7 @@ Grammar
   145        | STRING
   146        | IDENTIFIER
 
-  147 expr_list: expr_list ',' expr
+  147 expr_list: expr ',' expr_list
   148          | expr
 
 
@@ -3735,7 +3735,10 @@ State 198
 
 State 199
 
-  148 expr_list: expr •
+  147 expr_list: expr • ',' expr_list
+  148          | expr •
+
+    ','  shift, and go to state 237
 
     $default  reduce using rule 148 (expr_list)
 
@@ -3743,10 +3746,8 @@ State 199
 State 200
 
   132 primary: primary '(' expr_list • ')'
-  147 expr_list: expr_list • ',' expr
 
-    ')'  shift, and go to state 237
-    ','  shift, and go to state 238
+    ')'  shift, and go to state 238
 
 
 State 201
@@ -4264,22 +4265,13 @@ State 235
 State 236
 
    96 new: NEW logical_or '(' expr_list • ')'
-  147 expr_list: expr_list • ',' expr
 
     ')'  shift, and go to state 259
-    ','  shift, and go to state 238
 
 
 State 237
 
-  132 primary: primary '(' expr_list ')' •
-
-    $default  reduce using rule 132 (primary)
-
-
-State 238
-
-  147 expr_list: expr_list ',' • expr
+  147 expr_list: expr ',' • expr_list
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4296,7 +4288,7 @@ State 238
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 260
+    expr           go to state 199
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -4314,6 +4306,14 @@ State 238
     primary        go to state 70
     elementary     go to state 71
     literal        go to state 72
+    expr_list      go to state 260
+
+
+State 238
+
+  132 primary: primary '(' expr_list ')' •
+
+    $default  reduce using rule 132 (primary)
 
 
 State 239
@@ -4738,7 +4738,7 @@ State 259
 
 State 260
 
-  147 expr_list: expr_list ',' expr •
+  147 expr_list: expr ',' expr_list •
 
     $default  reduce using rule 147 (expr_list)
 

@@ -357,25 +357,25 @@ for_stmt:
         $$ = make(FOR_STMT_NODE, FOR_INIT_COND_POST_OPTION, $1, 4, $2, $4, $6, $7);
     }
     | FOR ';' expr ';' expr stmt {
-        $$ = make(FOR_STMT_NODE, FOR_COND_POST_OPTION, $1, 3, $3, $5, $6);
+        $$ = make(FOR_STMT_NODE, FOR_COND_POST_OPTION, $1, 4, NULL, $3, $5, $6);
     }
     | FOR expr ';' ';' expr stmt {
-        $$ = make(FOR_STMT_NODE, FOR_INIT_POST_OPTION, $1, 3, $2, $5, $6);
+        $$ = make(FOR_STMT_NODE, FOR_INIT_POST_OPTION, $1, 4, $2, NULL, $5, $6);
     }
     | FOR expr ';' expr ';' stmt {
-        $$ = make(FOR_STMT_NODE, FOR_INIT_COND_OPTION, $1, 3, $2, $4, $6);
+        $$ = make(FOR_STMT_NODE, FOR_INIT_COND_OPTION, $1, 4, $2, $4, NULL, $6);
     }
     | FOR ';' ';' expr stmt {
-        $$ = make(FOR_STMT_NODE, FOR_POST_OPTION, $1, 2, $4, $5);
+        $$ = make(FOR_STMT_NODE, FOR_POST_OPTION, $1, 4, NULL, NULL, $4, $5);
     }
     | FOR ';' expr ';' stmt {
-        $$ = make(FOR_STMT_NODE, FOR_COND_OPTION, $1, 2, $3, $5);
+        $$ = make(FOR_STMT_NODE, FOR_COND_OPTION, $1, 4, NULL, $3, NULL, $5);
     }
     | FOR expr ';' ';' stmt {
-        $$ = make(FOR_STMT_NODE, FOR_INIT_OPTION, $1, 2, $2, $5);
+        $$ = make(FOR_STMT_NODE, FOR_INIT_OPTION, $1, 4, $2, NULL, NULL, $5);
     }
     | FOR ';' ';' stmt {
-        $$ = make(FOR_STMT_NODE, FOR_NOTHING_OPTION, $1, 1, $4);
+        $$ = make(FOR_STMT_NODE, FOR_NOTHING_OPTION, $1, 4, NULL, NULL, NULL, $4);
     }
     ;
 

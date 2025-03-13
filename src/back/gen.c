@@ -4,7 +4,23 @@
 #include "env.h"
 
 static void printIdent(ident id) {
-    printf("%d[%s]", id, symtabIdentToString(id));
+    printf("%lld[%s]", id, symtabIdentToString(id));
+}
+
+static char *getChar(char c) {
+    switch (c) {
+    case '\n' : return "'\\n'";
+    case '\t' : return "'\\t'";
+    case '\v' : return "'\\v'";
+    case '\a' : return "'\\a'";
+    case '\f' : return "'\\f'";
+    case '\b' : return "'\\b'";
+    case '\r' : return "'\\r'";
+    }
+
+    static char buf[32];
+    sprintf(buf, "'%c'", c);
+    return buf;
 }
 
 void genPrintInstrShort(int64_t pos, Instruction *instr) {
@@ -15,18 +31,50 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
     }
 
     switch (instr->code) {
+    case POP_IC : {
+        printf("%-20s    ", "POP");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case SWAP_IC : {
+        printf("%-20s    ", "SWAP");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
     case CREATE_ENV_IC : {
         printf("%-20s    ", "CREATE_ENV");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case SWITCH_ENV_INS_IC : {
+        printf("%-20s    ", "SWITCH_ENV_INS");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case SWITCH_ENV_OBJ_IC : {
+        printf("%-20s    ", "SWITCH_ENV_OBJ");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("\n");
         return;
     }
     case IMPORT_MODULE_IC : {
         printf("%-20s    ", "IMPORT_MODULE");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("module_path=%s\t", instr->string_arg1);
         printf("import_as=");
@@ -37,8 +85,8 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
     }
     case EXPORT_OBJECT_IC : {
         printf("%-20s    ", "EXPORT_OBJECT");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("export_as=");
         printIdent(instr->ident_arg1);
@@ -48,8 +96,8 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
     }
     case CREATE_GLOBAL_IC : {
         printf("%-20s    ", "CREATE_GLOBAL");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -57,28 +105,10 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
-    case CREATE_SCOPE_IC : {
-        printf("%-20s    ", "CREATE_SCOPE");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
-
-        printf(instr->flags ? "WITH_PARENT_ACCESS" : "WITHOUT_PARENT_ACCESS");
-
-        printf("\n");
-        return;
-    }
-    case DESTROY_SCOPE_IC : {
-        printf("%-20s    ", "DESTROY_SCOPE");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
-
-        printf("\n");
-        return;
-    }
     case CREATE_FUNCTION_IC : {
         printf("%-20s    ", "CREATE_FUNCTION");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -102,38 +132,426 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
+    case CREATE_TYPE_IC : {
+        printf("%-20s    ", "CREATE_TYPE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        int64_t n_fields  = instr->args[0];
+        int64_t n_methods = instr->args[1];
+
+        printf("    fields: ");
+        for (int i = 2; i < 2 + n_fields; i++) {
+            printIdent(instr->args[i]);
+            printf(", ");
+        }
+
+        printf("    methods: ");
+        for (int i = 2 + n_fields; i < 2 + n_fields + n_methods; i++) {
+            printIdent(instr->args[i]);
+            printf(", ");
+        }
+
+        printf("\n");
+        return;
+    }
+    case CREATE_METHOD_IC : {
+        printf("%-20s    ", "CREATE_METHOD");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        printf("    args: ");
+        for (int i = 0; i < instr->n_args; i++) {
+            ident arg = instr->args[i];
+            if (arg & COPY_MODE_FLAG) {
+                printf("COPY ");
+            }
+            else if (arg & REF_MODE_FLAG) {
+                printf("REF ");
+            }
+            else if (arg & PASS_MODE_FLAG) {
+                printf("PASS ");
+            }
+            printIdent((arg << 4) >> 4);
+            printf(", ");
+        }
+
+        printf("\n");
+        return;
+    }
+    case CREATE_SCOPE_IC : {
+        printf("%-20s    ", "CREATE_SCOPE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf(instr->flags ? "WITH_PARENT_ACCESS" : "WITHOUT_PARENT_ACCESS");
+
+        printf("\n");
+        return;
+    }
+    case DESTROY_SCOPE_IC : {
+        printf("%-20s    ", "DESTROY_SCOPE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
     case JUMP_IF_FALSE_IC : {
         printf("%-20s    ", "JUMP_IF_FALSE");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
-        printf("offset=%d (abs=%d)", instr->int_arg1, pos + instr->int_arg1);
+        printf("offset=%lld (abs=%lld)", instr->int_arg1, pos + instr->int_arg1);
 
         printf("\n");
         return;
     }
     case JUMP_IC : {
         printf("%-20s    ", "JUMP");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
-        printf("offset=%d (abs=%d)", instr->int_arg1, pos + instr->int_arg1);
+        printf("offset=%lld (abs=%lld)", instr->int_arg1, pos + instr->int_arg1);
 
         printf("\n");
         return;
     }
     case RETURN_IC : {
         printf("%-20s    ", "RETURN");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case REGISTER_CATCH_IC : {
+        printf("%-20s    ", "REGISTER_CATCH");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case DESTROY_CATCH_IC : {
+        printf("%-20s    ", "DESTROY_CATCH");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("n=%lld", instr->int_arg1);
+
+        printf("\n");
+        return;
+    }
+    case SIGNAL_ERROR_IC : {
+        printf("%-20s    ", "SIGNAL_ERROR");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        return;
+    }
+    case CREATE_VAR_IC : {
+        printf("%-20s    ", "CREATE_VAR");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        return;
+    }
+    case COPY_BY_VALUE_IC : {
+        printf("%-20s    ", "COPY_BY_VALUE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        return;
+    }
+    case COPY_BY_REFERENCE_IC : {
+        printf("%-20s    ", "COPY_BY_REFERENCE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        return;
+    }
+    case COPY_BY_AUTO_IC : {
+        printf("%-20s    ", "COPY_BY_AUTO");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case ASSIGNMENT_IC : {
+        printf("%-20s    ", "ASSIGNMENT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOGICAL_OR_IC : {
+        printf("%-20s    ", "LOGICAL_OR");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOGICAL_AND_IC : {
+        printf("%-20s    ", "LOGICAL_AND");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case BITWISE_OR_IC : {
+        printf("%-20s    ", "BITWISE_OR");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case BITWISE_XOR_IC : {
+        printf("%-20s    ", "BITWISE_XOR");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case BITWISE_AND_IC : {
+        printf("%-20s    ", "BITWISE_AND");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case EQUAL_IC : {
+        printf("%-20s    ", "EQUAL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case NOT_EQUAL_IC : {
+        printf("%-20s    ", "NOT_EQUAL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LESS_THAN_IC : {
+        printf("%-20s    ", "LESS_THAN");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LESS_EQUAL_IC : {
+        printf("%-20s    ", "LESS_EQUAL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case GREATER_THAN_IC : {
+        printf("%-20s    ", "GREATER_THAN");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case GREATER_EQUAL_IC : {
+        printf("%-20s    ", "GREATER_EQUAL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case ADDITION_IC : {
+        printf("%-20s    ", "ADDITION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case SUBTRACTION_IC : {
+        printf("%-20s    ", "SUBTRACTION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LSHIFT_IC : {
+        printf("%-20s    ", "LSHIFT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case RSHIFT_IC : {
+        printf("%-20s    ", "RSHIFT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case MULTIPLICATION_IC : {
+        printf("%-20s    ", "MULTIPLICATION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case DIVISION_IC : {
+        printf("%-20s    ", "DIVISION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case REMAINDER_IC : {
+        printf("%-20s    ", "REMAINDER");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case POSITIVE_IC : {
+        printf("%-20s    ", "POSITIVE");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case NEGATION_IC : {
+        printf("%-20s    ", "NEGATION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case INVERTION_IC : {
+        printf("%-20s    ", "INVERTION");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOGICAL_NOT_IC : {
+        printf("%-20s    ", "LOGICAL_NOT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case CALL_IC : {
+        printf("%-20s    ", "CALL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("n=%lld", instr->int_arg1);
+
+        printf("\n");
+        return;
+    }
+    case ACCESS_IC : {
+        printf("%-20s    ", "ACCESS");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_BOOL_IC : {
+        printf("%-20s    ", "LOAD_BOOL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("value=%s", instr->int_arg1 ? "true" : "false");
+
+        printf("\n");
+        return;
+    }
+    case LOAD_CHAR_IC : {
+        printf("%-20s    ", "LOAD_BOOL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("value=%s", getChar(instr->char_arg1));
+
+        printf("\n");
+        return;
+    }
+    case LOAD_INT_IC : {
+        printf("%-20s    ", "LOAD_INT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("value=%lld", instr->int_arg1);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_FLOAT_IC : {
+        printf("%-20s    ", "LOAD_FLOAT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("value=%f", instr->float_arg1);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_STRING_IC : {
+        printf("%-20s    ", "LOAD_STRING");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("value=\"%s\"", instr->string_arg1);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_NULL_IC : {
+        printf("%-20s    ", "LOAD_NULL");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("\n");
         return;
     }
     case LOAD_IC : {
         printf("%-20s    ", "LOAD");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -141,18 +559,40 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
-    case LOAD_NULL_IC : {
-        printf("%-20s    ", "LOAD_NULL");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+    case LOAD_FIELD_IC : {
+        printf("%-20s    ", "LOAD_FIELD");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        printf("\n");
+        return;
+    }
+    case LOAD_METHOD_IC : {
+        printf("%-20s    ", "LOAD_METHOD");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+
+        printf("name=");
+        printIdent(instr->ident_arg1);
+
+        printf("\n");
+        return;
+    }
+    case NEW_IC : {
+        printf("%-20s    ", "NEW");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("\n");
         return;
     }
     default : {
         printf("%-20s    ", "INVALID");
-        printf("lineno=%-4d ", instr->lineno);
-        printf("n_args=%-4d ", instr->n_args);
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
 
         printf("\n");
         return;
@@ -1310,6 +1750,7 @@ static ilist gen_function_stmt(AstNode *node) {
     ctx_open_scopes_since_function = 0;
     ilist block                    = gen(block_stmt);
     ctx_is_inside_function         = 0;
+    ctx_is_inside_function         = 0;
 
     ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
 
@@ -1368,11 +1809,15 @@ static ilist gen_block_stmt(AstNode *node) {
             (*cvector_back(ctx_open_scopes_since_loop))++;
         }
 
+        ctx_open_scopes_since_function++;
+
         temp = gen(node->nodes[0]);
 
         if (!cvector_empty(ctx_open_scopes_since_loop)) {
             (*cvector_back(ctx_open_scopes_since_loop))--;
         }
+
+        ctx_open_scopes_since_function--;
 
         ilistLink(&output, &temp);
 
@@ -1457,7 +1902,122 @@ static ilist gen_while_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_for_stmt(AstNode *node) {}
+static ilist gen_for_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    AstNode *init = node->nodes[0];    // may be NULL
+    AstNode *cond = node->nodes[1];    // may be NULL
+    AstNode *step = node->nodes[2];    // may be NULL
+    AstNode *stmt = node->nodes[3];
+
+    if (cond != NULL) {
+        /*
+        > for init; cond; step; stmt
+
+        <   CREATE_SCOPE WITH_PARENT_ACCESS
+        <   gen(init)
+        1   gen(cond)
+        <   JUMP_IF_FALSE REL@2
+        <   gen(stmt)
+        <   gen(step)
+        <   JUMP REL@1
+        2   DESTROY_SCOPE
+
+        also we have to handle continue/break statements
+        they are JUMP statements with offset=0 and LOOP_CONTINUE_FLAG / LOOP_BREAK_FLAG
+        */
+        cvector_push_back(ctx_open_scopes_since_loop, 1);
+        ctx_open_scopes_since_function++;
+
+        ilist ini = init != NULL ? gen(init) : ilistCreate();
+        ilist con = cond != NULL ? gen(cond) : ilistCreate();
+        ilist ste = step != NULL ? gen(step) : ilistCreate();
+        ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
+
+        ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
+        ilistLink(&output, &ini);
+        ilistLink(&output, &con);
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), stm.size + ste.size + 2));
+        ilistLink(&output, &stm);
+        ilistLink(&output, &ste);
+        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)ste.size + stm.size + 1 + con.size)));
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+
+        ctx_open_scopes_since_function--;
+        cvector_pop_back(ctx_open_scopes_since_loop);
+
+        int64_t offset = 0;
+        for (inode *nd = output.head; nd->next != NULL; nd = nd->next, offset++) {
+            Instruction *ins = &nd->ins;
+            if (ins->code != JUMP_IC || ins->int_arg1 != 0) {
+                continue;
+            }
+
+            if (ins->flags == LOOP_CONTINUE_FLAG) {
+                ins->int_arg1 = -offset + 1 + ini.size;
+            }
+            else if (ins->flags == LOOP_BREAK_FLAG) {
+                ins->int_arg1 = (int64_t)output.size - offset - 1;
+            }
+            else {
+                molalog("Strange instruction (JUMP, offset = 0)\n");
+            }
+        }
+
+        return output;
+    }
+
+    /*
+    > for init; ; step; stmt
+
+    <   CREATE_SCOPE WITH_PARENT_ACCESS
+    <   gen(init)
+    1   gen(stmt)
+    <   gen(step)
+    <   JUMP REL@1
+    <   DESTROY_SCOPE
+
+    also we have to handle continue/break statements
+    they are JUMP statements with offset=0 and LOOP_CONTINUE_FLAG / LOOP_BREAK_FLAG
+    */
+    cvector_push_back(ctx_open_scopes_since_loop, 1);
+    ctx_open_scopes_since_function++;
+
+    ilist ini = init != NULL ? gen(init) : ilistCreate();
+    ilist ste = step != NULL ? gen(step) : ilistCreate();
+    ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
+
+    ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
+    ilistLink(&output, &ini);
+    ilistLink(&output, &stm);
+    ilistLink(&output, &ste);
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)ste.size + stm.size)));
+    ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+
+    ctx_open_scopes_since_function--;
+    cvector_pop_back(ctx_open_scopes_since_loop);
+
+    int64_t offset = 0;
+    for (inode *nd = output.head; nd->next != NULL; nd = nd->next, offset++) {
+        Instruction *ins = &nd->ins;
+        if (ins->code != JUMP_IC || ins->int_arg1 != 0) {
+            continue;
+        }
+
+        if (ins->flags == LOOP_CONTINUE_FLAG) {
+            ins->int_arg1 = -offset + 1 + ini.size;
+        }
+        else if (ins->flags == LOOP_BREAK_FLAG) {
+            ins->int_arg1 = (int64_t)output.size - offset - 1;
+        }
+        else {
+            molalog("Strange instruction (JUMP, offset = 0)\n");
+        }
+    }
+
+    return output;
+}
 
 static ilist gen_if_stmt(AstNode *node) {}
 
