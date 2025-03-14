@@ -713,7 +713,7 @@ Instruction genInsCREATE_TYPE(char  *filename,
     res.args[0]    = n_fields;
     res.args[1]    = n_methods;
     memcpy(res.args + 2, fields, n_fields * sizeof(ident));
-    memcpy(res.args + 2 + n_fields * sizeof(ident), methods, n_methods * sizeof(ident));
+    memcpy(res.args + 2 + n_fields, methods, n_methods * sizeof(ident));
 
     memfree(fields);
     memfree(methods);
@@ -1299,8 +1299,6 @@ static ilist gen_function_stmt(AstNode *node);
 static ilist gen_parameter_list(AstNode *node);
 static ilist gen_parameter_item(AstNode *node);
 static ilist gen_type_stmt(AstNode *node);
-static ilist gen_member_list(AstNode *node);
-static ilist gen_member_item(AstNode *node);
 static ilist gen_method_stmt(AstNode *node);
 static ilist gen_constructor_stmt(AstNode *node);
 static ilist gen_destructor_stmt(AstNode *node);
@@ -1368,12 +1366,6 @@ static ilist gen(AstNode *node) {
     }
     case TYPE_STMT_NODE : {
         return gen_type_stmt(node);
-    }
-    case MEMBER_LIST_NODE : {
-        return gen_member_list(node);
-    }
-    case MEMBER_ITEM_NODE : {
-        return gen_member_item(node);
     }
     case METHOD_STMT_NODE : {
         return gen_method_stmt(node);
@@ -1709,8 +1701,8 @@ static ilist gen_function_stmt(AstNode *node) {
     */
 
     struct AstNode *name       = node->nodes[0];
-    struct AstNode *args       = (node->n_nodes == 2) ? NULL : node->nodes[1];
-    struct AstNode *block_stmt = node->nodes[node->n_nodes - 1];
+    struct AstNode *args       = node->nodes[1];
+    struct AstNode *block_stmt = node->nodes[2];
 
     cvector_vector_type(ident) params = NULL;
     while (args != NULL) {
@@ -1746,6 +1738,12 @@ static ilist gen_function_stmt(AstNode *node) {
 
     ilistAppend(&output, genInsCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
 
+    if (strcmp(name->string_value, "constructor") == 0 || strcmp(name->string_value, "destructor") == 0) {
+        // should print an error. however, i dont yet have a way to handle compile time errors
+        // so let's lust set instruction flag as FAILURE, so that an error gets signalled during runtime
+        output.tail->ins.flags = 1;    // failure
+    }
+
     ctx_is_inside_function         = 1;
     ctx_open_scopes_since_function = 0;
     ilist block                    = gen(block_stmt);
@@ -1761,20 +1759,253 @@ static ilist gen_function_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_type_stmt(AstNode *node) {}
+static ilist gen_type_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ilist gen_member_list(AstNode *node) {}
+    /*
+    > type name {f1 ... fn m1 ... mk}
 
-static ilist gen_member_item(AstNode *node) {}
+    < CREATE_TYPE name n k f1 ... fn m1 ... mn
+    */
 
-static ilist gen_method_stmt(AstNode *node) {}
+    AstNode *name = node->nodes[0];
 
-static ilist gen_constructor_stmt(AstNode *node) {}
+    cvector_vector_type(ident) fields  = NULL;
+    cvector_vector_type(ident) methods = NULL;
 
-static ilist gen_destructor_stmt(AstNode *node) {}
+    AstNode *params = node->nodes[1];
+    while (params != NULL) {
+        AstNode *item = params->nodes[0];
+
+        if (item->option == MEMBER_METHOD_OPTION) {
+            cvector_push_back(methods, item->nodes[0]->identifier_value);
+        }
+        else {
+            cvector_push_back(fields, item->nodes[0]->identifier_value);
+        }
+
+        if (params->n_nodes == 2) {
+            params = params->nodes[1];
+        }
+        else {
+            params = NULL;
+        }
+    }
+
+    ident *fields_copy = malloc(cvector_size(fields) * sizeof(ident));
+    memcpy(fields_copy, fields, cvector_size(fields) * sizeof(ident));
+    ident *methods_copy = malloc(cvector_size(methods) * sizeof(ident));
+    memcpy(methods_copy, methods, cvector_size(methods) * sizeof(ident));
+
+    ilistAppend(&output,
+                genInsCREATE_TYPE(info(node),
+                                  name->identifier_value,
+                                  cvector_size(fields),
+                                  fields_copy,
+                                  cvector_size(methods),
+                                  methods_copy));
+
+    cvector_free(fields);
+    cvector_free(methods);
+    return output;
+}
+
+extern Symtab *lex_symtab;
+
+static ilist gen_method_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    > method name '(' m1 p1 ... mn pn ')' of type block_stmt
+
+    > LOAD type
+    < CREATE_METHOD name ref 'this' m1 p1 ... mn pn
+    < JUMP REL@1
+    < gen(block_stmt)
+    < RETURN
+    1
+    */
+
+    struct AstNode *name       = node->nodes[0];
+    struct AstNode *args       = node->nodes[1];
+    struct AstNode *type       = node->nodes[2];
+    struct AstNode *block_stmt = node->nodes[3];
+
+    cvector_vector_type(ident) params = NULL;
+    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+
+    while (args != NULL) {
+        struct AstNode *item  = args->nodes[0];
+        ident           value = item->nodes[0]->identifier_value;
+
+        if (item->option == PARAM_COPY_MODE_OPTION) {
+            value ^= COPY_MODE_FLAG;
+        }
+        else if (item->option == PARAM_REF_MODE_OPTION) {
+            value ^= REF_MODE_FLAG;
+        }
+        else if (item->option == PARAM_PASS_MODE_OPTION) {
+            value ^= PASS_MODE_FLAG;
+        }
+        else {
+            value ^= AUTO_MODE_FLAG;
+        }
+
+        cvector_push_back(params, value);
+
+        if (args->n_nodes == 2) {
+            args = args->nodes[1];
+        }
+        else {
+            args = NULL;
+        }
+    }
+    size_t n_args = cvector_size(params);
+    ident *margs  = malloc(sizeof(ident) * n_args);
+    memcpy(margs, params, sizeof(ident) * n_args);
+    cvector_free(params);
+
+    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+
+    ilistAppend(&output, genInsCREATE_METHOD(info(node), name->identifier_value, n_args, margs));
+
+    ctx_is_inside_function         = 1;
+    ctx_open_scopes_since_function = 0;
+    ilist block                    = gen(block_stmt);
+    ctx_is_inside_function         = 0;
+    ctx_is_inside_function         = 0;
+
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+
+    ilistLink(&output, &block);
+
+    ilistAppend(&output, genInsRETURN(info(node)));
+
+    return output;
+}
+
+static ilist gen_constructor_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    > constructor '(' m1 p1 ... mn pn ')' of type block_stmt
+
+    > LOAD type
+    < CREATE_METHOD 'constructor' ref 'this' m1 p1 ... mn pn
+    < JUMP REL@1
+    < gen(block_stmt)
+    < RETURN
+    1
+    */
+
+    struct AstNode *args       = node->nodes[0];
+    struct AstNode *type       = node->nodes[1];
+    struct AstNode *block_stmt = node->nodes[2];
+
+    cvector_vector_type(ident) params = NULL;
+    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+
+    while (args != NULL) {
+        struct AstNode *item  = args->nodes[0];
+        ident           value = item->nodes[0]->identifier_value;
+
+        if (item->option == PARAM_COPY_MODE_OPTION) {
+            value ^= COPY_MODE_FLAG;
+        }
+        else if (item->option == PARAM_REF_MODE_OPTION) {
+            value ^= REF_MODE_FLAG;
+        }
+        else if (item->option == PARAM_PASS_MODE_OPTION) {
+            value ^= PASS_MODE_FLAG;
+        }
+        else {
+            value ^= AUTO_MODE_FLAG;
+        }
+
+        cvector_push_back(params, value);
+
+        if (args->n_nodes == 2) {
+            args = args->nodes[1];
+        }
+        else {
+            args = NULL;
+        }
+    }
+    size_t n_args = cvector_size(params);
+    ident *margs  = malloc(sizeof(ident) * n_args);
+    memcpy(margs, params, sizeof(ident) * n_args);
+    cvector_free(params);
+
+    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+
+    ilistAppend(&output, genInsCREATE_METHOD(info(node), symtabInsert(lex_symtab, "constructor"), n_args, margs));
+
+    ctx_is_inside_function         = 1;
+    ctx_open_scopes_since_function = 0;
+    ilist block                    = gen(block_stmt);
+    ctx_is_inside_function         = 0;
+    ctx_is_inside_function         = 0;
+
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+
+    ilistLink(&output, &block);
+
+    ilistAppend(&output, genInsRETURN(info(node)));
+
+    return output;
+}
+
+static ilist gen_destructor_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    > destructor of type block_stmt
+
+    > LOAD type
+    < CREATE_METHOD 'destructor' ref 'this'
+    < JUMP REL@1
+    < gen(block_stmt)
+    < RETURN
+    1
+    */
+
+    struct AstNode *type       = node->nodes[0];
+    struct AstNode *block_stmt = node->nodes[1];
+
+    cvector_vector_type(ident) params = NULL;
+    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+
+    size_t n_args = cvector_size(params);
+    ident *margs  = malloc(sizeof(ident) * n_args);
+    memcpy(margs, params, sizeof(ident) * n_args);
+    cvector_free(params);
+
+    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+
+    ilistAppend(&output, genInsCREATE_METHOD(info(node), symtabInsert(lex_symtab, "destructor"), n_args, margs));
+
+    ctx_is_inside_function         = 1;
+    ctx_open_scopes_since_function = 0;
+    ilist block                    = gen(block_stmt);
+    ctx_is_inside_function         = 0;
+    ctx_is_inside_function         = 0;
+
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+
+    ilistLink(&output, &block);
+
+    ilistAppend(&output, genInsRETURN(info(node)));
+
+    return output;
+}
 
 static ilist gen_stmt(AstNode *node) {
     // i wish all code was like this....
+    // ^ well no one restricts you, so go ahead, wish as much as you want lol
 
     /*
 
@@ -1913,7 +2144,7 @@ static ilist gen_for_stmt(AstNode *node) {
 
     if (cond != NULL) {
         /*
-        > for init; cond; step; stmt
+        > for init; cond; step stmt
 
         <   CREATE_SCOPE WITH_PARENT_ACCESS
         <   gen(init)
@@ -1969,7 +2200,7 @@ static ilist gen_for_stmt(AstNode *node) {
     }
 
     /*
-    > for init; ; step; stmt
+    > for init; ; step stmt
 
     <   CREATE_SCOPE WITH_PARENT_ACCESS
     <   gen(init)

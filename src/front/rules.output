@@ -1,25 +1,25 @@
 State 66 conflicts: 2 shift/reduce
 State 70 conflicts: 1 shift/reduce
-State 104 conflicts: 1 shift/reduce
-State 167 conflicts: 2 shift/reduce
-State 168 conflicts: 1 shift/reduce
+State 103 conflicts: 1 shift/reduce
+State 166 conflicts: 2 shift/reduce
+State 167 conflicts: 1 shift/reduce
+State 186 conflicts: 2 shift/reduce
 State 187 conflicts: 2 shift/reduce
 State 188 conflicts: 2 shift/reduce
 State 189 conflicts: 2 shift/reduce
-State 190 conflicts: 2 shift/reduce
 State 230 conflicts: 1 shift/reduce
 State 231 conflicts: 24 shift/reduce
-State 251 conflicts: 1 shift/reduce
-State 252 conflicts: 1 shift/reduce
 State 253 conflicts: 1 shift/reduce
-State 254 conflicts: 24 shift/reduce
+State 254 conflicts: 1 shift/reduce
 State 255 conflicts: 1 shift/reduce
 State 256 conflicts: 24 shift/reduce
-State 269 conflicts: 1 shift/reduce
-State 270 conflicts: 1 shift/reduce
-State 271 conflicts: 1 shift/reduce
-State 272 conflicts: 24 shift/reduce
-State 279 conflicts: 1 shift/reduce
+State 257 conflicts: 1 shift/reduce
+State 258 conflicts: 24 shift/reduce
+State 273 conflicts: 1 shift/reduce
+State 274 conflicts: 1 shift/reduce
+State 275 conflicts: 1 shift/reduce
+State 276 conflicts: 24 shift/reduce
+State 284 conflicts: 1 shift/reduce
 
 
 Grammar
@@ -74,235 +74,236 @@ Grammar
 
    34 type_stmt: TYPE IDENTIFIER '{' member_list '}'
 
-   35 member_list: member_list ',' member_item
+   35 member_list: member_item ',' member_list
    36            | member_item
 
    37 member_item: IDENTIFIER '(' ')'
    38            | IDENTIFIER
 
    39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF IDENTIFIER block_stmt
+   40            | METHOD IDENTIFIER '(' ')' OF IDENTIFIER block_stmt
 
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER block_stmt
-   41                 | CONSTRUCTOR OF IDENTIFIER block_stmt
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER block_stmt
+   42                 | CONSTRUCTOR '(' ')' OF IDENTIFIER block_stmt
 
-   42 destructor_stmt: DESTRUCTOR OF IDENTIFIER block_stmt
+   43 destructor_stmt: DESTRUCTOR OF IDENTIFIER block_stmt
 
-   43 stmt: expr
-   44     | block_stmt
-   45     | while_stmt
-   46     | for_stmt
-   47     | if_stmt
-   48     | continue_stmt
-   49     | break_stmt
-   50     | return_stmt
-   51     | assignment_stmt
-   52     | try_catch_stmt
-   53     | signal_stmt
-   54     | var_stmt
-   55     | stmt ';'
+   44 stmt: expr
+   45     | block_stmt
+   46     | while_stmt
+   47     | for_stmt
+   48     | if_stmt
+   49     | continue_stmt
+   50     | break_stmt
+   51     | return_stmt
+   52     | assignment_stmt
+   53     | try_catch_stmt
+   54     | signal_stmt
+   55     | var_stmt
+   56     | stmt ';'
 
-   56 block_stmt: '{' stmt_list '}'
-   57           | '{' '}'
+   57 block_stmt: '{' stmt_list '}'
+   58           | '{' '}'
 
-   58 stmt_list: stmt stmt_list
-   59          | stmt
+   59 stmt_list: stmt stmt_list
+   60          | stmt
 
-   60 while_stmt: WHILE expr stmt
+   61 while_stmt: WHILE expr stmt
 
-   61 for_stmt: FOR expr ';' expr ';' expr stmt
-   62         | FOR ';' expr ';' expr stmt
-   63         | FOR expr ';' ';' expr stmt
-   64         | FOR expr ';' expr ';' stmt
-   65         | FOR ';' ';' expr stmt
-   66         | FOR ';' expr ';' stmt
-   67         | FOR expr ';' ';' stmt
-   68         | FOR ';' ';' stmt
+   62 for_stmt: FOR expr ';' expr ';' expr stmt
+   63         | FOR ';' expr ';' expr stmt
+   64         | FOR expr ';' ';' expr stmt
+   65         | FOR expr ';' expr ';' stmt
+   66         | FOR ';' ';' expr stmt
+   67         | FOR ';' expr ';' stmt
+   68         | FOR expr ';' ';' stmt
+   69         | FOR ';' ';' stmt
 
-   69 if_stmt: IF expr stmt ELSE stmt
-   70        | IF expr stmt
+   70 if_stmt: IF expr stmt ELSE stmt
+   71        | IF expr stmt
 
-   71 continue_stmt: CONTINUE
+   72 continue_stmt: CONTINUE
 
-   72 break_stmt: BREAK
+   73 break_stmt: BREAK
 
-   73 return_stmt: RETURN COPY expr
-   74            | RETURN REF expr
-   75            | RETURN PASS expr
-   76            | RETURN expr
+   74 return_stmt: RETURN COPY expr
+   75            | RETURN REF expr
+   76            | RETURN PASS expr
+   77            | RETURN expr
 
-   77 assignment_stmt: expr COPIES expr
-   78                | expr REFS expr
+   78 assignment_stmt: expr COPIES expr
+   79                | expr REFS expr
 
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
-   80               | TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt
-   81               | TRY block_stmt catch_item_list
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
+   81               | TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt
+   82               | TRY block_stmt catch_item_list
 
-   82 catch_item_list: catch_item catch_item_list
-   83                | catch_item
+   83 catch_item_list: catch_item catch_item_list
+   84                | catch_item
 
-   84 catch_item: CATCH expr AS IDENTIFIER block_stmt
+   85 catch_item: CATCH expr AS IDENTIFIER block_stmt
 
-   85 signal_stmt: SIGNAL expr BECAUSE expr
+   86 signal_stmt: SIGNAL expr BECAUSE expr
 
-   86 var_stmt: VAR assignment_item_list
+   87 var_stmt: VAR assignment_item_list
 
-   87 assignment_item_list: assignment_item ',' assignment_item_list
-   88                     | assignment_item
+   88 assignment_item_list: assignment_item ',' assignment_item_list
+   89                     | assignment_item
 
-   89 assignment_item: IDENTIFIER '=' expr
-   90                | IDENTIFIER
+   90 assignment_item: IDENTIFIER '=' expr
+   91                | IDENTIFIER
 
-   91 expr: assignment
+   92 expr: assignment
 
-   92 assignment: inline_if '=' assignment
-   93           | inline_if
+   93 assignment: inline_if '=' assignment
+   94           | inline_if
 
-   94 inline_if: WHEN new THEN new ELSE new
-   95          | new
+   95 inline_if: WHEN new THEN new ELSE new
+   96          | new
 
-   96 new: NEW logical_or '(' expr_list ')'
-   97    | NEW logical_or
-   98    | logical_or
+   97 new: NEW logical_or '(' expr_list ')'
+   98    | NEW logical_or
+   99    | logical_or
 
-   99 logical_or: logical_or OR logical_and
-  100           | logical_and
+  100 logical_or: logical_or OR logical_and
+  101           | logical_and
 
-  101 logical_and: logical_and AND bitwise_or
-  102            | bitwise_or
+  102 logical_and: logical_and AND bitwise_or
+  103            | bitwise_or
 
-  103 bitwise_or: bitwise_or '|' bitwise_xor
-  104           | bitwise_xor
+  104 bitwise_or: bitwise_or '|' bitwise_xor
+  105           | bitwise_xor
 
-  105 bitwise_xor: bitwise_xor '^' bitwise_and
-  106            | bitwise_and
+  106 bitwise_xor: bitwise_xor '^' bitwise_and
+  107            | bitwise_and
 
-  107 bitwise_and: bitwise_and '&' equality
-  108            | equality
+  108 bitwise_and: bitwise_and '&' equality
+  109            | equality
 
-  109 equality: equality EQ relational
-  110         | equality NE relational
-  111         | relational
+  110 equality: equality EQ relational
+  111         | equality NE relational
+  112         | relational
 
-  112 relational: relational LE sum
-  113           | relational GE sum
-  114           | relational '<' sum
-  115           | relational '>' sum
-  116           | sum
+  113 relational: relational LE sum
+  114           | relational GE sum
+  115           | relational '<' sum
+  116           | relational '>' sum
+  117           | sum
 
-  117 sum: sum '+' bitwise_shift
-  118    | sum '-' bitwise_shift
-  119    | bitwise_shift
+  118 sum: sum '+' bitwise_shift
+  119    | sum '-' bitwise_shift
+  120    | bitwise_shift
 
-  120 bitwise_shift: bitwise_shift LSHIFT term
-  121              | bitwise_shift RSHIFT term
-  122              | term
+  121 bitwise_shift: bitwise_shift LSHIFT term
+  122              | bitwise_shift RSHIFT term
+  123              | term
 
-  123 term: term '*' prefix_op
-  124     | term '/' prefix_op
-  125     | term '%' prefix_op
-  126     | prefix_op
+  124 term: term '*' prefix_op
+  125     | term '/' prefix_op
+  126     | term '%' prefix_op
+  127     | prefix_op
 
-  127 prefix_op: '+' prefix_op
-  128          | '-' prefix_op
-  129          | NOT prefix_op
-  130          | '~' prefix_op
-  131          | primary
+  128 prefix_op: '+' prefix_op
+  129          | '-' prefix_op
+  130          | NOT prefix_op
+  131          | '~' prefix_op
+  132          | primary
 
-  132 primary: primary '(' expr_list ')'
-  133        | primary '(' ')'
-  134        | primary '[' expr ']'
-  135        | primary '.' IDENTIFIER
-  136        | primary ':' IDENTIFIER
-  137        | elementary
+  133 primary: primary '(' expr_list ')'
+  134        | primary '(' ')'
+  135        | primary '[' expr ']'
+  136        | primary '.' IDENTIFIER
+  137        | primary ':' IDENTIFIER
+  138        | elementary
 
-  138 elementary: '(' expr ')'
-  139           | literal
+  139 elementary: '(' expr ')'
+  140           | literal
 
-  140 literal: NULLV
-  141        | BOOL
-  142        | CHAR
-  143        | INT
-  144        | FLOAT
-  145        | STRING
-  146        | IDENTIFIER
+  141 literal: NULLV
+  142        | BOOL
+  143        | CHAR
+  144        | INT
+  145        | FLOAT
+  146        | STRING
+  147        | IDENTIFIER
 
-  147 expr_list: expr ',' expr_list
-  148          | expr
+  148 expr_list: expr ',' expr_list
+  149          | expr
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
-    '%' <num> (37) 125
-    '&' (38) 107
-    '(' <num> (40) 26 27 37 39 40 96 132 133 138
-    ')' <num> (41) 26 27 37 39 40 96 132 133 138
-    '*' <num> (42) 123
-    '+' <num> (43) 117 127
-    ',' (44) 20 24 28 35 87 147
-    '-' <num> (45) 118 128
-    '.' (46) 17 135
-    '/' <num> (47) 124
-    ':' (58) 136
-    ';' (59) 55 61 62 63 64 65 66 67 68
-    '<' (60) 114
-    '=' (61) 89 92
-    '>' (62) 115
-    '[' (91) 134
-    ']' (93) 134
-    '^' <num> (94) 15 16 105
-    '{' <num> (123) 34 56 57
-    '|' (124) 103
-    '}' <num> (125) 34 56 57
-    '~' <num> (126) 130
+    '%' <num> (37) 126
+    '&' (38) 108
+    '(' <num> (40) 26 27 37 39 40 41 42 97 133 134 139
+    ')' <num> (41) 26 27 37 39 40 41 42 97 133 134 139
+    '*' <num> (42) 124
+    '+' <num> (43) 118 128
+    ',' (44) 20 24 28 35 88 148
+    '-' <num> (45) 119 129
+    '.' (46) 17 136
+    '/' <num> (47) 125
+    ':' (58) 137
+    ';' (59) 56 62 63 64 65 66 67 68 69
+    '<' (60) 115
+    '=' (61) 90 93
+    '>' (62) 116
+    '[' (91) 135
+    ']' (93) 135
+    '^' <num> (94) 15 16 106
+    '{' <num> (123) 34 57 58
+    '|' (124) 104
+    '}' <num> (125) 34 57 58
+    '~' <num> (126) 131
     error (256)
-    BOOL <node> (258) 141
-    CHAR <node> (259) 142
-    INT <node> (260) 143
-    FLOAT <node> (261) 144
-    STRING <node> (262) 14 145
-    IDENTIFIER <node> (263) 11 17 18 22 24 25 26 27 30 31 32 33 34 37 38 39 40 41 42 79 80 84 89 90 135 136 146
-    NULLV <node> (264) 140
+    BOOL <node> (258) 142
+    CHAR <node> (259) 143
+    INT <node> (260) 144
+    FLOAT <node> (261) 145
+    STRING <node> (262) 14 146
+    IDENTIFIER <node> (263) 11 17 18 22 24 25 26 27 30 31 32 33 34 37 38 39 40 41 42 43 80 81 85 90 91 136 137 147
+    NULLV <node> (264) 141
     IMPORT <num> (265) 11
     EXPORT <num> (266) 19
     GLOBAL <num> (267) 23
     FUNCTION <num> (268) 26 27
     TYPE <num> (269) 34
-    METHOD <num> (270) 39
-    CONSTRUCTOR <num> (271) 40 41
-    DESTRUCTOR <num> (272) 42
-    OF <num> (273) 39 40 41 42
-    COPY <num> (274) 30 73
-    REF <num> (275) 31 74
-    PASS <num> (276) 32 75
-    CONTINUE <num> (277) 71
-    BREAK <num> (278) 72
-    RETURN <num> (279) 73 74 75 76
-    VAR <num> (280) 86
-    TRY <num> (281) 79 80 81
-    CATCH <num> (282) 79 80 84
-    FINALLY <num> (283) 79 80
-    SIGNAL <num> (284) 85
-    BECAUSE <num> (285) 85
-    IF <num> (286) 69 70
-    ELSE <num> (287) 69 94
-    WHILE <num> (288) 60
-    FOR <num> (289) 61 62 63 64 65 66 67 68
-    WHEN <num> (290) 94
-    THEN <num> (291) 94
-    NEW <num> (292) 96 97
-    OR <num> (293) 99
-    AND <num> (294) 101
-    NOT <num> (295) 129
-    COPIES <num> (296) 77
-    REFS <num> (297) 78
-    AS <num> (298) 11 22 79 80 84
-    LSHIFT <num> (299) 120
-    RSHIFT <num> (300) 121
-    EQ <num> (301) 109
-    NE <num> (302) 110
-    LE <num> (303) 112
-    GE <num> (304) 113
+    METHOD <num> (270) 39 40
+    CONSTRUCTOR <num> (271) 41 42
+    DESTRUCTOR <num> (272) 43
+    OF <num> (273) 39 40 41 42 43
+    COPY <num> (274) 30 74
+    REF <num> (275) 31 75
+    PASS <num> (276) 32 76
+    CONTINUE <num> (277) 72
+    BREAK <num> (278) 73
+    RETURN <num> (279) 74 75 76 77
+    VAR <num> (280) 87
+    TRY <num> (281) 80 81 82
+    CATCH <num> (282) 80 81 85
+    FINALLY <num> (283) 80 81
+    SIGNAL <num> (284) 86
+    BECAUSE <num> (285) 86
+    IF <num> (286) 70 71
+    ELSE <num> (287) 70 95
+    WHILE <num> (288) 61
+    FOR <num> (289) 62 63 64 65 66 67 68 69
+    WHEN <num> (290) 95
+    THEN <num> (291) 95
+    NEW <num> (292) 97 98
+    OR <num> (293) 100
+    AND <num> (294) 102
+    NOT <num> (295) 130
+    COPIES <num> (296) 78
+    REFS <num> (297) 79
+    AS <num> (298) 11 22 80 81 85
+    LSHIFT <num> (299) 121
+    RSHIFT <num> (300) 122
+    EQ <num> (301) 110
+    NE <num> (302) 111
+    LE <num> (303) 113
+    GE <num> (304) 114
 
 
 Nonterminals, with rules where they appear
@@ -344,7 +345,7 @@ Nonterminals, with rules where they appear
         on right: 4
     parameter_list <node> (84)
         on left: 28 29
-        on right: 26 28 39 40
+        on right: 26 28 39 41
     parameter_item <node> (85)
         on left: 30 31 32 33
         on right: 28 29
@@ -358,122 +359,122 @@ Nonterminals, with rules where they appear
         on left: 37 38
         on right: 35 36
     method_stmt <node> (89)
-        on left: 39
+        on left: 39 40
         on right: 6
     constructor_stmt <node> (90)
-        on left: 40 41
+        on left: 41 42
         on right: 7
     destructor_stmt <node> (91)
-        on left: 42
+        on left: 43
         on right: 8
     stmt <node> (92)
-        on left: 43 44 45 46 47 48 49 50 51 52 53 54 55
-        on right: 9 55 58 59 60 61 62 63 64 65 66 67 68 69 70
+        on left: 44 45 46 47 48 49 50 51 52 53 54 55 56
+        on right: 9 56 59 60 61 62 63 64 65 66 67 68 69 70 71
     block_stmt <node> (93)
-        on left: 56 57
-        on right: 26 27 39 40 41 42 44 79 80 81 84
+        on left: 57 58
+        on right: 26 27 39 40 41 42 43 45 80 81 82 85
     stmt_list <node> (94)
-        on left: 58 59
-        on right: 56 58
+        on left: 59 60
+        on right: 57 59
     while_stmt <node> (95)
-        on left: 60
-        on right: 45
-    for_stmt <node> (96)
-        on left: 61 62 63 64 65 66 67 68
+        on left: 61
         on right: 46
-    if_stmt <node> (97)
-        on left: 69 70
+    for_stmt <node> (96)
+        on left: 62 63 64 65 66 67 68 69
         on right: 47
-    continue_stmt <node> (98)
-        on left: 71
+    if_stmt <node> (97)
+        on left: 70 71
         on right: 48
-    break_stmt <node> (99)
+    continue_stmt <node> (98)
         on left: 72
         on right: 49
-    return_stmt <node> (100)
-        on left: 73 74 75 76
+    break_stmt <node> (99)
+        on left: 73
         on right: 50
-    assignment_stmt <node> (101)
-        on left: 77 78
+    return_stmt <node> (100)
+        on left: 74 75 76 77
         on right: 51
-    try_catch_stmt <node> (102)
-        on left: 79 80 81
+    assignment_stmt <node> (101)
+        on left: 78 79
         on right: 52
-    catch_item_list <node> (103)
-        on left: 82 83
-        on right: 79 81 82
-    catch_item <node> (104)
-        on left: 84
-        on right: 82 83
-    signal_stmt <node> (105)
-        on left: 85
+    try_catch_stmt <node> (102)
+        on left: 80 81 82
         on right: 53
-    var_stmt <node> (106)
+    catch_item_list <node> (103)
+        on left: 83 84
+        on right: 80 82 83
+    catch_item <node> (104)
+        on left: 85
+        on right: 83 84
+    signal_stmt <node> (105)
         on left: 86
         on right: 54
+    var_stmt <node> (106)
+        on left: 87
+        on right: 55
     assignment_item_list <node> (107)
-        on left: 87 88
-        on right: 86 87
-    assignment_item <node> (108)
-        on left: 89 90
+        on left: 88 89
         on right: 87 88
+    assignment_item <node> (108)
+        on left: 90 91
+        on right: 88 89
     expr <node> (109)
-        on left: 91
-        on right: 22 43 60 61 62 63 64 65 66 67 69 70 73 74 75 76 77 78 84 85 89 134 138 147 148
+        on left: 92
+        on right: 22 44 61 62 63 64 65 66 67 68 70 71 74 75 76 77 78 79 85 86 90 135 139 148 149
     assignment <node> (110)
-        on left: 92 93
-        on right: 91 92
-    inline_if <node> (111)
-        on left: 94 95
+        on left: 93 94
         on right: 92 93
+    inline_if <node> (111)
+        on left: 95 96
+        on right: 93 94
     new <node> (112)
-        on left: 96 97 98
-        on right: 94 95
+        on left: 97 98 99
+        on right: 95 96
     logical_or <node> (113)
-        on left: 99 100
-        on right: 96 97 98 99
+        on left: 100 101
+        on right: 97 98 99 100
     logical_and <node> (114)
-        on left: 101 102
-        on right: 99 100 101
+        on left: 102 103
+        on right: 100 101 102
     bitwise_or <node> (115)
-        on left: 103 104
-        on right: 101 102 103
+        on left: 104 105
+        on right: 102 103 104
     bitwise_xor <node> (116)
-        on left: 105 106
-        on right: 103 104 105
+        on left: 106 107
+        on right: 104 105 106
     bitwise_and <node> (117)
-        on left: 107 108
-        on right: 105 106 107
+        on left: 108 109
+        on right: 106 107 108
     equality <node> (118)
-        on left: 109 110 111
-        on right: 107 108 109 110
+        on left: 110 111 112
+        on right: 108 109 110 111
     relational <node> (119)
-        on left: 112 113 114 115 116
-        on right: 109 110 111 112 113 114 115
+        on left: 113 114 115 116 117
+        on right: 110 111 112 113 114 115 116
     sum <node> (120)
-        on left: 117 118 119
-        on right: 112 113 114 115 116 117 118
+        on left: 118 119 120
+        on right: 113 114 115 116 117 118 119
     bitwise_shift <node> (121)
-        on left: 120 121 122
-        on right: 117 118 119 120 121
+        on left: 121 122 123
+        on right: 118 119 120 121 122
     term <node> (122)
-        on left: 123 124 125 126
-        on right: 120 121 122 123 124 125
+        on left: 124 125 126 127
+        on right: 121 122 123 124 125 126
     prefix_op <node> (123)
-        on left: 127 128 129 130 131
-        on right: 123 124 125 126 127 128 129 130
+        on left: 128 129 130 131 132
+        on right: 124 125 126 127 128 129 130 131
     primary <node> (124)
-        on left: 132 133 134 135 136 137
-        on right: 131 132 133 134 135 136
+        on left: 133 134 135 136 137 138
+        on right: 132 133 134 135 136 137
     elementary <node> (125)
-        on left: 138 139
-        on right: 137
+        on left: 139 140
+        on right: 138
     literal <node> (126)
-        on left: 140 141 142 143 144 145 146
-        on right: 139
+        on left: 141 142 143 144 145 146 147
+        on right: 140
     expr_list <node> (127)
-        on left: 147 148
-        on right: 96 132 147
+        on left: 148 149
+        on right: 97 133 148
 
 
 State 0
@@ -581,51 +582,51 @@ State 2
 
 State 3
 
-  141 literal: BOOL •
-
-    $default  reduce using rule 141 (literal)
-
-
-State 4
-
-  142 literal: CHAR •
+  142 literal: BOOL •
 
     $default  reduce using rule 142 (literal)
 
 
-State 5
+State 4
 
-  143 literal: INT •
+  143 literal: CHAR •
 
     $default  reduce using rule 143 (literal)
 
 
-State 6
+State 5
 
-  144 literal: FLOAT •
+  144 literal: INT •
 
     $default  reduce using rule 144 (literal)
 
 
-State 7
+State 6
 
-  145 literal: STRING •
+  145 literal: FLOAT •
 
     $default  reduce using rule 145 (literal)
 
 
-State 8
+State 7
 
-  146 literal: IDENTIFIER •
+  146 literal: STRING •
 
     $default  reduce using rule 146 (literal)
 
 
+State 8
+
+  147 literal: IDENTIFIER •
+
+    $default  reduce using rule 147 (literal)
+
+
 State 9
 
-  140 literal: NULLV •
+  141 literal: NULLV •
 
-    $default  reduce using rule 140 (literal)
+    $default  reduce using rule 141 (literal)
 
 
 State 10
@@ -709,46 +710,46 @@ State 14
 State 15
 
    39 method_stmt: METHOD • IDENTIFIER '(' parameter_list ')' OF IDENTIFIER block_stmt
+   40            | METHOD • IDENTIFIER '(' ')' OF IDENTIFIER block_stmt
 
     IDENTIFIER  shift, and go to state 86
 
 
 State 16
 
-   40 constructor_stmt: CONSTRUCTOR • '(' parameter_list ')' OF IDENTIFIER block_stmt
-   41                 | CONSTRUCTOR • OF IDENTIFIER block_stmt
+   41 constructor_stmt: CONSTRUCTOR • '(' parameter_list ')' OF IDENTIFIER block_stmt
+   42                 | CONSTRUCTOR • '(' ')' OF IDENTIFIER block_stmt
 
-    OF   shift, and go to state 87
-    '('  shift, and go to state 88
+    '('  shift, and go to state 87
 
 
 State 17
 
-   42 destructor_stmt: DESTRUCTOR • OF IDENTIFIER block_stmt
+   43 destructor_stmt: DESTRUCTOR • OF IDENTIFIER block_stmt
 
-    OF  shift, and go to state 89
+    OF  shift, and go to state 88
 
 
 State 18
 
-   71 continue_stmt: CONTINUE •
+   72 continue_stmt: CONTINUE •
 
-    $default  reduce using rule 71 (continue_stmt)
+    $default  reduce using rule 72 (continue_stmt)
 
 
 State 19
 
-   72 break_stmt: BREAK •
+   73 break_stmt: BREAK •
 
-    $default  reduce using rule 72 (break_stmt)
+    $default  reduce using rule 73 (break_stmt)
 
 
 State 20
 
-   73 return_stmt: RETURN • COPY expr
-   74            | RETURN • REF expr
-   75            | RETURN • PASS expr
-   76            | RETURN • expr
+   74 return_stmt: RETURN • COPY expr
+   75            | RETURN • REF expr
+   76            | RETURN • PASS expr
+   77            | RETURN • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -757,9 +758,9 @@ State 20
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
-    COPY        shift, and go to state 90
-    REF         shift, and go to state 91
-    PASS        shift, and go to state 92
+    COPY        shift, and go to state 89
+    REF         shift, and go to state 90
+    PASS        shift, and go to state 91
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
@@ -768,7 +769,7 @@ State 20
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 93
+    expr           go to state 92
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -790,28 +791,68 @@ State 20
 
 State 21
 
-   86 var_stmt: VAR • assignment_item_list
+   87 var_stmt: VAR • assignment_item_list
 
-    IDENTIFIER  shift, and go to state 94
+    IDENTIFIER  shift, and go to state 93
 
-    assignment_item_list  go to state 95
-    assignment_item       go to state 96
+    assignment_item_list  go to state 94
+    assignment_item       go to state 95
 
 
 State 22
 
-   79 try_catch_stmt: TRY • block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
-   80               | TRY • block_stmt FINALLY CATCH AS IDENTIFIER block_stmt
-   81               | TRY • block_stmt catch_item_list
+   80 try_catch_stmt: TRY • block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
+   81               | TRY • block_stmt FINALLY CATCH AS IDENTIFIER block_stmt
+   82               | TRY • block_stmt catch_item_list
 
     '{'  shift, and go to state 30
 
-    block_stmt  go to state 97
+    block_stmt  go to state 96
 
 
 State 23
 
-   85 signal_stmt: SIGNAL • expr BECAUSE expr
+   86 signal_stmt: SIGNAL • expr BECAUSE expr
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    expr           go to state 97
+    assignment     go to state 56
+    inline_if      go to state 57
+    new            go to state 58
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
+
+
+State 24
+
+   70 if_stmt: IF • expr stmt ELSE stmt
+   71        | IF • expr stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -848,10 +889,9 @@ State 23
     literal        go to state 72
 
 
-State 24
+State 25
 
-   69 if_stmt: IF • expr stmt ELSE stmt
-   70        | IF • expr stmt
+   61 while_stmt: WHILE • expr stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -888,55 +928,16 @@ State 24
     literal        go to state 72
 
 
-State 25
-
-   60 while_stmt: WHILE • expr stmt
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    expr           go to state 100
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
-
-
 State 26
 
-   61 for_stmt: FOR • expr ';' expr ';' expr stmt
-   62         | FOR • ';' expr ';' expr stmt
-   63         | FOR • expr ';' ';' expr stmt
-   64         | FOR • expr ';' expr ';' stmt
-   65         | FOR • ';' ';' expr stmt
-   66         | FOR • ';' expr ';' stmt
-   67         | FOR • expr ';' ';' stmt
-   68         | FOR • ';' ';' stmt
+   62 for_stmt: FOR • expr ';' expr ';' expr stmt
+   63         | FOR • ';' expr ';' expr stmt
+   64         | FOR • expr ';' ';' expr stmt
+   65         | FOR • expr ';' expr ';' stmt
+   66         | FOR • ';' ';' expr stmt
+   67         | FOR • ';' expr ';' stmt
+   68         | FOR • expr ';' ';' stmt
+   69         | FOR • ';' ';' stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -952,9 +953,9 @@ State 26
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
-    ';'         shift, and go to state 101
+    ';'         shift, and go to state 100
 
-    expr           go to state 102
+    expr           go to state 101
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -976,7 +977,7 @@ State 26
 
 State 27
 
-   94 inline_if: WHEN • new THEN new ELSE new
+   95 inline_if: WHEN • new THEN new ELSE new
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -992,7 +993,7 @@ State 27
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    new            go to state 103
+    new            go to state 102
     logical_or     go to state 59
     logical_and    go to state 60
     bitwise_or     go to state 61
@@ -1011,8 +1012,8 @@ State 27
 
 State 28
 
-   96 new: NEW • logical_or '(' expr_list ')'
-   97    | NEW • logical_or
+   97 new: NEW • logical_or '(' expr_list ')'
+   98    | NEW • logical_or
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1027,7 +1028,7 @@ State 28
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    logical_or     go to state 104
+    logical_or     go to state 103
     logical_and    go to state 60
     bitwise_or     go to state 61
     bitwise_xor    go to state 62
@@ -1045,7 +1046,7 @@ State 28
 
 State 29
 
-  129 prefix_op: NOT • prefix_op
+  130 prefix_op: NOT • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1060,7 +1061,7 @@ State 29
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    prefix_op   go to state 105
+    prefix_op   go to state 104
     primary     go to state 70
     elementary  go to state 71
     literal     go to state 72
@@ -1068,8 +1069,8 @@ State 29
 
 State 30
 
-   56 block_stmt: '{' • stmt_list '}'
-   57           | '{' • '}'
+   57 block_stmt: '{' • stmt_list '}'
+   58           | '{' • '}'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1091,15 +1092,15 @@ State 30
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
     '{'         shift, and go to state 30
-    '}'         shift, and go to state 106
+    '}'         shift, and go to state 105
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    stmt             go to state 107
+    stmt             go to state 106
     block_stmt       go to state 44
-    stmt_list        go to state 108
+    stmt_list        go to state 107
     while_stmt       go to state 45
     for_stmt         go to state 46
     if_stmt          go to state 47
@@ -1132,7 +1133,30 @@ State 30
 
 State 31
 
-  127 prefix_op: '+' • prefix_op
+  128 prefix_op: '+' • prefix_op
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    prefix_op   go to state 108
+    primary     go to state 70
+    elementary  go to state 71
+    literal     go to state 72
+
+
+State 32
+
+  129 prefix_op: '-' • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1153,9 +1177,9 @@ State 31
     literal     go to state 72
 
 
-State 32
+State 33
 
-  128 prefix_op: '-' • prefix_op
+  131 prefix_op: '~' • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1176,32 +1200,9 @@ State 32
     literal     go to state 72
 
 
-State 33
-
-  130 prefix_op: '~' • prefix_op
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    prefix_op   go to state 111
-    primary     go to state 70
-    elementary  go to state 71
-    literal     go to state 72
-
-
 State 34
 
-  138 elementary: '(' • expr ')'
+  139 elementary: '(' • expr ')'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1218,7 +1219,7 @@ State 34
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 112
+    expr           go to state 111
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -1297,281 +1298,281 @@ State 42
 State 43
 
     9 program: program stmt •
-   55 stmt: stmt • ';'
+   56 stmt: stmt • ';'
 
-    ';'  shift, and go to state 113
+    ';'  shift, and go to state 112
 
     $default  reduce using rule 9 (program)
 
 
 State 44
 
-   44 stmt: block_stmt •
-
-    $default  reduce using rule 44 (stmt)
-
-
-State 45
-
-   45 stmt: while_stmt •
+   45 stmt: block_stmt •
 
     $default  reduce using rule 45 (stmt)
 
 
-State 46
+State 45
 
-   46 stmt: for_stmt •
+   46 stmt: while_stmt •
 
     $default  reduce using rule 46 (stmt)
 
 
-State 47
+State 46
 
-   47 stmt: if_stmt •
+   47 stmt: for_stmt •
 
     $default  reduce using rule 47 (stmt)
 
 
-State 48
+State 47
 
-   48 stmt: continue_stmt •
+   48 stmt: if_stmt •
 
     $default  reduce using rule 48 (stmt)
 
 
-State 49
+State 48
 
-   49 stmt: break_stmt •
+   49 stmt: continue_stmt •
 
     $default  reduce using rule 49 (stmt)
 
 
-State 50
+State 49
 
-   50 stmt: return_stmt •
+   50 stmt: break_stmt •
 
     $default  reduce using rule 50 (stmt)
 
 
-State 51
+State 50
 
-   51 stmt: assignment_stmt •
+   51 stmt: return_stmt •
 
     $default  reduce using rule 51 (stmt)
 
 
-State 52
+State 51
 
-   52 stmt: try_catch_stmt •
+   52 stmt: assignment_stmt •
 
     $default  reduce using rule 52 (stmt)
 
 
-State 53
+State 52
 
-   53 stmt: signal_stmt •
+   53 stmt: try_catch_stmt •
 
     $default  reduce using rule 53 (stmt)
 
 
-State 54
+State 53
 
-   54 stmt: var_stmt •
+   54 stmt: signal_stmt •
 
     $default  reduce using rule 54 (stmt)
 
 
+State 54
+
+   55 stmt: var_stmt •
+
+    $default  reduce using rule 55 (stmt)
+
+
 State 55
 
-   43 stmt: expr •
-   77 assignment_stmt: expr • COPIES expr
-   78                | expr • REFS expr
+   44 stmt: expr •
+   78 assignment_stmt: expr • COPIES expr
+   79                | expr • REFS expr
 
-    COPIES  shift, and go to state 114
-    REFS    shift, and go to state 115
+    COPIES  shift, and go to state 113
+    REFS    shift, and go to state 114
 
-    $default  reduce using rule 43 (stmt)
+    $default  reduce using rule 44 (stmt)
 
 
 State 56
 
-   91 expr: assignment •
+   92 expr: assignment •
 
-    $default  reduce using rule 91 (expr)
+    $default  reduce using rule 92 (expr)
 
 
 State 57
 
-   92 assignment: inline_if • '=' assignment
-   93           | inline_if •
+   93 assignment: inline_if • '=' assignment
+   94           | inline_if •
 
-    '='  shift, and go to state 116
+    '='  shift, and go to state 115
 
-    $default  reduce using rule 93 (assignment)
+    $default  reduce using rule 94 (assignment)
 
 
 State 58
 
-   95 inline_if: new •
+   96 inline_if: new •
 
-    $default  reduce using rule 95 (inline_if)
+    $default  reduce using rule 96 (inline_if)
 
 
 State 59
 
-   98 new: logical_or •
-   99 logical_or: logical_or • OR logical_and
+   99 new: logical_or •
+  100 logical_or: logical_or • OR logical_and
 
-    OR  shift, and go to state 117
+    OR  shift, and go to state 116
 
-    $default  reduce using rule 98 (new)
+    $default  reduce using rule 99 (new)
 
 
 State 60
 
-  100 logical_or: logical_and •
-  101 logical_and: logical_and • AND bitwise_or
+  101 logical_or: logical_and •
+  102 logical_and: logical_and • AND bitwise_or
 
-    AND  shift, and go to state 118
+    AND  shift, and go to state 117
 
-    $default  reduce using rule 100 (logical_or)
+    $default  reduce using rule 101 (logical_or)
 
 
 State 61
 
-  102 logical_and: bitwise_or •
-  103 bitwise_or: bitwise_or • '|' bitwise_xor
+  103 logical_and: bitwise_or •
+  104 bitwise_or: bitwise_or • '|' bitwise_xor
 
-    '|'  shift, and go to state 119
+    '|'  shift, and go to state 118
 
-    $default  reduce using rule 102 (logical_and)
+    $default  reduce using rule 103 (logical_and)
 
 
 State 62
 
-  104 bitwise_or: bitwise_xor •
-  105 bitwise_xor: bitwise_xor • '^' bitwise_and
+  105 bitwise_or: bitwise_xor •
+  106 bitwise_xor: bitwise_xor • '^' bitwise_and
 
-    '^'  shift, and go to state 120
+    '^'  shift, and go to state 119
 
-    $default  reduce using rule 104 (bitwise_or)
+    $default  reduce using rule 105 (bitwise_or)
 
 
 State 63
 
-  106 bitwise_xor: bitwise_and •
-  107 bitwise_and: bitwise_and • '&' equality
+  107 bitwise_xor: bitwise_and •
+  108 bitwise_and: bitwise_and • '&' equality
 
-    '&'  shift, and go to state 121
+    '&'  shift, and go to state 120
 
-    $default  reduce using rule 106 (bitwise_xor)
+    $default  reduce using rule 107 (bitwise_xor)
 
 
 State 64
 
-  108 bitwise_and: equality •
-  109 equality: equality • EQ relational
-  110         | equality • NE relational
+  109 bitwise_and: equality •
+  110 equality: equality • EQ relational
+  111         | equality • NE relational
 
-    EQ  shift, and go to state 122
-    NE  shift, and go to state 123
+    EQ  shift, and go to state 121
+    NE  shift, and go to state 122
 
-    $default  reduce using rule 108 (bitwise_and)
+    $default  reduce using rule 109 (bitwise_and)
 
 
 State 65
 
-  111 equality: relational •
-  112 relational: relational • LE sum
-  113           | relational • GE sum
-  114           | relational • '<' sum
-  115           | relational • '>' sum
+  112 equality: relational •
+  113 relational: relational • LE sum
+  114           | relational • GE sum
+  115           | relational • '<' sum
+  116           | relational • '>' sum
 
-    LE   shift, and go to state 124
-    GE   shift, and go to state 125
-    '<'  shift, and go to state 126
-    '>'  shift, and go to state 127
+    LE   shift, and go to state 123
+    GE   shift, and go to state 124
+    '<'  shift, and go to state 125
+    '>'  shift, and go to state 126
 
-    $default  reduce using rule 111 (equality)
+    $default  reduce using rule 112 (equality)
 
 
 State 66
 
-  116 relational: sum •
-  117 sum: sum • '+' bitwise_shift
-  118    | sum • '-' bitwise_shift
+  117 relational: sum •
+  118 sum: sum • '+' bitwise_shift
+  119    | sum • '-' bitwise_shift
 
-    '+'  shift, and go to state 128
-    '-'  shift, and go to state 129
+    '+'  shift, and go to state 127
+    '-'  shift, and go to state 128
 
-    '+'       [reduce using rule 116 (relational)]
-    '-'       [reduce using rule 116 (relational)]
-    $default  reduce using rule 116 (relational)
+    '+'       [reduce using rule 117 (relational)]
+    '-'       [reduce using rule 117 (relational)]
+    $default  reduce using rule 117 (relational)
 
 
 State 67
 
-  119 sum: bitwise_shift •
-  120 bitwise_shift: bitwise_shift • LSHIFT term
-  121              | bitwise_shift • RSHIFT term
+  120 sum: bitwise_shift •
+  121 bitwise_shift: bitwise_shift • LSHIFT term
+  122              | bitwise_shift • RSHIFT term
 
-    LSHIFT  shift, and go to state 130
-    RSHIFT  shift, and go to state 131
+    LSHIFT  shift, and go to state 129
+    RSHIFT  shift, and go to state 130
 
-    $default  reduce using rule 119 (sum)
+    $default  reduce using rule 120 (sum)
 
 
 State 68
 
-  122 bitwise_shift: term •
-  123 term: term • '*' prefix_op
-  124     | term • '/' prefix_op
-  125     | term • '%' prefix_op
+  123 bitwise_shift: term •
+  124 term: term • '*' prefix_op
+  125     | term • '/' prefix_op
+  126     | term • '%' prefix_op
 
-    '*'  shift, and go to state 132
-    '/'  shift, and go to state 133
-    '%'  shift, and go to state 134
+    '*'  shift, and go to state 131
+    '/'  shift, and go to state 132
+    '%'  shift, and go to state 133
 
-    $default  reduce using rule 122 (bitwise_shift)
+    $default  reduce using rule 123 (bitwise_shift)
 
 
 State 69
 
-  126 term: prefix_op •
+  127 term: prefix_op •
 
-    $default  reduce using rule 126 (term)
+    $default  reduce using rule 127 (term)
 
 
 State 70
 
-  131 prefix_op: primary •
-  132 primary: primary • '(' expr_list ')'
-  133        | primary • '(' ')'
-  134        | primary • '[' expr ']'
-  135        | primary • '.' IDENTIFIER
-  136        | primary • ':' IDENTIFIER
+  132 prefix_op: primary •
+  133 primary: primary • '(' expr_list ')'
+  134        | primary • '(' ')'
+  135        | primary • '[' expr ']'
+  136        | primary • '.' IDENTIFIER
+  137        | primary • ':' IDENTIFIER
 
-    '('  shift, and go to state 135
-    '.'  shift, and go to state 136
-    '['  shift, and go to state 137
-    ':'  shift, and go to state 138
+    '('  shift, and go to state 134
+    '.'  shift, and go to state 135
+    '['  shift, and go to state 136
+    ':'  shift, and go to state 137
 
-    '('       [reduce using rule 131 (prefix_op)]
-    $default  reduce using rule 131 (prefix_op)
+    '('       [reduce using rule 132 (prefix_op)]
+    $default  reduce using rule 132 (prefix_op)
 
 
 State 71
 
-  137 primary: elementary •
+  138 primary: elementary •
 
-    $default  reduce using rule 137 (primary)
+    $default  reduce using rule 138 (primary)
 
 
 State 72
 
-  139 elementary: literal •
+  140 elementary: literal •
 
-    $default  reduce using rule 139 (elementary)
+    $default  reduce using rule 140 (elementary)
 
 
 State 73
@@ -1586,7 +1587,7 @@ State 74
    17 module_path_compact: IDENTIFIER • '.' module_path_compact
    18                    | IDENTIFIER •
 
-    '.'  shift, and go to state 139
+    '.'  shift, and go to state 138
 
     $default  reduce using rule 18 (module_path_compact)
 
@@ -1600,14 +1601,14 @@ State 75
 
     $default  reduce using rule 16 (module_path_upwards)
 
-    module_path_upwards  go to state 140
+    module_path_upwards  go to state 139
 
 
 State 76
 
    11 import_stmt: IMPORT module_path • AS IDENTIFIER
 
-    AS  shift, and go to state 141
+    AS  shift, and go to state 140
 
 
 State 77
@@ -1616,7 +1617,7 @@ State 77
 
     IDENTIFIER  shift, and go to state 74
 
-    module_path_compact  go to state 142
+    module_path_compact  go to state 141
 
 
 State 78
@@ -1638,7 +1639,7 @@ State 80
    20 export_item_list: export_item • ',' export_item_list
    21                 | export_item •
 
-    ','  shift, and go to state 143
+    ','  shift, and go to state 142
 
     $default  reduce using rule 21 (export_item_list)
 
@@ -1647,7 +1648,7 @@ State 81
 
    22 export_item: expr • AS IDENTIFIER
 
-    AS  shift, and go to state 144
+    AS  shift, and go to state 143
 
 
 State 82
@@ -1655,7 +1656,7 @@ State 82
    24 identifier_item_list: IDENTIFIER • ',' identifier_item_list
    25                     | IDENTIFIER •
 
-    ','  shift, and go to state 145
+    ','  shift, and go to state 144
 
     $default  reduce using rule 25 (identifier_item_list)
 
@@ -1672,53 +1673,88 @@ State 84
    26 function_stmt: FUNCTION IDENTIFIER • '(' parameter_list ')' block_stmt
    27              | FUNCTION IDENTIFIER • '(' ')' block_stmt
 
-    '('  shift, and go to state 146
+    '('  shift, and go to state 145
 
 
 State 85
 
    34 type_stmt: TYPE IDENTIFIER • '{' member_list '}'
 
-    '{'  shift, and go to state 147
+    '{'  shift, and go to state 146
 
 
 State 86
 
    39 method_stmt: METHOD IDENTIFIER • '(' parameter_list ')' OF IDENTIFIER block_stmt
+   40            | METHOD IDENTIFIER • '(' ')' OF IDENTIFIER block_stmt
 
-    '('  shift, and go to state 148
+    '('  shift, and go to state 147
 
 
 State 87
 
-   41 constructor_stmt: CONSTRUCTOR OF • IDENTIFIER block_stmt
+   41 constructor_stmt: CONSTRUCTOR '(' • parameter_list ')' OF IDENTIFIER block_stmt
+   42                 | CONSTRUCTOR '(' • ')' OF IDENTIFIER block_stmt
 
-    IDENTIFIER  shift, and go to state 149
+    IDENTIFIER  shift, and go to state 148
+    COPY        shift, and go to state 149
+    REF         shift, and go to state 150
+    PASS        shift, and go to state 151
+    ')'         shift, and go to state 152
+
+    parameter_list  go to state 153
+    parameter_item  go to state 154
 
 
 State 88
 
-   40 constructor_stmt: CONSTRUCTOR '(' • parameter_list ')' OF IDENTIFIER block_stmt
+   43 destructor_stmt: DESTRUCTOR OF • IDENTIFIER block_stmt
 
-    IDENTIFIER  shift, and go to state 150
-    COPY        shift, and go to state 151
-    REF         shift, and go to state 152
-    PASS        shift, and go to state 153
-
-    parameter_list  go to state 154
-    parameter_item  go to state 155
+    IDENTIFIER  shift, and go to state 155
 
 
 State 89
 
-   42 destructor_stmt: DESTRUCTOR OF • IDENTIFIER block_stmt
+   74 return_stmt: RETURN COPY • expr
 
-    IDENTIFIER  shift, and go to state 156
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    expr           go to state 156
+    assignment     go to state 56
+    inline_if      go to state 57
+    new            go to state 58
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
 
 
 State 90
 
-   73 return_stmt: RETURN COPY • expr
+   75 return_stmt: RETURN REF • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1757,7 +1793,7 @@ State 90
 
 State 91
 
-   74 return_stmt: RETURN REF • expr
+   76 return_stmt: RETURN PASS • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1796,7 +1832,62 @@ State 91
 
 State 92
 
-   75 return_stmt: RETURN PASS • expr
+   77 return_stmt: RETURN expr •
+
+    $default  reduce using rule 77 (return_stmt)
+
+
+State 93
+
+   90 assignment_item: IDENTIFIER • '=' expr
+   91                | IDENTIFIER •
+
+    '='  shift, and go to state 159
+
+    $default  reduce using rule 91 (assignment_item)
+
+
+State 94
+
+   87 var_stmt: VAR assignment_item_list •
+
+    $default  reduce using rule 87 (var_stmt)
+
+
+State 95
+
+   88 assignment_item_list: assignment_item • ',' assignment_item_list
+   89                     | assignment_item •
+
+    ','  shift, and go to state 160
+
+    $default  reduce using rule 89 (assignment_item_list)
+
+
+State 96
+
+   80 try_catch_stmt: TRY block_stmt • catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
+   81               | TRY block_stmt • FINALLY CATCH AS IDENTIFIER block_stmt
+   82               | TRY block_stmt • catch_item_list
+
+    CATCH    shift, and go to state 161
+    FINALLY  shift, and go to state 162
+
+    catch_item_list  go to state 163
+    catch_item       go to state 164
+
+
+State 97
+
+   86 signal_stmt: SIGNAL expr • BECAUSE expr
+
+    BECAUSE  shift, and go to state 165
+
+
+State 98
+
+   70 if_stmt: IF expr • stmt ELSE stmt
+   71        | IF expr • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1805,92 +1896,59 @@ State 92
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
+    CONTINUE    shift, and go to state 18
+    BREAK       shift, and go to state 19
+    RETURN      shift, and go to state 20
+    VAR         shift, and go to state 21
+    TRY         shift, and go to state 22
+    SIGNAL      shift, and go to state 23
+    IF          shift, and go to state 24
+    WHILE       shift, and go to state 25
+    FOR         shift, and go to state 26
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
+    '{'         shift, and go to state 30
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 159
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
-
-
-State 93
-
-   76 return_stmt: RETURN expr •
-
-    $default  reduce using rule 76 (return_stmt)
-
-
-State 94
-
-   89 assignment_item: IDENTIFIER • '=' expr
-   90                | IDENTIFIER •
-
-    '='  shift, and go to state 160
-
-    $default  reduce using rule 90 (assignment_item)
-
-
-State 95
-
-   86 var_stmt: VAR assignment_item_list •
-
-    $default  reduce using rule 86 (var_stmt)
-
-
-State 96
-
-   87 assignment_item_list: assignment_item • ',' assignment_item_list
-   88                     | assignment_item •
-
-    ','  shift, and go to state 161
-
-    $default  reduce using rule 88 (assignment_item_list)
-
-
-State 97
-
-   79 try_catch_stmt: TRY block_stmt • catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt
-   80               | TRY block_stmt • FINALLY CATCH AS IDENTIFIER block_stmt
-   81               | TRY block_stmt • catch_item_list
-
-    CATCH    shift, and go to state 162
-    FINALLY  shift, and go to state 163
-
-    catch_item_list  go to state 164
-    catch_item       go to state 165
-
-
-State 98
-
-   85 signal_stmt: SIGNAL expr • BECAUSE expr
-
-    BECAUSE  shift, and go to state 166
+    stmt             go to state 166
+    block_stmt       go to state 44
+    while_stmt       go to state 45
+    for_stmt         go to state 46
+    if_stmt          go to state 47
+    continue_stmt    go to state 48
+    break_stmt       go to state 49
+    return_stmt      go to state 50
+    assignment_stmt  go to state 51
+    try_catch_stmt   go to state 52
+    signal_stmt      go to state 53
+    var_stmt         go to state 54
+    expr             go to state 55
+    assignment       go to state 56
+    inline_if        go to state 57
+    new              go to state 58
+    logical_or       go to state 59
+    logical_and      go to state 60
+    bitwise_or       go to state 61
+    bitwise_xor      go to state 62
+    bitwise_and      go to state 63
+    equality         go to state 64
+    relational       go to state 65
+    sum              go to state 66
+    bitwise_shift    go to state 67
+    term             go to state 68
+    prefix_op        go to state 69
+    primary          go to state 70
+    elementary       go to state 71
+    literal          go to state 72
 
 
 State 99
 
-   69 if_stmt: IF expr • stmt ELSE stmt
-   70        | IF expr • stmt
+   61 while_stmt: WHILE expr • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1951,71 +2009,10 @@ State 99
 
 State 100
 
-   60 while_stmt: WHILE expr • stmt
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    CONTINUE    shift, and go to state 18
-    BREAK       shift, and go to state 19
-    RETURN      shift, and go to state 20
-    VAR         shift, and go to state 21
-    TRY         shift, and go to state 22
-    SIGNAL      shift, and go to state 23
-    IF          shift, and go to state 24
-    WHILE       shift, and go to state 25
-    FOR         shift, and go to state 26
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '{'         shift, and go to state 30
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    stmt             go to state 168
-    block_stmt       go to state 44
-    while_stmt       go to state 45
-    for_stmt         go to state 46
-    if_stmt          go to state 47
-    continue_stmt    go to state 48
-    break_stmt       go to state 49
-    return_stmt      go to state 50
-    assignment_stmt  go to state 51
-    try_catch_stmt   go to state 52
-    signal_stmt      go to state 53
-    var_stmt         go to state 54
-    expr             go to state 55
-    assignment       go to state 56
-    inline_if        go to state 57
-    new              go to state 58
-    logical_or       go to state 59
-    logical_and      go to state 60
-    bitwise_or       go to state 61
-    bitwise_xor      go to state 62
-    bitwise_and      go to state 63
-    equality         go to state 64
-    relational       go to state 65
-    sum              go to state 66
-    bitwise_shift    go to state 67
-    term             go to state 68
-    prefix_op        go to state 69
-    primary          go to state 70
-    elementary       go to state 71
-    literal          go to state 72
-
-
-State 101
-
-   62 for_stmt: FOR ';' • expr ';' expr stmt
-   65         | FOR ';' • ';' expr stmt
-   66         | FOR ';' • expr ';' stmt
-   68         | FOR ';' • ';' stmt
+   63 for_stmt: FOR ';' • expr ';' expr stmt
+   66         | FOR ';' • ';' expr stmt
+   67         | FOR ';' • expr ';' stmt
+   69         | FOR ';' • ';' stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2031,9 +2028,9 @@ State 101
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
-    ';'         shift, and go to state 169
+    ';'         shift, and go to state 168
 
-    expr           go to state 170
+    expr           go to state 169
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -2053,55 +2050,55 @@ State 101
     literal        go to state 72
 
 
+State 101
+
+   62 for_stmt: FOR expr • ';' expr ';' expr stmt
+   64         | FOR expr • ';' ';' expr stmt
+   65         | FOR expr • ';' expr ';' stmt
+   68         | FOR expr • ';' ';' stmt
+
+    ';'  shift, and go to state 170
+
+
 State 102
 
-   61 for_stmt: FOR expr • ';' expr ';' expr stmt
-   63         | FOR expr • ';' ';' expr stmt
-   64         | FOR expr • ';' expr ';' stmt
-   67         | FOR expr • ';' ';' stmt
+   95 inline_if: WHEN new • THEN new ELSE new
 
-    ';'  shift, and go to state 171
+    THEN  shift, and go to state 171
 
 
 State 103
 
-   94 inline_if: WHEN new • THEN new ELSE new
+   97 new: NEW logical_or • '(' expr_list ')'
+   98    | NEW logical_or •
+  100 logical_or: logical_or • OR logical_and
 
-    THEN  shift, and go to state 172
+    OR   shift, and go to state 116
+    '('  shift, and go to state 172
+
+    '('       [reduce using rule 98 (new)]
+    $default  reduce using rule 98 (new)
 
 
 State 104
 
-   96 new: NEW logical_or • '(' expr_list ')'
-   97    | NEW logical_or •
-   99 logical_or: logical_or • OR logical_and
+  130 prefix_op: NOT prefix_op •
 
-    OR   shift, and go to state 117
-    '('  shift, and go to state 173
-
-    '('       [reduce using rule 97 (new)]
-    $default  reduce using rule 97 (new)
+    $default  reduce using rule 130 (prefix_op)
 
 
 State 105
 
-  129 prefix_op: NOT prefix_op •
+   58 block_stmt: '{' '}' •
 
-    $default  reduce using rule 129 (prefix_op)
+    $default  reduce using rule 58 (block_stmt)
 
 
 State 106
 
-   57 block_stmt: '{' '}' •
-
-    $default  reduce using rule 57 (block_stmt)
-
-
-State 107
-
-   55 stmt: stmt • ';'
-   58 stmt_list: stmt • stmt_list
-   59          | stmt •
+   56 stmt: stmt • ';'
+   59 stmt_list: stmt • stmt_list
+   60          | stmt •
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2127,13 +2124,13 @@ State 107
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
-    ';'         shift, and go to state 113
+    ';'         shift, and go to state 112
 
-    $default  reduce using rule 59 (stmt_list)
+    $default  reduce using rule 60 (stmt_list)
 
-    stmt             go to state 107
+    stmt             go to state 106
     block_stmt       go to state 44
-    stmt_list        go to state 174
+    stmt_list        go to state 173
     while_stmt       go to state 45
     for_stmt         go to state 46
     if_stmt          go to state 47
@@ -2164,51 +2161,90 @@ State 107
     literal          go to state 72
 
 
+State 107
+
+   57 block_stmt: '{' stmt_list • '}'
+
+    '}'  shift, and go to state 174
+
+
 State 108
 
-   56 block_stmt: '{' stmt_list • '}'
-
-    '}'  shift, and go to state 175
-
-
-State 109
-
-  127 prefix_op: '+' prefix_op •
-
-    $default  reduce using rule 127 (prefix_op)
-
-
-State 110
-
-  128 prefix_op: '-' prefix_op •
+  128 prefix_op: '+' prefix_op •
 
     $default  reduce using rule 128 (prefix_op)
 
 
+State 109
+
+  129 prefix_op: '-' prefix_op •
+
+    $default  reduce using rule 129 (prefix_op)
+
+
+State 110
+
+  131 prefix_op: '~' prefix_op •
+
+    $default  reduce using rule 131 (prefix_op)
+
+
 State 111
 
-  130 prefix_op: '~' prefix_op •
+  139 elementary: '(' expr • ')'
 
-    $default  reduce using rule 130 (prefix_op)
+    ')'  shift, and go to state 175
 
 
 State 112
 
-  138 elementary: '(' expr • ')'
+   56 stmt: stmt ';' •
 
-    ')'  shift, and go to state 176
+    $default  reduce using rule 56 (stmt)
 
 
 State 113
 
-   55 stmt: stmt ';' •
+   78 assignment_stmt: expr COPIES • expr
 
-    $default  reduce using rule 55 (stmt)
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    expr           go to state 176
+    assignment     go to state 56
+    inline_if      go to state 57
+    new            go to state 58
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
 
 
 State 114
 
-   77 assignment_stmt: expr COPIES • expr
+   79 assignment_stmt: expr REFS • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2247,7 +2283,7 @@ State 114
 
 State 115
 
-   78 assignment_stmt: expr REFS • expr
+   93 assignment: inline_if '=' • assignment
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2264,8 +2300,7 @@ State 115
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 178
-    assignment     go to state 56
+    assignment     go to state 178
     inline_if      go to state 57
     new            go to state 58
     logical_or     go to state 59
@@ -2286,7 +2321,7 @@ State 115
 
 State 116
 
-   92 assignment: inline_if '=' • assignment
+  100 logical_or: logical_or OR • logical_and
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2295,19 +2330,13 @@ State 116
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
     NOT         shift, and go to state 29
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    assignment     go to state 179
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
+    logical_and    go to state 179
     bitwise_or     go to state 61
     bitwise_xor    go to state 62
     bitwise_and    go to state 63
@@ -2324,7 +2353,7 @@ State 116
 
 State 117
 
-   99 logical_or: logical_or OR • logical_and
+  102 logical_and: logical_and AND • bitwise_or
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2339,8 +2368,7 @@ State 117
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    logical_and    go to state 180
-    bitwise_or     go to state 61
+    bitwise_or     go to state 180
     bitwise_xor    go to state 62
     bitwise_and    go to state 63
     equality       go to state 64
@@ -2356,7 +2384,7 @@ State 117
 
 State 118
 
-  101 logical_and: logical_and AND • bitwise_or
+  104 bitwise_or: bitwise_or '|' • bitwise_xor
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2371,8 +2399,7 @@ State 118
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    bitwise_or     go to state 181
-    bitwise_xor    go to state 62
+    bitwise_xor    go to state 181
     bitwise_and    go to state 63
     equality       go to state 64
     relational     go to state 65
@@ -2387,7 +2414,7 @@ State 118
 
 State 119
 
-  103 bitwise_or: bitwise_or '|' • bitwise_xor
+  106 bitwise_xor: bitwise_xor '^' • bitwise_and
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2402,8 +2429,7 @@ State 119
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    bitwise_xor    go to state 182
-    bitwise_and    go to state 63
+    bitwise_and    go to state 182
     equality       go to state 64
     relational     go to state 65
     sum            go to state 66
@@ -2417,7 +2443,7 @@ State 119
 
 State 120
 
-  105 bitwise_xor: bitwise_xor '^' • bitwise_and
+  108 bitwise_and: bitwise_and '&' • equality
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2432,8 +2458,7 @@ State 120
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    bitwise_and    go to state 183
-    equality       go to state 64
+    equality       go to state 183
     relational     go to state 65
     sum            go to state 66
     bitwise_shift  go to state 67
@@ -2446,7 +2471,7 @@ State 120
 
 State 121
 
-  107 bitwise_and: bitwise_and '&' • equality
+  110 equality: equality EQ • relational
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2461,8 +2486,7 @@ State 121
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    equality       go to state 184
-    relational     go to state 65
+    relational     go to state 184
     sum            go to state 66
     bitwise_shift  go to state 67
     term           go to state 68
@@ -2474,7 +2498,7 @@ State 121
 
 State 122
 
-  109 equality: equality EQ • relational
+  111 equality: equality NE • relational
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2501,7 +2525,7 @@ State 122
 
 State 123
 
-  110 equality: equality NE • relational
+  113 relational: relational LE • sum
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2516,8 +2540,7 @@ State 123
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    relational     go to state 186
-    sum            go to state 66
+    sum            go to state 186
     bitwise_shift  go to state 67
     term           go to state 68
     prefix_op      go to state 69
@@ -2528,7 +2551,7 @@ State 123
 
 State 124
 
-  112 relational: relational LE • sum
+  114 relational: relational GE • sum
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2554,7 +2577,7 @@ State 124
 
 State 125
 
-  113 relational: relational GE • sum
+  115 relational: relational '<' • sum
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2580,7 +2603,7 @@ State 125
 
 State 126
 
-  114 relational: relational '<' • sum
+  116 relational: relational '>' • sum
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2606,7 +2629,7 @@ State 126
 
 State 127
 
-  115 relational: relational '>' • sum
+  118 sum: sum '+' • bitwise_shift
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2621,8 +2644,7 @@ State 127
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    sum            go to state 190
-    bitwise_shift  go to state 67
+    bitwise_shift  go to state 190
     term           go to state 68
     prefix_op      go to state 69
     primary        go to state 70
@@ -2632,7 +2654,7 @@ State 127
 
 State 128
 
-  117 sum: sum '+' • bitwise_shift
+  119 sum: sum '-' • bitwise_shift
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2657,7 +2679,7 @@ State 128
 
 State 129
 
-  118 sum: sum '-' • bitwise_shift
+  121 bitwise_shift: bitwise_shift LSHIFT • term
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2672,17 +2694,16 @@ State 129
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    bitwise_shift  go to state 192
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
+    term        go to state 192
+    prefix_op   go to state 69
+    primary     go to state 70
+    elementary  go to state 71
+    literal     go to state 72
 
 
 State 130
 
-  120 bitwise_shift: bitwise_shift LSHIFT • term
+  122 bitwise_shift: bitwise_shift RSHIFT • term
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2706,7 +2727,7 @@ State 130
 
 State 131
 
-  121 bitwise_shift: bitwise_shift RSHIFT • term
+  124 term: term '*' • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2721,8 +2742,7 @@ State 131
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    term        go to state 194
-    prefix_op   go to state 69
+    prefix_op   go to state 194
     primary     go to state 70
     elementary  go to state 71
     literal     go to state 72
@@ -2730,7 +2750,7 @@ State 131
 
 State 132
 
-  123 term: term '*' • prefix_op
+  125 term: term '/' • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2753,7 +2773,7 @@ State 132
 
 State 133
 
-  124 term: term '/' • prefix_op
+  126 term: term '%' • prefix_op
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2776,7 +2796,8 @@ State 133
 
 State 134
 
-  125 term: term '%' • prefix_op
+  133 primary: primary '(' • expr_list ')'
+  134        | primary '(' • ')'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2785,70 +2806,46 @@ State 134
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
     NOT         shift, and go to state 29
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
+    ')'         shift, and go to state 197
 
-    prefix_op   go to state 197
-    primary     go to state 70
-    elementary  go to state 71
-    literal     go to state 72
+    expr           go to state 198
+    assignment     go to state 56
+    inline_if      go to state 57
+    new            go to state 58
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
+    expr_list      go to state 199
 
 
 State 135
 
-  132 primary: primary '(' • expr_list ')'
-  133        | primary '(' • ')'
+  136 primary: primary '.' • IDENTIFIER
 
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-    ')'         shift, and go to state 198
-
-    expr           go to state 199
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
-    expr_list      go to state 200
+    IDENTIFIER  shift, and go to state 200
 
 
 State 136
 
-  135 primary: primary '.' • IDENTIFIER
-
-    IDENTIFIER  shift, and go to state 201
-
-
-State 137
-
-  134 primary: primary '[' • expr ']'
+  135 primary: primary '[' • expr ']'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -2865,7 +2862,7 @@ State 137
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 202
+    expr           go to state 201
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -2885,44 +2882,44 @@ State 137
     literal        go to state 72
 
 
+State 137
+
+  137 primary: primary ':' • IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 202
+
+
 State 138
-
-  136 primary: primary ':' • IDENTIFIER
-
-    IDENTIFIER  shift, and go to state 203
-
-
-State 139
 
    17 module_path_compact: IDENTIFIER '.' • module_path_compact
 
     IDENTIFIER  shift, and go to state 74
 
-    module_path_compact  go to state 204
+    module_path_compact  go to state 203
 
 
-State 140
+State 139
 
    15 module_path_upwards: '^' module_path_upwards •
 
     $default  reduce using rule 15 (module_path_upwards)
 
 
-State 141
+State 140
 
    11 import_stmt: IMPORT module_path AS • IDENTIFIER
 
-    IDENTIFIER  shift, and go to state 205
+    IDENTIFIER  shift, and go to state 204
 
 
-State 142
+State 141
 
    12 module_path: module_path_upwards module_path_compact •
 
     $default  reduce using rule 12 (module_path)
 
 
-State 143
+State 142
 
    20 export_item_list: export_item ',' • export_item_list
 
@@ -2941,7 +2938,7 @@ State 143
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    export_item_list  go to state 206
+    export_item_list  go to state 205
     export_item       go to state 80
     expr              go to state 81
     assignment        go to state 56
@@ -2963,105 +2960,105 @@ State 143
     literal           go to state 72
 
 
-State 144
+State 143
 
    22 export_item: expr AS • IDENTIFIER
 
-    IDENTIFIER  shift, and go to state 207
+    IDENTIFIER  shift, and go to state 206
 
 
-State 145
+State 144
 
    24 identifier_item_list: IDENTIFIER ',' • identifier_item_list
 
     IDENTIFIER  shift, and go to state 82
 
-    identifier_item_list  go to state 208
+    identifier_item_list  go to state 207
 
 
-State 146
+State 145
 
    26 function_stmt: FUNCTION IDENTIFIER '(' • parameter_list ')' block_stmt
    27              | FUNCTION IDENTIFIER '(' • ')' block_stmt
 
-    IDENTIFIER  shift, and go to state 150
-    COPY        shift, and go to state 151
-    REF         shift, and go to state 152
-    PASS        shift, and go to state 153
-    ')'         shift, and go to state 209
+    IDENTIFIER  shift, and go to state 148
+    COPY        shift, and go to state 149
+    REF         shift, and go to state 150
+    PASS        shift, and go to state 151
+    ')'         shift, and go to state 208
 
-    parameter_list  go to state 210
-    parameter_item  go to state 155
+    parameter_list  go to state 209
+    parameter_item  go to state 154
+
+
+State 146
+
+   34 type_stmt: TYPE IDENTIFIER '{' • member_list '}'
+
+    IDENTIFIER  shift, and go to state 210
+
+    member_list  go to state 211
+    member_item  go to state 212
 
 
 State 147
 
-   34 type_stmt: TYPE IDENTIFIER '{' • member_list '}'
+   39 method_stmt: METHOD IDENTIFIER '(' • parameter_list ')' OF IDENTIFIER block_stmt
+   40            | METHOD IDENTIFIER '(' • ')' OF IDENTIFIER block_stmt
 
-    IDENTIFIER  shift, and go to state 211
+    IDENTIFIER  shift, and go to state 148
+    COPY        shift, and go to state 149
+    REF         shift, and go to state 150
+    PASS        shift, and go to state 151
+    ')'         shift, and go to state 213
 
-    member_list  go to state 212
-    member_item  go to state 213
+    parameter_list  go to state 214
+    parameter_item  go to state 154
 
 
 State 148
-
-   39 method_stmt: METHOD IDENTIFIER '(' • parameter_list ')' OF IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 150
-    COPY        shift, and go to state 151
-    REF         shift, and go to state 152
-    PASS        shift, and go to state 153
-
-    parameter_list  go to state 214
-    parameter_item  go to state 155
-
-
-State 149
-
-   41 constructor_stmt: CONSTRUCTOR OF IDENTIFIER • block_stmt
-
-    '{'  shift, and go to state 30
-
-    block_stmt  go to state 215
-
-
-State 150
 
    33 parameter_item: IDENTIFIER •
 
     $default  reduce using rule 33 (parameter_item)
 
 
-State 151
+State 149
 
    30 parameter_item: COPY • IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 215
+
+
+State 150
+
+   31 parameter_item: REF • IDENTIFIER
 
     IDENTIFIER  shift, and go to state 216
 
 
-State 152
+State 151
 
-   31 parameter_item: REF • IDENTIFIER
+   32 parameter_item: PASS • IDENTIFIER
 
     IDENTIFIER  shift, and go to state 217
 
 
+State 152
+
+   42 constructor_stmt: CONSTRUCTOR '(' ')' • OF IDENTIFIER block_stmt
+
+    OF  shift, and go to state 218
+
+
 State 153
 
-   32 parameter_item: PASS • IDENTIFIER
-
-    IDENTIFIER  shift, and go to state 218
-
-
-State 154
-
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list • ')' OF IDENTIFIER block_stmt
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list • ')' OF IDENTIFIER block_stmt
 
     ')'  shift, and go to state 219
 
 
-State 155
+State 154
 
    28 parameter_list: parameter_item • ',' parameter_list
    29               | parameter_item •
@@ -3071,39 +3068,39 @@ State 155
     $default  reduce using rule 29 (parameter_list)
 
 
-State 156
+State 155
 
-   42 destructor_stmt: DESTRUCTOR OF IDENTIFIER • block_stmt
+   43 destructor_stmt: DESTRUCTOR OF IDENTIFIER • block_stmt
 
     '{'  shift, and go to state 30
 
     block_stmt  go to state 221
 
 
-State 157
+State 156
 
-   73 return_stmt: RETURN COPY expr •
-
-    $default  reduce using rule 73 (return_stmt)
-
-
-State 158
-
-   74 return_stmt: RETURN REF expr •
+   74 return_stmt: RETURN COPY expr •
 
     $default  reduce using rule 74 (return_stmt)
 
 
-State 159
+State 157
 
-   75 return_stmt: RETURN PASS expr •
+   75 return_stmt: RETURN REF expr •
 
     $default  reduce using rule 75 (return_stmt)
 
 
-State 160
+State 158
 
-   89 assignment_item: IDENTIFIER '=' • expr
+   76 return_stmt: RETURN PASS expr •
+
+    $default  reduce using rule 76 (return_stmt)
+
+
+State 159
+
+   90 assignment_item: IDENTIFIER '=' • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3140,19 +3137,19 @@ State 160
     literal        go to state 72
 
 
-State 161
+State 160
 
-   87 assignment_item_list: assignment_item ',' • assignment_item_list
+   88 assignment_item_list: assignment_item ',' • assignment_item_list
 
-    IDENTIFIER  shift, and go to state 94
+    IDENTIFIER  shift, and go to state 93
 
     assignment_item_list  go to state 223
-    assignment_item       go to state 96
+    assignment_item       go to state 95
 
 
-State 162
+State 161
 
-   84 catch_item: CATCH • expr AS IDENTIFIER block_stmt
+   85 catch_item: CATCH • expr AS IDENTIFIER block_stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3189,39 +3186,39 @@ State 162
     literal        go to state 72
 
 
-State 163
+State 162
 
-   80 try_catch_stmt: TRY block_stmt FINALLY • CATCH AS IDENTIFIER block_stmt
+   81 try_catch_stmt: TRY block_stmt FINALLY • CATCH AS IDENTIFIER block_stmt
 
     CATCH  shift, and go to state 225
 
 
-State 164
+State 163
 
-   79 try_catch_stmt: TRY block_stmt catch_item_list • FINALLY CATCH AS IDENTIFIER block_stmt
-   81               | TRY block_stmt catch_item_list •
+   80 try_catch_stmt: TRY block_stmt catch_item_list • FINALLY CATCH AS IDENTIFIER block_stmt
+   82               | TRY block_stmt catch_item_list •
 
     FINALLY  shift, and go to state 226
 
-    $default  reduce using rule 81 (try_catch_stmt)
+    $default  reduce using rule 82 (try_catch_stmt)
+
+
+State 164
+
+   83 catch_item_list: catch_item • catch_item_list
+   84                | catch_item •
+
+    CATCH  shift, and go to state 161
+
+    $default  reduce using rule 84 (catch_item_list)
+
+    catch_item_list  go to state 227
+    catch_item       go to state 164
 
 
 State 165
 
-   82 catch_item_list: catch_item • catch_item_list
-   83                | catch_item •
-
-    CATCH  shift, and go to state 162
-
-    $default  reduce using rule 83 (catch_item_list)
-
-    catch_item_list  go to state 227
-    catch_item       go to state 165
-
-
-State 166
-
-   85 signal_stmt: SIGNAL expr BECAUSE • expr
+   86 signal_stmt: SIGNAL expr BECAUSE • expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3258,35 +3255,35 @@ State 166
     literal        go to state 72
 
 
-State 167
+State 166
 
-   55 stmt: stmt • ';'
-   69 if_stmt: IF expr stmt • ELSE stmt
-   70        | IF expr stmt •
+   56 stmt: stmt • ';'
+   70 if_stmt: IF expr stmt • ELSE stmt
+   71        | IF expr stmt •
 
     ELSE  shift, and go to state 229
-    ';'   shift, and go to state 113
+    ';'   shift, and go to state 112
 
-    ELSE      [reduce using rule 70 (if_stmt)]
-    ';'       [reduce using rule 70 (if_stmt)]
-    $default  reduce using rule 70 (if_stmt)
+    ELSE      [reduce using rule 71 (if_stmt)]
+    ';'       [reduce using rule 71 (if_stmt)]
+    $default  reduce using rule 71 (if_stmt)
+
+
+State 167
+
+   56 stmt: stmt • ';'
+   61 while_stmt: WHILE expr stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 61 (while_stmt)]
+    $default  reduce using rule 61 (while_stmt)
 
 
 State 168
 
-   55 stmt: stmt • ';'
-   60 while_stmt: WHILE expr stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 60 (while_stmt)]
-    $default  reduce using rule 60 (while_stmt)
-
-
-State 169
-
-   65 for_stmt: FOR ';' ';' • expr stmt
-   68         | FOR ';' ';' • stmt
+   66 for_stmt: FOR ';' ';' • expr stmt
+   69         | FOR ';' ';' • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3345,20 +3342,20 @@ State 169
     literal          go to state 72
 
 
-State 170
+State 169
 
-   62 for_stmt: FOR ';' expr • ';' expr stmt
-   66         | FOR ';' expr • ';' stmt
+   63 for_stmt: FOR ';' expr • ';' expr stmt
+   67         | FOR ';' expr • ';' stmt
 
     ';'  shift, and go to state 232
 
 
-State 171
+State 170
 
-   61 for_stmt: FOR expr ';' • expr ';' expr stmt
-   63         | FOR expr ';' • ';' expr stmt
-   64         | FOR expr ';' • expr ';' stmt
-   67         | FOR expr ';' • ';' stmt
+   62 for_stmt: FOR expr ';' • expr ';' expr stmt
+   64         | FOR expr ';' • ';' expr stmt
+   65         | FOR expr ';' • expr ';' stmt
+   68         | FOR expr ';' • ';' stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3396,9 +3393,9 @@ State 171
     literal        go to state 72
 
 
-State 172
+State 171
 
-   94 inline_if: WHEN new THEN • new ELSE new
+   95 inline_if: WHEN new THEN • new ELSE new
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3431,9 +3428,9 @@ State 172
     literal        go to state 72
 
 
-State 173
+State 172
 
-   96 new: NEW logical_or '(' • expr_list ')'
+   97 new: NEW logical_or '(' • expr_list ')'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3450,7 +3447,7 @@ State 173
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    expr           go to state 199
+    expr           go to state 198
     assignment     go to state 56
     inline_if      go to state 57
     new            go to state 58
@@ -3471,342 +3468,342 @@ State 173
     expr_list      go to state 236
 
 
+State 173
+
+   59 stmt_list: stmt stmt_list •
+
+    $default  reduce using rule 59 (stmt_list)
+
+
 State 174
 
-   58 stmt_list: stmt stmt_list •
+   57 block_stmt: '{' stmt_list '}' •
 
-    $default  reduce using rule 58 (stmt_list)
+    $default  reduce using rule 57 (block_stmt)
 
 
 State 175
 
-   56 block_stmt: '{' stmt_list '}' •
+  139 elementary: '(' expr ')' •
 
-    $default  reduce using rule 56 (block_stmt)
+    $default  reduce using rule 139 (elementary)
 
 
 State 176
 
-  138 elementary: '(' expr ')' •
-
-    $default  reduce using rule 138 (elementary)
-
-
-State 177
-
-   77 assignment_stmt: expr COPIES expr •
-
-    $default  reduce using rule 77 (assignment_stmt)
-
-
-State 178
-
-   78 assignment_stmt: expr REFS expr •
+   78 assignment_stmt: expr COPIES expr •
 
     $default  reduce using rule 78 (assignment_stmt)
 
 
+State 177
+
+   79 assignment_stmt: expr REFS expr •
+
+    $default  reduce using rule 79 (assignment_stmt)
+
+
+State 178
+
+   93 assignment: inline_if '=' assignment •
+
+    $default  reduce using rule 93 (assignment)
+
+
 State 179
 
-   92 assignment: inline_if '=' assignment •
+  100 logical_or: logical_or OR logical_and •
+  102 logical_and: logical_and • AND bitwise_or
 
-    $default  reduce using rule 92 (assignment)
+    AND  shift, and go to state 117
+
+    $default  reduce using rule 100 (logical_or)
 
 
 State 180
 
-   99 logical_or: logical_or OR logical_and •
-  101 logical_and: logical_and • AND bitwise_or
+  102 logical_and: logical_and AND bitwise_or •
+  104 bitwise_or: bitwise_or • '|' bitwise_xor
 
-    AND  shift, and go to state 118
+    '|'  shift, and go to state 118
 
-    $default  reduce using rule 99 (logical_or)
+    $default  reduce using rule 102 (logical_and)
 
 
 State 181
 
-  101 logical_and: logical_and AND bitwise_or •
-  103 bitwise_or: bitwise_or • '|' bitwise_xor
+  104 bitwise_or: bitwise_or '|' bitwise_xor •
+  106 bitwise_xor: bitwise_xor • '^' bitwise_and
 
-    '|'  shift, and go to state 119
+    '^'  shift, and go to state 119
 
-    $default  reduce using rule 101 (logical_and)
+    $default  reduce using rule 104 (bitwise_or)
 
 
 State 182
 
-  103 bitwise_or: bitwise_or '|' bitwise_xor •
-  105 bitwise_xor: bitwise_xor • '^' bitwise_and
+  106 bitwise_xor: bitwise_xor '^' bitwise_and •
+  108 bitwise_and: bitwise_and • '&' equality
 
-    '^'  shift, and go to state 120
+    '&'  shift, and go to state 120
 
-    $default  reduce using rule 103 (bitwise_or)
+    $default  reduce using rule 106 (bitwise_xor)
 
 
 State 183
 
-  105 bitwise_xor: bitwise_xor '^' bitwise_and •
-  107 bitwise_and: bitwise_and • '&' equality
+  108 bitwise_and: bitwise_and '&' equality •
+  110 equality: equality • EQ relational
+  111         | equality • NE relational
 
-    '&'  shift, and go to state 121
+    EQ  shift, and go to state 121
+    NE  shift, and go to state 122
 
-    $default  reduce using rule 105 (bitwise_xor)
+    $default  reduce using rule 108 (bitwise_and)
 
 
 State 184
 
-  107 bitwise_and: bitwise_and '&' equality •
-  109 equality: equality • EQ relational
-  110         | equality • NE relational
+  110 equality: equality EQ relational •
+  113 relational: relational • LE sum
+  114           | relational • GE sum
+  115           | relational • '<' sum
+  116           | relational • '>' sum
 
-    EQ  shift, and go to state 122
-    NE  shift, and go to state 123
-
-    $default  reduce using rule 107 (bitwise_and)
-
-
-State 185
-
-  109 equality: equality EQ relational •
-  112 relational: relational • LE sum
-  113           | relational • GE sum
-  114           | relational • '<' sum
-  115           | relational • '>' sum
-
-    LE   shift, and go to state 124
-    GE   shift, and go to state 125
-    '<'  shift, and go to state 126
-    '>'  shift, and go to state 127
-
-    $default  reduce using rule 109 (equality)
-
-
-State 186
-
-  110 equality: equality NE relational •
-  112 relational: relational • LE sum
-  113           | relational • GE sum
-  114           | relational • '<' sum
-  115           | relational • '>' sum
-
-    LE   shift, and go to state 124
-    GE   shift, and go to state 125
-    '<'  shift, and go to state 126
-    '>'  shift, and go to state 127
+    LE   shift, and go to state 123
+    GE   shift, and go to state 124
+    '<'  shift, and go to state 125
+    '>'  shift, and go to state 126
 
     $default  reduce using rule 110 (equality)
 
 
-State 187
+State 185
 
-  112 relational: relational LE sum •
-  117 sum: sum • '+' bitwise_shift
-  118    | sum • '-' bitwise_shift
+  111 equality: equality NE relational •
+  113 relational: relational • LE sum
+  114           | relational • GE sum
+  115           | relational • '<' sum
+  116           | relational • '>' sum
 
-    '+'  shift, and go to state 128
-    '-'  shift, and go to state 129
+    LE   shift, and go to state 123
+    GE   shift, and go to state 124
+    '<'  shift, and go to state 125
+    '>'  shift, and go to state 126
 
-    '+'       [reduce using rule 112 (relational)]
-    '-'       [reduce using rule 112 (relational)]
-    $default  reduce using rule 112 (relational)
+    $default  reduce using rule 111 (equality)
 
 
-State 188
+State 186
 
-  113 relational: relational GE sum •
-  117 sum: sum • '+' bitwise_shift
-  118    | sum • '-' bitwise_shift
+  113 relational: relational LE sum •
+  118 sum: sum • '+' bitwise_shift
+  119    | sum • '-' bitwise_shift
 
-    '+'  shift, and go to state 128
-    '-'  shift, and go to state 129
+    '+'  shift, and go to state 127
+    '-'  shift, and go to state 128
 
     '+'       [reduce using rule 113 (relational)]
     '-'       [reduce using rule 113 (relational)]
     $default  reduce using rule 113 (relational)
 
 
-State 189
+State 187
 
-  114 relational: relational '<' sum •
-  117 sum: sum • '+' bitwise_shift
-  118    | sum • '-' bitwise_shift
+  114 relational: relational GE sum •
+  118 sum: sum • '+' bitwise_shift
+  119    | sum • '-' bitwise_shift
 
-    '+'  shift, and go to state 128
-    '-'  shift, and go to state 129
+    '+'  shift, and go to state 127
+    '-'  shift, and go to state 128
 
     '+'       [reduce using rule 114 (relational)]
     '-'       [reduce using rule 114 (relational)]
     $default  reduce using rule 114 (relational)
 
 
-State 190
+State 188
 
-  115 relational: relational '>' sum •
-  117 sum: sum • '+' bitwise_shift
-  118    | sum • '-' bitwise_shift
+  115 relational: relational '<' sum •
+  118 sum: sum • '+' bitwise_shift
+  119    | sum • '-' bitwise_shift
 
-    '+'  shift, and go to state 128
-    '-'  shift, and go to state 129
+    '+'  shift, and go to state 127
+    '-'  shift, and go to state 128
 
     '+'       [reduce using rule 115 (relational)]
     '-'       [reduce using rule 115 (relational)]
     $default  reduce using rule 115 (relational)
 
 
-State 191
+State 189
 
-  117 sum: sum '+' bitwise_shift •
-  120 bitwise_shift: bitwise_shift • LSHIFT term
-  121              | bitwise_shift • RSHIFT term
+  116 relational: relational '>' sum •
+  118 sum: sum • '+' bitwise_shift
+  119    | sum • '-' bitwise_shift
 
-    LSHIFT  shift, and go to state 130
-    RSHIFT  shift, and go to state 131
+    '+'  shift, and go to state 127
+    '-'  shift, and go to state 128
 
-    $default  reduce using rule 117 (sum)
+    '+'       [reduce using rule 116 (relational)]
+    '-'       [reduce using rule 116 (relational)]
+    $default  reduce using rule 116 (relational)
 
 
-State 192
+State 190
 
-  118 sum: sum '-' bitwise_shift •
-  120 bitwise_shift: bitwise_shift • LSHIFT term
-  121              | bitwise_shift • RSHIFT term
+  118 sum: sum '+' bitwise_shift •
+  121 bitwise_shift: bitwise_shift • LSHIFT term
+  122              | bitwise_shift • RSHIFT term
 
-    LSHIFT  shift, and go to state 130
-    RSHIFT  shift, and go to state 131
+    LSHIFT  shift, and go to state 129
+    RSHIFT  shift, and go to state 130
 
     $default  reduce using rule 118 (sum)
 
 
-State 193
+State 191
 
-  120 bitwise_shift: bitwise_shift LSHIFT term •
-  123 term: term • '*' prefix_op
-  124     | term • '/' prefix_op
-  125     | term • '%' prefix_op
+  119 sum: sum '-' bitwise_shift •
+  121 bitwise_shift: bitwise_shift • LSHIFT term
+  122              | bitwise_shift • RSHIFT term
 
-    '*'  shift, and go to state 132
-    '/'  shift, and go to state 133
-    '%'  shift, and go to state 134
+    LSHIFT  shift, and go to state 129
+    RSHIFT  shift, and go to state 130
 
-    $default  reduce using rule 120 (bitwise_shift)
+    $default  reduce using rule 119 (sum)
 
 
-State 194
+State 192
 
-  121 bitwise_shift: bitwise_shift RSHIFT term •
-  123 term: term • '*' prefix_op
-  124     | term • '/' prefix_op
-  125     | term • '%' prefix_op
+  121 bitwise_shift: bitwise_shift LSHIFT term •
+  124 term: term • '*' prefix_op
+  125     | term • '/' prefix_op
+  126     | term • '%' prefix_op
 
-    '*'  shift, and go to state 132
-    '/'  shift, and go to state 133
-    '%'  shift, and go to state 134
+    '*'  shift, and go to state 131
+    '/'  shift, and go to state 132
+    '%'  shift, and go to state 133
 
     $default  reduce using rule 121 (bitwise_shift)
 
 
-State 195
+State 193
 
-  123 term: term '*' prefix_op •
+  122 bitwise_shift: bitwise_shift RSHIFT term •
+  124 term: term • '*' prefix_op
+  125     | term • '/' prefix_op
+  126     | term • '%' prefix_op
 
-    $default  reduce using rule 123 (term)
+    '*'  shift, and go to state 131
+    '/'  shift, and go to state 132
+    '%'  shift, and go to state 133
+
+    $default  reduce using rule 122 (bitwise_shift)
 
 
-State 196
+State 194
 
-  124 term: term '/' prefix_op •
+  124 term: term '*' prefix_op •
 
     $default  reduce using rule 124 (term)
 
 
-State 197
+State 195
 
-  125 term: term '%' prefix_op •
+  125 term: term '/' prefix_op •
 
     $default  reduce using rule 125 (term)
 
 
+State 196
+
+  126 term: term '%' prefix_op •
+
+    $default  reduce using rule 126 (term)
+
+
+State 197
+
+  134 primary: primary '(' ')' •
+
+    $default  reduce using rule 134 (primary)
+
+
 State 198
 
-  133 primary: primary '(' ')' •
+  148 expr_list: expr • ',' expr_list
+  149          | expr •
 
-    $default  reduce using rule 133 (primary)
+    ','  shift, and go to state 237
+
+    $default  reduce using rule 149 (expr_list)
 
 
 State 199
 
-  147 expr_list: expr • ',' expr_list
-  148          | expr •
-
-    ','  shift, and go to state 237
-
-    $default  reduce using rule 148 (expr_list)
-
-
-State 200
-
-  132 primary: primary '(' expr_list • ')'
+  133 primary: primary '(' expr_list • ')'
 
     ')'  shift, and go to state 238
 
 
-State 201
+State 200
 
-  135 primary: primary '.' IDENTIFIER •
-
-    $default  reduce using rule 135 (primary)
-
-
-State 202
-
-  134 primary: primary '[' expr • ']'
-
-    ']'  shift, and go to state 239
-
-
-State 203
-
-  136 primary: primary ':' IDENTIFIER •
+  136 primary: primary '.' IDENTIFIER •
 
     $default  reduce using rule 136 (primary)
 
 
-State 204
+State 201
+
+  135 primary: primary '[' expr • ']'
+
+    ']'  shift, and go to state 239
+
+
+State 202
+
+  137 primary: primary ':' IDENTIFIER •
+
+    $default  reduce using rule 137 (primary)
+
+
+State 203
 
    17 module_path_compact: IDENTIFIER '.' module_path_compact •
 
     $default  reduce using rule 17 (module_path_compact)
 
 
-State 205
+State 204
 
    11 import_stmt: IMPORT module_path AS IDENTIFIER •
 
     $default  reduce using rule 11 (import_stmt)
 
 
-State 206
+State 205
 
    20 export_item_list: export_item ',' export_item_list •
 
     $default  reduce using rule 20 (export_item_list)
 
 
-State 207
+State 206
 
    22 export_item: expr AS IDENTIFIER •
 
     $default  reduce using rule 22 (export_item)
 
 
-State 208
+State 207
 
    24 identifier_item_list: IDENTIFIER ',' identifier_item_list •
 
     $default  reduce using rule 24 (identifier_item_list)
 
 
-State 209
+State 208
 
    27 function_stmt: FUNCTION IDENTIFIER '(' ')' • block_stmt
 
@@ -3815,14 +3812,14 @@ State 209
     block_stmt  go to state 240
 
 
-State 210
+State 209
 
    26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list • ')' block_stmt
 
     ')'  shift, and go to state 241
 
 
-State 211
+State 210
 
    37 member_item: IDENTIFIER • '(' ')'
    38            | IDENTIFIER •
@@ -3832,301 +3829,144 @@ State 211
     $default  reduce using rule 38 (member_item)
 
 
-State 212
+State 211
 
    34 type_stmt: TYPE IDENTIFIER '{' member_list • '}'
-   35 member_list: member_list • ',' member_item
 
     '}'  shift, and go to state 243
+
+
+State 212
+
+   35 member_list: member_item • ',' member_list
+   36            | member_item •
+
     ','  shift, and go to state 244
+
+    $default  reduce using rule 36 (member_list)
 
 
 State 213
 
-   36 member_list: member_item •
+   40 method_stmt: METHOD IDENTIFIER '(' ')' • OF IDENTIFIER block_stmt
 
-    $default  reduce using rule 36 (member_list)
+    OF  shift, and go to state 245
 
 
 State 214
 
    39 method_stmt: METHOD IDENTIFIER '(' parameter_list • ')' OF IDENTIFIER block_stmt
 
-    ')'  shift, and go to state 245
+    ')'  shift, and go to state 246
 
 
 State 215
-
-   41 constructor_stmt: CONSTRUCTOR OF IDENTIFIER block_stmt •
-
-    $default  reduce using rule 41 (constructor_stmt)
-
-
-State 216
 
    30 parameter_item: COPY IDENTIFIER •
 
     $default  reduce using rule 30 (parameter_item)
 
 
-State 217
+State 216
 
    31 parameter_item: REF IDENTIFIER •
 
     $default  reduce using rule 31 (parameter_item)
 
 
-State 218
+State 217
 
    32 parameter_item: PASS IDENTIFIER •
 
     $default  reduce using rule 32 (parameter_item)
 
 
+State 218
+
+   42 constructor_stmt: CONSTRUCTOR '(' ')' OF • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 247
+
+
 State 219
 
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' • OF IDENTIFIER block_stmt
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' • OF IDENTIFIER block_stmt
 
-    OF  shift, and go to state 246
+    OF  shift, and go to state 248
 
 
 State 220
 
    28 parameter_list: parameter_item ',' • parameter_list
 
-    IDENTIFIER  shift, and go to state 150
-    COPY        shift, and go to state 151
-    REF         shift, and go to state 152
-    PASS        shift, and go to state 153
+    IDENTIFIER  shift, and go to state 148
+    COPY        shift, and go to state 149
+    REF         shift, and go to state 150
+    PASS        shift, and go to state 151
 
-    parameter_list  go to state 247
-    parameter_item  go to state 155
+    parameter_list  go to state 249
+    parameter_item  go to state 154
 
 
 State 221
 
-   42 destructor_stmt: DESTRUCTOR OF IDENTIFIER block_stmt •
+   43 destructor_stmt: DESTRUCTOR OF IDENTIFIER block_stmt •
 
-    $default  reduce using rule 42 (destructor_stmt)
+    $default  reduce using rule 43 (destructor_stmt)
 
 
 State 222
 
-   89 assignment_item: IDENTIFIER '=' expr •
+   90 assignment_item: IDENTIFIER '=' expr •
 
-    $default  reduce using rule 89 (assignment_item)
+    $default  reduce using rule 90 (assignment_item)
 
 
 State 223
 
-   87 assignment_item_list: assignment_item ',' assignment_item_list •
+   88 assignment_item_list: assignment_item ',' assignment_item_list •
 
-    $default  reduce using rule 87 (assignment_item_list)
+    $default  reduce using rule 88 (assignment_item_list)
 
 
 State 224
 
-   84 catch_item: CATCH expr • AS IDENTIFIER block_stmt
+   85 catch_item: CATCH expr • AS IDENTIFIER block_stmt
 
-    AS  shift, and go to state 248
+    AS  shift, and go to state 250
 
 
 State 225
 
-   80 try_catch_stmt: TRY block_stmt FINALLY CATCH • AS IDENTIFIER block_stmt
+   81 try_catch_stmt: TRY block_stmt FINALLY CATCH • AS IDENTIFIER block_stmt
 
-    AS  shift, and go to state 249
+    AS  shift, and go to state 251
 
 
 State 226
 
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY • CATCH AS IDENTIFIER block_stmt
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY • CATCH AS IDENTIFIER block_stmt
 
-    CATCH  shift, and go to state 250
+    CATCH  shift, and go to state 252
 
 
 State 227
 
-   82 catch_item_list: catch_item catch_item_list •
+   83 catch_item_list: catch_item catch_item_list •
 
-    $default  reduce using rule 82 (catch_item_list)
+    $default  reduce using rule 83 (catch_item_list)
 
 
 State 228
 
-   85 signal_stmt: SIGNAL expr BECAUSE expr •
+   86 signal_stmt: SIGNAL expr BECAUSE expr •
 
-    $default  reduce using rule 85 (signal_stmt)
+    $default  reduce using rule 86 (signal_stmt)
 
 
 State 229
 
-   69 if_stmt: IF expr stmt ELSE • stmt
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    CONTINUE    shift, and go to state 18
-    BREAK       shift, and go to state 19
-    RETURN      shift, and go to state 20
-    VAR         shift, and go to state 21
-    TRY         shift, and go to state 22
-    SIGNAL      shift, and go to state 23
-    IF          shift, and go to state 24
-    WHILE       shift, and go to state 25
-    FOR         shift, and go to state 26
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '{'         shift, and go to state 30
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    stmt             go to state 251
-    block_stmt       go to state 44
-    while_stmt       go to state 45
-    for_stmt         go to state 46
-    if_stmt          go to state 47
-    continue_stmt    go to state 48
-    break_stmt       go to state 49
-    return_stmt      go to state 50
-    assignment_stmt  go to state 51
-    try_catch_stmt   go to state 52
-    signal_stmt      go to state 53
-    var_stmt         go to state 54
-    expr             go to state 55
-    assignment       go to state 56
-    inline_if        go to state 57
-    new              go to state 58
-    logical_or       go to state 59
-    logical_and      go to state 60
-    bitwise_or       go to state 61
-    bitwise_xor      go to state 62
-    bitwise_and      go to state 63
-    equality         go to state 64
-    relational       go to state 65
-    sum              go to state 66
-    bitwise_shift    go to state 67
-    term             go to state 68
-    prefix_op        go to state 69
-    primary          go to state 70
-    elementary       go to state 71
-    literal          go to state 72
-
-
-State 230
-
-   55 stmt: stmt • ';'
-   68 for_stmt: FOR ';' ';' stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 68 (for_stmt)]
-    $default  reduce using rule 68 (for_stmt)
-
-
-State 231
-
-   43 stmt: expr •
-   65 for_stmt: FOR ';' ';' expr • stmt
-   77 assignment_stmt: expr • COPIES expr
-   78                | expr • REFS expr
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    CONTINUE    shift, and go to state 18
-    BREAK       shift, and go to state 19
-    RETURN      shift, and go to state 20
-    VAR         shift, and go to state 21
-    TRY         shift, and go to state 22
-    SIGNAL      shift, and go to state 23
-    IF          shift, and go to state 24
-    WHILE       shift, and go to state 25
-    FOR         shift, and go to state 26
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    COPIES      shift, and go to state 114
-    REFS        shift, and go to state 115
-    '{'         shift, and go to state 30
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    BOOL        [reduce using rule 43 (stmt)]
-    CHAR        [reduce using rule 43 (stmt)]
-    INT         [reduce using rule 43 (stmt)]
-    FLOAT       [reduce using rule 43 (stmt)]
-    STRING      [reduce using rule 43 (stmt)]
-    IDENTIFIER  [reduce using rule 43 (stmt)]
-    NULLV       [reduce using rule 43 (stmt)]
-    CONTINUE    [reduce using rule 43 (stmt)]
-    BREAK       [reduce using rule 43 (stmt)]
-    RETURN      [reduce using rule 43 (stmt)]
-    VAR         [reduce using rule 43 (stmt)]
-    TRY         [reduce using rule 43 (stmt)]
-    SIGNAL      [reduce using rule 43 (stmt)]
-    IF          [reduce using rule 43 (stmt)]
-    WHILE       [reduce using rule 43 (stmt)]
-    FOR         [reduce using rule 43 (stmt)]
-    WHEN        [reduce using rule 43 (stmt)]
-    NEW         [reduce using rule 43 (stmt)]
-    NOT         [reduce using rule 43 (stmt)]
-    '{'         [reduce using rule 43 (stmt)]
-    '+'         [reduce using rule 43 (stmt)]
-    '-'         [reduce using rule 43 (stmt)]
-    '~'         [reduce using rule 43 (stmt)]
-    '('         [reduce using rule 43 (stmt)]
-    $default    reduce using rule 43 (stmt)
-
-    stmt             go to state 252
-    block_stmt       go to state 44
-    while_stmt       go to state 45
-    for_stmt         go to state 46
-    if_stmt          go to state 47
-    continue_stmt    go to state 48
-    break_stmt       go to state 49
-    return_stmt      go to state 50
-    assignment_stmt  go to state 51
-    try_catch_stmt   go to state 52
-    signal_stmt      go to state 53
-    var_stmt         go to state 54
-    expr             go to state 55
-    assignment       go to state 56
-    inline_if        go to state 57
-    new              go to state 58
-    logical_or       go to state 59
-    logical_and      go to state 60
-    bitwise_or       go to state 61
-    bitwise_xor      go to state 62
-    bitwise_and      go to state 63
-    equality         go to state 64
-    relational       go to state 65
-    sum              go to state 66
-    bitwise_shift    go to state 67
-    term             go to state 68
-    prefix_op        go to state 69
-    primary          go to state 70
-    elementary       go to state 71
-    literal          go to state 72
-
-
-State 232
-
-   62 for_stmt: FOR ';' expr ';' • expr stmt
-   66         | FOR ';' expr ';' • stmt
+   70 if_stmt: IF expr stmt ELSE • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4165,7 +4005,7 @@ State 232
     try_catch_stmt   go to state 52
     signal_stmt      go to state 53
     var_stmt         go to state 54
-    expr             go to state 254
+    expr             go to state 55
     assignment       go to state 56
     inline_if        go to state 57
     new              go to state 58
@@ -4185,10 +4025,113 @@ State 232
     literal          go to state 72
 
 
-State 233
+State 230
 
-   63 for_stmt: FOR expr ';' ';' • expr stmt
-   67         | FOR expr ';' ';' • stmt
+   56 stmt: stmt • ';'
+   69 for_stmt: FOR ';' ';' stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 69 (for_stmt)]
+    $default  reduce using rule 69 (for_stmt)
+
+
+State 231
+
+   44 stmt: expr •
+   66 for_stmt: FOR ';' ';' expr • stmt
+   78 assignment_stmt: expr • COPIES expr
+   79                | expr • REFS expr
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    CONTINUE    shift, and go to state 18
+    BREAK       shift, and go to state 19
+    RETURN      shift, and go to state 20
+    VAR         shift, and go to state 21
+    TRY         shift, and go to state 22
+    SIGNAL      shift, and go to state 23
+    IF          shift, and go to state 24
+    WHILE       shift, and go to state 25
+    FOR         shift, and go to state 26
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    COPIES      shift, and go to state 113
+    REFS        shift, and go to state 114
+    '{'         shift, and go to state 30
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    BOOL        [reduce using rule 44 (stmt)]
+    CHAR        [reduce using rule 44 (stmt)]
+    INT         [reduce using rule 44 (stmt)]
+    FLOAT       [reduce using rule 44 (stmt)]
+    STRING      [reduce using rule 44 (stmt)]
+    IDENTIFIER  [reduce using rule 44 (stmt)]
+    NULLV       [reduce using rule 44 (stmt)]
+    CONTINUE    [reduce using rule 44 (stmt)]
+    BREAK       [reduce using rule 44 (stmt)]
+    RETURN      [reduce using rule 44 (stmt)]
+    VAR         [reduce using rule 44 (stmt)]
+    TRY         [reduce using rule 44 (stmt)]
+    SIGNAL      [reduce using rule 44 (stmt)]
+    IF          [reduce using rule 44 (stmt)]
+    WHILE       [reduce using rule 44 (stmt)]
+    FOR         [reduce using rule 44 (stmt)]
+    WHEN        [reduce using rule 44 (stmt)]
+    NEW         [reduce using rule 44 (stmt)]
+    NOT         [reduce using rule 44 (stmt)]
+    '{'         [reduce using rule 44 (stmt)]
+    '+'         [reduce using rule 44 (stmt)]
+    '-'         [reduce using rule 44 (stmt)]
+    '~'         [reduce using rule 44 (stmt)]
+    '('         [reduce using rule 44 (stmt)]
+    $default    reduce using rule 44 (stmt)
+
+    stmt             go to state 254
+    block_stmt       go to state 44
+    while_stmt       go to state 45
+    for_stmt         go to state 46
+    if_stmt          go to state 47
+    continue_stmt    go to state 48
+    break_stmt       go to state 49
+    return_stmt      go to state 50
+    assignment_stmt  go to state 51
+    try_catch_stmt   go to state 52
+    signal_stmt      go to state 53
+    var_stmt         go to state 54
+    expr             go to state 55
+    assignment       go to state 56
+    inline_if        go to state 57
+    new              go to state 58
+    logical_or       go to state 59
+    logical_and      go to state 60
+    bitwise_or       go to state 61
+    bitwise_xor      go to state 62
+    bitwise_and      go to state 63
+    equality         go to state 64
+    relational       go to state 65
+    sum              go to state 66
+    bitwise_shift    go to state 67
+    term             go to state 68
+    prefix_op        go to state 69
+    primary          go to state 70
+    elementary       go to state 71
+    literal          go to state 72
+
+
+State 232
+
+   63 for_stmt: FOR ';' expr ';' • expr stmt
+   67         | FOR ';' expr ';' • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4247,202 +4190,10 @@ State 233
     literal          go to state 72
 
 
-State 234
+State 233
 
-   61 for_stmt: FOR expr ';' expr • ';' expr stmt
-   64         | FOR expr ';' expr • ';' stmt
-
-    ';'  shift, and go to state 257
-
-
-State 235
-
-   94 inline_if: WHEN new THEN new • ELSE new
-
-    ELSE  shift, and go to state 258
-
-
-State 236
-
-   96 new: NEW logical_or '(' expr_list • ')'
-
-    ')'  shift, and go to state 259
-
-
-State 237
-
-  147 expr_list: expr ',' • expr_list
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    expr           go to state 199
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
-    expr_list      go to state 260
-
-
-State 238
-
-  132 primary: primary '(' expr_list ')' •
-
-    $default  reduce using rule 132 (primary)
-
-
-State 239
-
-  134 primary: primary '[' expr ']' •
-
-    $default  reduce using rule 134 (primary)
-
-
-State 240
-
-   27 function_stmt: FUNCTION IDENTIFIER '(' ')' block_stmt •
-
-    $default  reduce using rule 27 (function_stmt)
-
-
-State 241
-
-   26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list ')' • block_stmt
-
-    '{'  shift, and go to state 30
-
-    block_stmt  go to state 261
-
-
-State 242
-
-   37 member_item: IDENTIFIER '(' • ')'
-
-    ')'  shift, and go to state 262
-
-
-State 243
-
-   34 type_stmt: TYPE IDENTIFIER '{' member_list '}' •
-
-    $default  reduce using rule 34 (type_stmt)
-
-
-State 244
-
-   35 member_list: member_list ',' • member_item
-
-    IDENTIFIER  shift, and go to state 211
-
-    member_item  go to state 263
-
-
-State 245
-
-   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' • OF IDENTIFIER block_stmt
-
-    OF  shift, and go to state 264
-
-
-State 246
-
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF • IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 265
-
-
-State 247
-
-   28 parameter_list: parameter_item ',' parameter_list •
-
-    $default  reduce using rule 28 (parameter_list)
-
-
-State 248
-
-   84 catch_item: CATCH expr AS • IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 266
-
-
-State 249
-
-   80 try_catch_stmt: TRY block_stmt FINALLY CATCH AS • IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 267
-
-
-State 250
-
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH • AS IDENTIFIER block_stmt
-
-    AS  shift, and go to state 268
-
-
-State 251
-
-   55 stmt: stmt • ';'
-   69 if_stmt: IF expr stmt ELSE stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 69 (if_stmt)]
-    $default  reduce using rule 69 (if_stmt)
-
-
-State 252
-
-   55 stmt: stmt • ';'
-   65 for_stmt: FOR ';' ';' expr stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 65 (for_stmt)]
-    $default  reduce using rule 65 (for_stmt)
-
-
-State 253
-
-   55 stmt: stmt • ';'
-   66 for_stmt: FOR ';' expr ';' stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 66 (for_stmt)]
-    $default  reduce using rule 66 (for_stmt)
-
-
-State 254
-
-   43 stmt: expr •
-   62 for_stmt: FOR ';' expr ';' expr • stmt
-   77 assignment_stmt: expr • COPIES expr
-   78                | expr • REFS expr
+   64 for_stmt: FOR expr ';' ';' • expr stmt
+   68         | FOR expr ';' ';' • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4463,41 +4214,13 @@ State 254
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
-    COPIES      shift, and go to state 114
-    REFS        shift, and go to state 115
     '{'         shift, and go to state 30
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    BOOL        [reduce using rule 43 (stmt)]
-    CHAR        [reduce using rule 43 (stmt)]
-    INT         [reduce using rule 43 (stmt)]
-    FLOAT       [reduce using rule 43 (stmt)]
-    STRING      [reduce using rule 43 (stmt)]
-    IDENTIFIER  [reduce using rule 43 (stmt)]
-    NULLV       [reduce using rule 43 (stmt)]
-    CONTINUE    [reduce using rule 43 (stmt)]
-    BREAK       [reduce using rule 43 (stmt)]
-    RETURN      [reduce using rule 43 (stmt)]
-    VAR         [reduce using rule 43 (stmt)]
-    TRY         [reduce using rule 43 (stmt)]
-    SIGNAL      [reduce using rule 43 (stmt)]
-    IF          [reduce using rule 43 (stmt)]
-    WHILE       [reduce using rule 43 (stmt)]
-    FOR         [reduce using rule 43 (stmt)]
-    WHEN        [reduce using rule 43 (stmt)]
-    NEW         [reduce using rule 43 (stmt)]
-    NOT         [reduce using rule 43 (stmt)]
-    '{'         [reduce using rule 43 (stmt)]
-    '+'         [reduce using rule 43 (stmt)]
-    '-'         [reduce using rule 43 (stmt)]
-    '~'         [reduce using rule 43 (stmt)]
-    '('         [reduce using rule 43 (stmt)]
-    $default    reduce using rule 43 (stmt)
-
-    stmt             go to state 269
+    stmt             go to state 257
     block_stmt       go to state 44
     while_stmt       go to state 45
     for_stmt         go to state 46
@@ -4509,7 +4232,7 @@ State 254
     try_catch_stmt   go to state 52
     signal_stmt      go to state 53
     var_stmt         go to state 54
-    expr             go to state 55
+    expr             go to state 258
     assignment       go to state 56
     inline_if        go to state 57
     new              go to state 58
@@ -4529,12 +4252,208 @@ State 254
     literal          go to state 72
 
 
+State 234
+
+   62 for_stmt: FOR expr ';' expr • ';' expr stmt
+   65         | FOR expr ';' expr • ';' stmt
+
+    ';'  shift, and go to state 259
+
+
+State 235
+
+   95 inline_if: WHEN new THEN new • ELSE new
+
+    ELSE  shift, and go to state 260
+
+
+State 236
+
+   97 new: NEW logical_or '(' expr_list • ')'
+
+    ')'  shift, and go to state 261
+
+
+State 237
+
+  148 expr_list: expr ',' • expr_list
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    expr           go to state 198
+    assignment     go to state 56
+    inline_if      go to state 57
+    new            go to state 58
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
+    expr_list      go to state 262
+
+
+State 238
+
+  133 primary: primary '(' expr_list ')' •
+
+    $default  reduce using rule 133 (primary)
+
+
+State 239
+
+  135 primary: primary '[' expr ']' •
+
+    $default  reduce using rule 135 (primary)
+
+
+State 240
+
+   27 function_stmt: FUNCTION IDENTIFIER '(' ')' block_stmt •
+
+    $default  reduce using rule 27 (function_stmt)
+
+
+State 241
+
+   26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list ')' • block_stmt
+
+    '{'  shift, and go to state 30
+
+    block_stmt  go to state 263
+
+
+State 242
+
+   37 member_item: IDENTIFIER '(' • ')'
+
+    ')'  shift, and go to state 264
+
+
+State 243
+
+   34 type_stmt: TYPE IDENTIFIER '{' member_list '}' •
+
+    $default  reduce using rule 34 (type_stmt)
+
+
+State 244
+
+   35 member_list: member_item ',' • member_list
+
+    IDENTIFIER  shift, and go to state 210
+
+    member_list  go to state 265
+    member_item  go to state 212
+
+
+State 245
+
+   40 method_stmt: METHOD IDENTIFIER '(' ')' OF • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 266
+
+
+State 246
+
+   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' • OF IDENTIFIER block_stmt
+
+    OF  shift, and go to state 267
+
+
+State 247
+
+   42 constructor_stmt: CONSTRUCTOR '(' ')' OF IDENTIFIER • block_stmt
+
+    '{'  shift, and go to state 30
+
+    block_stmt  go to state 268
+
+
+State 248
+
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 269
+
+
+State 249
+
+   28 parameter_list: parameter_item ',' parameter_list •
+
+    $default  reduce using rule 28 (parameter_list)
+
+
+State 250
+
+   85 catch_item: CATCH expr AS • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 270
+
+
+State 251
+
+   81 try_catch_stmt: TRY block_stmt FINALLY CATCH AS • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 271
+
+
+State 252
+
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH • AS IDENTIFIER block_stmt
+
+    AS  shift, and go to state 272
+
+
+State 253
+
+   56 stmt: stmt • ';'
+   70 if_stmt: IF expr stmt ELSE stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 70 (if_stmt)]
+    $default  reduce using rule 70 (if_stmt)
+
+
+State 254
+
+   56 stmt: stmt • ';'
+   66 for_stmt: FOR ';' ';' expr stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 66 (for_stmt)]
+    $default  reduce using rule 66 (for_stmt)
+
+
 State 255
 
-   55 stmt: stmt • ';'
-   67 for_stmt: FOR expr ';' ';' stmt •
+   56 stmt: stmt • ';'
+   67 for_stmt: FOR ';' expr ';' stmt •
 
-    ';'  shift, and go to state 113
+    ';'  shift, and go to state 112
 
     ';'       [reduce using rule 67 (for_stmt)]
     $default  reduce using rule 67 (for_stmt)
@@ -4542,10 +4461,10 @@ State 255
 
 State 256
 
-   43 stmt: expr •
-   63 for_stmt: FOR expr ';' ';' expr • stmt
-   77 assignment_stmt: expr • COPIES expr
-   78                | expr • REFS expr
+   44 stmt: expr •
+   63 for_stmt: FOR ';' expr ';' expr • stmt
+   78 assignment_stmt: expr • COPIES expr
+   79                | expr • REFS expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4566,41 +4485,41 @@ State 256
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
-    COPIES      shift, and go to state 114
-    REFS        shift, and go to state 115
+    COPIES      shift, and go to state 113
+    REFS        shift, and go to state 114
     '{'         shift, and go to state 30
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    BOOL        [reduce using rule 43 (stmt)]
-    CHAR        [reduce using rule 43 (stmt)]
-    INT         [reduce using rule 43 (stmt)]
-    FLOAT       [reduce using rule 43 (stmt)]
-    STRING      [reduce using rule 43 (stmt)]
-    IDENTIFIER  [reduce using rule 43 (stmt)]
-    NULLV       [reduce using rule 43 (stmt)]
-    CONTINUE    [reduce using rule 43 (stmt)]
-    BREAK       [reduce using rule 43 (stmt)]
-    RETURN      [reduce using rule 43 (stmt)]
-    VAR         [reduce using rule 43 (stmt)]
-    TRY         [reduce using rule 43 (stmt)]
-    SIGNAL      [reduce using rule 43 (stmt)]
-    IF          [reduce using rule 43 (stmt)]
-    WHILE       [reduce using rule 43 (stmt)]
-    FOR         [reduce using rule 43 (stmt)]
-    WHEN        [reduce using rule 43 (stmt)]
-    NEW         [reduce using rule 43 (stmt)]
-    NOT         [reduce using rule 43 (stmt)]
-    '{'         [reduce using rule 43 (stmt)]
-    '+'         [reduce using rule 43 (stmt)]
-    '-'         [reduce using rule 43 (stmt)]
-    '~'         [reduce using rule 43 (stmt)]
-    '('         [reduce using rule 43 (stmt)]
-    $default    reduce using rule 43 (stmt)
+    BOOL        [reduce using rule 44 (stmt)]
+    CHAR        [reduce using rule 44 (stmt)]
+    INT         [reduce using rule 44 (stmt)]
+    FLOAT       [reduce using rule 44 (stmt)]
+    STRING      [reduce using rule 44 (stmt)]
+    IDENTIFIER  [reduce using rule 44 (stmt)]
+    NULLV       [reduce using rule 44 (stmt)]
+    CONTINUE    [reduce using rule 44 (stmt)]
+    BREAK       [reduce using rule 44 (stmt)]
+    RETURN      [reduce using rule 44 (stmt)]
+    VAR         [reduce using rule 44 (stmt)]
+    TRY         [reduce using rule 44 (stmt)]
+    SIGNAL      [reduce using rule 44 (stmt)]
+    IF          [reduce using rule 44 (stmt)]
+    WHILE       [reduce using rule 44 (stmt)]
+    FOR         [reduce using rule 44 (stmt)]
+    WHEN        [reduce using rule 44 (stmt)]
+    NEW         [reduce using rule 44 (stmt)]
+    NOT         [reduce using rule 44 (stmt)]
+    '{'         [reduce using rule 44 (stmt)]
+    '+'         [reduce using rule 44 (stmt)]
+    '-'         [reduce using rule 44 (stmt)]
+    '~'         [reduce using rule 44 (stmt)]
+    '('         [reduce using rule 44 (stmt)]
+    $default    reduce using rule 44 (stmt)
 
-    stmt             go to state 270
+    stmt             go to state 273
     block_stmt       go to state 44
     while_stmt       go to state 45
     for_stmt         go to state 46
@@ -4634,216 +4553,21 @@ State 256
 
 State 257
 
-   61 for_stmt: FOR expr ';' expr ';' • expr stmt
-   64         | FOR expr ';' expr ';' • stmt
+   56 stmt: stmt • ';'
+   68 for_stmt: FOR expr ';' ';' stmt •
 
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    CONTINUE    shift, and go to state 18
-    BREAK       shift, and go to state 19
-    RETURN      shift, and go to state 20
-    VAR         shift, and go to state 21
-    TRY         shift, and go to state 22
-    SIGNAL      shift, and go to state 23
-    IF          shift, and go to state 24
-    WHILE       shift, and go to state 25
-    FOR         shift, and go to state 26
-    WHEN        shift, and go to state 27
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '{'         shift, and go to state 30
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
+    ';'  shift, and go to state 112
 
-    stmt             go to state 271
-    block_stmt       go to state 44
-    while_stmt       go to state 45
-    for_stmt         go to state 46
-    if_stmt          go to state 47
-    continue_stmt    go to state 48
-    break_stmt       go to state 49
-    return_stmt      go to state 50
-    assignment_stmt  go to state 51
-    try_catch_stmt   go to state 52
-    signal_stmt      go to state 53
-    var_stmt         go to state 54
-    expr             go to state 272
-    assignment       go to state 56
-    inline_if        go to state 57
-    new              go to state 58
-    logical_or       go to state 59
-    logical_and      go to state 60
-    bitwise_or       go to state 61
-    bitwise_xor      go to state 62
-    bitwise_and      go to state 63
-    equality         go to state 64
-    relational       go to state 65
-    sum              go to state 66
-    bitwise_shift    go to state 67
-    term             go to state 68
-    prefix_op        go to state 69
-    primary          go to state 70
-    elementary       go to state 71
-    literal          go to state 72
+    ';'       [reduce using rule 68 (for_stmt)]
+    $default  reduce using rule 68 (for_stmt)
 
 
 State 258
 
-   94 inline_if: WHEN new THEN new ELSE • new
-
-    BOOL        shift, and go to state 3
-    CHAR        shift, and go to state 4
-    INT         shift, and go to state 5
-    FLOAT       shift, and go to state 6
-    STRING      shift, and go to state 7
-    IDENTIFIER  shift, and go to state 8
-    NULLV       shift, and go to state 9
-    NEW         shift, and go to state 28
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
-    '('         shift, and go to state 34
-
-    new            go to state 273
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
-
-
-State 259
-
-   96 new: NEW logical_or '(' expr_list ')' •
-
-    $default  reduce using rule 96 (new)
-
-
-State 260
-
-  147 expr_list: expr ',' expr_list •
-
-    $default  reduce using rule 147 (expr_list)
-
-
-State 261
-
-   26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list ')' block_stmt •
-
-    $default  reduce using rule 26 (function_stmt)
-
-
-State 262
-
-   37 member_item: IDENTIFIER '(' ')' •
-
-    $default  reduce using rule 37 (member_item)
-
-
-State 263
-
-   35 member_list: member_list ',' member_item •
-
-    $default  reduce using rule 35 (member_list)
-
-
-State 264
-
-   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF • IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 274
-
-
-State 265
-
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER • block_stmt
-
-    '{'  shift, and go to state 30
-
-    block_stmt  go to state 275
-
-
-State 266
-
-   84 catch_item: CATCH expr AS IDENTIFIER • block_stmt
-
-    '{'  shift, and go to state 30
-
-    block_stmt  go to state 276
-
-
-State 267
-
-   80 try_catch_stmt: TRY block_stmt FINALLY CATCH AS IDENTIFIER • block_stmt
-
-    '{'  shift, and go to state 30
-
-    block_stmt  go to state 277
-
-
-State 268
-
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS • IDENTIFIER block_stmt
-
-    IDENTIFIER  shift, and go to state 278
-
-
-State 269
-
-   55 stmt: stmt • ';'
-   62 for_stmt: FOR ';' expr ';' expr stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 62 (for_stmt)]
-    $default  reduce using rule 62 (for_stmt)
-
-
-State 270
-
-   55 stmt: stmt • ';'
-   63 for_stmt: FOR expr ';' ';' expr stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 63 (for_stmt)]
-    $default  reduce using rule 63 (for_stmt)
-
-
-State 271
-
-   55 stmt: stmt • ';'
-   64 for_stmt: FOR expr ';' expr ';' stmt •
-
-    ';'  shift, and go to state 113
-
-    ';'       [reduce using rule 64 (for_stmt)]
-    $default  reduce using rule 64 (for_stmt)
-
-
-State 272
-
-   43 stmt: expr •
-   61 for_stmt: FOR expr ';' expr ';' expr • stmt
-   77 assignment_stmt: expr • COPIES expr
-   78                | expr • REFS expr
+   44 stmt: expr •
+   64 for_stmt: FOR expr ';' ';' expr • stmt
+   78 assignment_stmt: expr • COPIES expr
+   79                | expr • REFS expr
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4864,41 +4588,41 @@ State 272
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
-    COPIES      shift, and go to state 114
-    REFS        shift, and go to state 115
+    COPIES      shift, and go to state 113
+    REFS        shift, and go to state 114
     '{'         shift, and go to state 30
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    BOOL        [reduce using rule 43 (stmt)]
-    CHAR        [reduce using rule 43 (stmt)]
-    INT         [reduce using rule 43 (stmt)]
-    FLOAT       [reduce using rule 43 (stmt)]
-    STRING      [reduce using rule 43 (stmt)]
-    IDENTIFIER  [reduce using rule 43 (stmt)]
-    NULLV       [reduce using rule 43 (stmt)]
-    CONTINUE    [reduce using rule 43 (stmt)]
-    BREAK       [reduce using rule 43 (stmt)]
-    RETURN      [reduce using rule 43 (stmt)]
-    VAR         [reduce using rule 43 (stmt)]
-    TRY         [reduce using rule 43 (stmt)]
-    SIGNAL      [reduce using rule 43 (stmt)]
-    IF          [reduce using rule 43 (stmt)]
-    WHILE       [reduce using rule 43 (stmt)]
-    FOR         [reduce using rule 43 (stmt)]
-    WHEN        [reduce using rule 43 (stmt)]
-    NEW         [reduce using rule 43 (stmt)]
-    NOT         [reduce using rule 43 (stmt)]
-    '{'         [reduce using rule 43 (stmt)]
-    '+'         [reduce using rule 43 (stmt)]
-    '-'         [reduce using rule 43 (stmt)]
-    '~'         [reduce using rule 43 (stmt)]
-    '('         [reduce using rule 43 (stmt)]
-    $default    reduce using rule 43 (stmt)
+    BOOL        [reduce using rule 44 (stmt)]
+    CHAR        [reduce using rule 44 (stmt)]
+    INT         [reduce using rule 44 (stmt)]
+    FLOAT       [reduce using rule 44 (stmt)]
+    STRING      [reduce using rule 44 (stmt)]
+    IDENTIFIER  [reduce using rule 44 (stmt)]
+    NULLV       [reduce using rule 44 (stmt)]
+    CONTINUE    [reduce using rule 44 (stmt)]
+    BREAK       [reduce using rule 44 (stmt)]
+    RETURN      [reduce using rule 44 (stmt)]
+    VAR         [reduce using rule 44 (stmt)]
+    TRY         [reduce using rule 44 (stmt)]
+    SIGNAL      [reduce using rule 44 (stmt)]
+    IF          [reduce using rule 44 (stmt)]
+    WHILE       [reduce using rule 44 (stmt)]
+    FOR         [reduce using rule 44 (stmt)]
+    WHEN        [reduce using rule 44 (stmt)]
+    NEW         [reduce using rule 44 (stmt)]
+    NOT         [reduce using rule 44 (stmt)]
+    '{'         [reduce using rule 44 (stmt)]
+    '+'         [reduce using rule 44 (stmt)]
+    '-'         [reduce using rule 44 (stmt)]
+    '~'         [reduce using rule 44 (stmt)]
+    '('         [reduce using rule 44 (stmt)]
+    $default    reduce using rule 44 (stmt)
 
-    stmt             go to state 279
+    stmt             go to state 274
     block_stmt       go to state 44
     while_stmt       go to state 45
     for_stmt         go to state 46
@@ -4930,72 +4654,393 @@ State 272
     literal          go to state 72
 
 
-State 273
+State 259
 
-   94 inline_if: WHEN new THEN new ELSE new •
+   62 for_stmt: FOR expr ';' expr ';' • expr stmt
+   65         | FOR expr ';' expr ';' • stmt
 
-    $default  reduce using rule 94 (inline_if)
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    CONTINUE    shift, and go to state 18
+    BREAK       shift, and go to state 19
+    RETURN      shift, and go to state 20
+    VAR         shift, and go to state 21
+    TRY         shift, and go to state 22
+    SIGNAL      shift, and go to state 23
+    IF          shift, and go to state 24
+    WHILE       shift, and go to state 25
+    FOR         shift, and go to state 26
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '{'         shift, and go to state 30
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    stmt             go to state 275
+    block_stmt       go to state 44
+    while_stmt       go to state 45
+    for_stmt         go to state 46
+    if_stmt          go to state 47
+    continue_stmt    go to state 48
+    break_stmt       go to state 49
+    return_stmt      go to state 50
+    assignment_stmt  go to state 51
+    try_catch_stmt   go to state 52
+    signal_stmt      go to state 53
+    var_stmt         go to state 54
+    expr             go to state 276
+    assignment       go to state 56
+    inline_if        go to state 57
+    new              go to state 58
+    logical_or       go to state 59
+    logical_and      go to state 60
+    bitwise_or       go to state 61
+    bitwise_xor      go to state 62
+    bitwise_and      go to state 63
+    equality         go to state 64
+    relational       go to state 65
+    sum              go to state 66
+    bitwise_shift    go to state 67
+    term             go to state 68
+    prefix_op        go to state 69
+    primary          go to state 70
+    elementary       go to state 71
+    literal          go to state 72
 
 
-State 274
+State 260
 
-   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF IDENTIFIER • block_stmt
+   95 inline_if: WHEN new THEN new ELSE • new
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    new            go to state 277
+    logical_or     go to state 59
+    logical_and    go to state 60
+    bitwise_or     go to state 61
+    bitwise_xor    go to state 62
+    bitwise_and    go to state 63
+    equality       go to state 64
+    relational     go to state 65
+    sum            go to state 66
+    bitwise_shift  go to state 67
+    term           go to state 68
+    prefix_op      go to state 69
+    primary        go to state 70
+    elementary     go to state 71
+    literal        go to state 72
+
+
+State 261
+
+   97 new: NEW logical_or '(' expr_list ')' •
+
+    $default  reduce using rule 97 (new)
+
+
+State 262
+
+  148 expr_list: expr ',' expr_list •
+
+    $default  reduce using rule 148 (expr_list)
+
+
+State 263
+
+   26 function_stmt: FUNCTION IDENTIFIER '(' parameter_list ')' block_stmt •
+
+    $default  reduce using rule 26 (function_stmt)
+
+
+State 264
+
+   37 member_item: IDENTIFIER '(' ')' •
+
+    $default  reduce using rule 37 (member_item)
+
+
+State 265
+
+   35 member_list: member_item ',' member_list •
+
+    $default  reduce using rule 35 (member_list)
+
+
+State 266
+
+   40 method_stmt: METHOD IDENTIFIER '(' ')' OF IDENTIFIER • block_stmt
+
+    '{'  shift, and go to state 30
+
+    block_stmt  go to state 278
+
+
+State 267
+
+   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 279
+
+
+State 268
+
+   42 constructor_stmt: CONSTRUCTOR '(' ')' OF IDENTIFIER block_stmt •
+
+    $default  reduce using rule 42 (constructor_stmt)
+
+
+State 269
+
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER • block_stmt
 
     '{'  shift, and go to state 30
 
     block_stmt  go to state 280
 
 
-State 275
+State 270
 
-   40 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER block_stmt •
-
-    $default  reduce using rule 40 (constructor_stmt)
-
-
-State 276
-
-   84 catch_item: CATCH expr AS IDENTIFIER block_stmt •
-
-    $default  reduce using rule 84 (catch_item)
-
-
-State 277
-
-   80 try_catch_stmt: TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt •
-
-    $default  reduce using rule 80 (try_catch_stmt)
-
-
-State 278
-
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER • block_stmt
+   85 catch_item: CATCH expr AS IDENTIFIER • block_stmt
 
     '{'  shift, and go to state 30
 
     block_stmt  go to state 281
 
 
+State 271
+
+   81 try_catch_stmt: TRY block_stmt FINALLY CATCH AS IDENTIFIER • block_stmt
+
+    '{'  shift, and go to state 30
+
+    block_stmt  go to state 282
+
+
+State 272
+
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS • IDENTIFIER block_stmt
+
+    IDENTIFIER  shift, and go to state 283
+
+
+State 273
+
+   56 stmt: stmt • ';'
+   63 for_stmt: FOR ';' expr ';' expr stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 63 (for_stmt)]
+    $default  reduce using rule 63 (for_stmt)
+
+
+State 274
+
+   56 stmt: stmt • ';'
+   64 for_stmt: FOR expr ';' ';' expr stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 64 (for_stmt)]
+    $default  reduce using rule 64 (for_stmt)
+
+
+State 275
+
+   56 stmt: stmt • ';'
+   65 for_stmt: FOR expr ';' expr ';' stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 65 (for_stmt)]
+    $default  reduce using rule 65 (for_stmt)
+
+
+State 276
+
+   44 stmt: expr •
+   62 for_stmt: FOR expr ';' expr ';' expr • stmt
+   78 assignment_stmt: expr • COPIES expr
+   79                | expr • REFS expr
+
+    BOOL        shift, and go to state 3
+    CHAR        shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    STRING      shift, and go to state 7
+    IDENTIFIER  shift, and go to state 8
+    NULLV       shift, and go to state 9
+    CONTINUE    shift, and go to state 18
+    BREAK       shift, and go to state 19
+    RETURN      shift, and go to state 20
+    VAR         shift, and go to state 21
+    TRY         shift, and go to state 22
+    SIGNAL      shift, and go to state 23
+    IF          shift, and go to state 24
+    WHILE       shift, and go to state 25
+    FOR         shift, and go to state 26
+    WHEN        shift, and go to state 27
+    NEW         shift, and go to state 28
+    NOT         shift, and go to state 29
+    COPIES      shift, and go to state 113
+    REFS        shift, and go to state 114
+    '{'         shift, and go to state 30
+    '+'         shift, and go to state 31
+    '-'         shift, and go to state 32
+    '~'         shift, and go to state 33
+    '('         shift, and go to state 34
+
+    BOOL        [reduce using rule 44 (stmt)]
+    CHAR        [reduce using rule 44 (stmt)]
+    INT         [reduce using rule 44 (stmt)]
+    FLOAT       [reduce using rule 44 (stmt)]
+    STRING      [reduce using rule 44 (stmt)]
+    IDENTIFIER  [reduce using rule 44 (stmt)]
+    NULLV       [reduce using rule 44 (stmt)]
+    CONTINUE    [reduce using rule 44 (stmt)]
+    BREAK       [reduce using rule 44 (stmt)]
+    RETURN      [reduce using rule 44 (stmt)]
+    VAR         [reduce using rule 44 (stmt)]
+    TRY         [reduce using rule 44 (stmt)]
+    SIGNAL      [reduce using rule 44 (stmt)]
+    IF          [reduce using rule 44 (stmt)]
+    WHILE       [reduce using rule 44 (stmt)]
+    FOR         [reduce using rule 44 (stmt)]
+    WHEN        [reduce using rule 44 (stmt)]
+    NEW         [reduce using rule 44 (stmt)]
+    NOT         [reduce using rule 44 (stmt)]
+    '{'         [reduce using rule 44 (stmt)]
+    '+'         [reduce using rule 44 (stmt)]
+    '-'         [reduce using rule 44 (stmt)]
+    '~'         [reduce using rule 44 (stmt)]
+    '('         [reduce using rule 44 (stmt)]
+    $default    reduce using rule 44 (stmt)
+
+    stmt             go to state 284
+    block_stmt       go to state 44
+    while_stmt       go to state 45
+    for_stmt         go to state 46
+    if_stmt          go to state 47
+    continue_stmt    go to state 48
+    break_stmt       go to state 49
+    return_stmt      go to state 50
+    assignment_stmt  go to state 51
+    try_catch_stmt   go to state 52
+    signal_stmt      go to state 53
+    var_stmt         go to state 54
+    expr             go to state 55
+    assignment       go to state 56
+    inline_if        go to state 57
+    new              go to state 58
+    logical_or       go to state 59
+    logical_and      go to state 60
+    bitwise_or       go to state 61
+    bitwise_xor      go to state 62
+    bitwise_and      go to state 63
+    equality         go to state 64
+    relational       go to state 65
+    sum              go to state 66
+    bitwise_shift    go to state 67
+    term             go to state 68
+    prefix_op        go to state 69
+    primary          go to state 70
+    elementary       go to state 71
+    literal          go to state 72
+
+
+State 277
+
+   95 inline_if: WHEN new THEN new ELSE new •
+
+    $default  reduce using rule 95 (inline_if)
+
+
+State 278
+
+   40 method_stmt: METHOD IDENTIFIER '(' ')' OF IDENTIFIER block_stmt •
+
+    $default  reduce using rule 40 (method_stmt)
+
+
 State 279
 
-   55 stmt: stmt • ';'
-   61 for_stmt: FOR expr ';' expr ';' expr stmt •
+   39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF IDENTIFIER • block_stmt
 
-    ';'  shift, and go to state 113
+    '{'  shift, and go to state 30
 
-    ';'       [reduce using rule 61 (for_stmt)]
-    $default  reduce using rule 61 (for_stmt)
+    block_stmt  go to state 285
 
 
 State 280
+
+   41 constructor_stmt: CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER block_stmt •
+
+    $default  reduce using rule 41 (constructor_stmt)
+
+
+State 281
+
+   85 catch_item: CATCH expr AS IDENTIFIER block_stmt •
+
+    $default  reduce using rule 85 (catch_item)
+
+
+State 282
+
+   81 try_catch_stmt: TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt •
+
+    $default  reduce using rule 81 (try_catch_stmt)
+
+
+State 283
+
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER • block_stmt
+
+    '{'  shift, and go to state 30
+
+    block_stmt  go to state 286
+
+
+State 284
+
+   56 stmt: stmt • ';'
+   62 for_stmt: FOR expr ';' expr ';' expr stmt •
+
+    ';'  shift, and go to state 112
+
+    ';'       [reduce using rule 62 (for_stmt)]
+    $default  reduce using rule 62 (for_stmt)
+
+
+State 285
 
    39 method_stmt: METHOD IDENTIFIER '(' parameter_list ')' OF IDENTIFIER block_stmt •
 
     $default  reduce using rule 39 (method_stmt)
 
 
-State 281
+State 286
 
-   79 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt •
+   80 try_catch_stmt: TRY block_stmt catch_item_list FINALLY CATCH AS IDENTIFIER block_stmt •
 
-    $default  reduce using rule 79 (try_catch_stmt)
+    $default  reduce using rule 80 (try_catch_stmt)

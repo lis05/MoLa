@@ -214,7 +214,7 @@ function_stmt:
         $$ = make(FUNCTION_STMT_NODE, FUNCTION_STMT_OPTION, $1, 3, $2, $4, $6);
     }
     | FUNCTION IDENTIFIER '(' ')' block_stmt {
-        $$ = make(FUNCTION_STMT_NODE, FUNCTION_STMT_OPTION, $1, 2, $2, $5);
+        $$ = make(FUNCTION_STMT_NODE, FUNCTION_STMT_OPTION, $1, 3, $2, NULL, $5);
     }
     ;
 
@@ -248,7 +248,7 @@ type_stmt:
     }
 
 member_list:
-    member_list ',' member_item {
+    member_item ',' member_list {
         $$ = make(MEMBER_LIST_NODE, LIST_RECURSIVE_OPTION, $1->lineno, 2, $1, $3);
     }
     | member_item {
@@ -268,6 +268,9 @@ member_item:
 method_stmt:
     METHOD IDENTIFIER '(' parameter_list ')' OF IDENTIFIER block_stmt {
         $$ = make(METHOD_STMT_NODE, DEFAULT_OPTION, $1, 4, $2, $4, $7, $8);
+    } 
+    | METHOD IDENTIFIER '(' ')' OF IDENTIFIER block_stmt {
+        $$ = make(METHOD_STMT_NODE, DEFAULT_OPTION, $1, 4, $2, NULL, $6, $7);
     }
     ;
 
@@ -275,8 +278,8 @@ constructor_stmt:
     CONSTRUCTOR '(' parameter_list ')' OF IDENTIFIER block_stmt {
         $$ = make(CONSTRUCTOR_STMT_NODE, DEFAULT_OPTION, $1, 3, $3, $6, $7);
     }
-    | CONSTRUCTOR OF IDENTIFIER block_stmt {
-        $$ = make(CONSTRUCTOR_STMT_NODE, DEFAULT_OPTION, $1, 2, $3, $4);
+    | CONSTRUCTOR '(' ')' OF IDENTIFIER block_stmt {
+        $$ = make(CONSTRUCTOR_STMT_NODE, DEFAULT_OPTION, $1, 3, NULL, $5, $6);
     }
     ;
 
