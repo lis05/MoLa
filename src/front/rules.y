@@ -387,7 +387,7 @@ if_stmt:
         $$ = make(IF_STMT_NODE, IF_WITH_ELSE_OPTION, $1, 3, $2, $3, $5);
     }
     | IF expr stmt {
-        $$ = make(IF_STMT_NODE, IF_WITHOUT_ELSE_OPTION, $1, 2, $2, $3);
+        $$ = make(IF_STMT_NODE, IF_WITHOUT_ELSE_OPTION, $1, 3, $2, $3, NULL);
     }
     ;
 

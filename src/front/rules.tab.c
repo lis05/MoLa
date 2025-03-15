@@ -2309,7 +2309,7 @@ yyreduce:
   case 72: /* if_stmt: IF expr stmt  */
 #line 389 "rules.y"
                    {
-        (yyval.node) = make(IF_STMT_NODE, IF_WITHOUT_ELSE_OPTION, (yyvsp[-2].num), 2, (yyvsp[-1].node), (yyvsp[0].node));
+        (yyval.node) = make(IF_STMT_NODE, IF_WITHOUT_ELSE_OPTION, (yyvsp[-2].num), 3, (yyvsp[-1].node), (yyvsp[0].node), NULL);
     }
 #line 2315 "rules.tab.c"
     break;

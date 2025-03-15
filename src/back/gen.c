@@ -254,6 +254,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
 
+        printf("\n");
         return;
     }
     case CREATE_VAR_IC : {
@@ -264,6 +265,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("name=");
         printIdent(instr->ident_arg1);
 
+        printf("\n");
         return;
     }
     case COPY_BY_VALUE_IC : {
@@ -271,6 +273,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
 
+        printf("\n");
         return;
     }
     case COPY_BY_REFERENCE_IC : {
@@ -278,6 +281,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
 
+        printf("\n");
         return;
     }
     case COPY_BY_AUTO_IC : {
@@ -1738,7 +1742,9 @@ static ilist gen_function_stmt(AstNode *node) {
 
     ilistAppend(&output, genInsCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
 
-    if (strcmp(name->string_value, "constructor") == 0 || strcmp(name->string_value, "destructor") == 0) {
+    char *name_str = symtabIdentToString(node->identifier_value);
+
+    if (strcmp(name_str, "constructor") == 0 || strcmp(name_str, "destructor") == 0) {
         // should print an error. however, i dont yet have a way to handle compile time errors
         // so let's lust set instruction flag as FAILURE, so that an error gets signalled during runtime
         output.tail->ins.flags = 1;    // failure
@@ -2250,11 +2256,71 @@ static ilist gen_for_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_if_stmt(AstNode *node) {}
+static ilist gen_if_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    AstNode *cond       = node->nodes[0];
+    AstNode *block      = node->nodes[1];
+    AstNode *else_block = node->nodes[2];
+
+    if (else_block != NULL) {
+        /*
+        >   if cond block else else_block
+
+        <   gen(cond)
+        <   JUMP_IF_FALSE REL@1
+        <   gen(block)
+        <   JUMP REL@2
+        1   gen(else_block)
+        2
+        */
+
+        ilist gen_cond       = gen(cond);
+        ilist gen_block      = gen(block);
+        ilist gen_else_block = gen(else_block);
+
+        ilistLink(&output, &gen_cond);
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), gen_block.size + 2));
+        ilistLink(&output, &gen_block);
+        ilistAppend(&output, genInsJUMP(info(node), gen_else_block.size + 1));
+        ilistLink(&output, &gen_else_block);
+
+        return output;
+    }
+
+    /*
+    >   if cond block
+
+    <   gen(cond)
+    <   JUMP_IF_FALSE REL@1
+    <   gen(block)
+    1
+    */
+
+    ilist gen_cond  = gen(cond);
+    ilist gen_block = gen(block);
+
+    ilistLink(&output, &gen_cond);
+    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), gen_block.size + 1));
+    ilistLink(&output, &gen_block);
+
+    return output;
+}
 
 static ilist gen_continue_stmt(AstNode *node) {
     ilist output = ilistCreate();
     ilist temp;
+
+    /*
+    >   continue
+
+    <   DESTROY_SCOPE
+        ...
+    <   DESTROY_SCOPE
+    <   JUMP REL@...?
+
+    */
 
     if (cvector_empty(ctx_open_scopes_since_loop)) {
         return output;
@@ -2274,6 +2340,16 @@ static ilist gen_break_stmt(AstNode *node) {
     ilist output = ilistCreate();
     ilist temp;
 
+    /*
+    >   break
+
+    <   DESTROY_SCOPE
+        ...
+    <   DESTROY_SCOPE
+    <   JUMP REL@...?
+
+    */
+
     if (cvector_empty(ctx_open_scopes_since_loop)) {
         return output;
     }
@@ -2288,9 +2364,81 @@ static ilist gen_break_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_return_stmt(AstNode *node) {}
+static ilist gen_return_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
 
-static ilist gen_assignment_stmt(AstNode *node) {}
+    if (!ctx_is_inside_function) {
+        return output;
+    }
+
+    /*
+    >   return mode expr
+
+    calling a function always creates an additional scope
+    which serves only one function: forbid parent access
+    therefore that scope will be destroyed, so SWAP is necessary
+
+    <   DESTROY_SCOPE
+        ...
+    <   DESTROY_SCOPE
+    <   gen(expr)
+    <   COPY_BY_mode // if mode != pass
+    <   SWAP
+    <   RETURN
+    */
+
+    for (int64_t i = 0; i < ctx_open_scopes_since_function; i++) {
+        ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+    }
+
+    temp = gen(node->nodes[0]);
+    ilistLink(&output, &temp);
+
+    if (node->option == RETURN_COPY_MODE_OPTION) {
+        ilistAppend(&output, genInsCOPY_BY_VALUE(info(node)));
+    }
+    else if (node->option == RETURN_REF_MODE_OPTION) {
+        ilistAppend(&output, genInsCOPY_BY_REFERENCE(info(node)));
+    }
+    else if (node->option == RETURN_AUTO_MODE_OPTION) {
+        ilistAppend(&output, genInsCOPY_BY_AUTO(info(node)));
+    }
+
+    ilistAppend(&output, genInsSWAP(info(node)));
+    ilistAppend(&output, genInsRETURN(info(node)));
+
+    return output;
+}
+
+static ilist gen_assignment_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp;
+
+    /*
+    >   a mode b
+
+    <   gen(b)
+    <   COPY_BY_mode
+    <   gen(a)
+    <   ASSIGNMENT
+    */
+
+    temp = gen(node->nodes[1]);
+    ilistLink(&output, &temp);
+
+    if (node->option == ASSIGNMENT_COPIES_OPTION) {
+        ilistAppend(&output, genInsCOPY_BY_VALUE(info(node)));
+    }
+    else {
+        ilistAppend(&output, genInsCOPY_BY_REFERENCE(info(node)));
+    }
+
+    ilistAppend(&output, genInsASSIGNMENT(info(node)));
+    ilistAppend(&output, genInsPOP(info(node)));
+
+    return output;
+}
 
 static ilist gen_try_catch_stmt(AstNode *node) {}
 

@@ -75,6 +75,7 @@ enum InstructionCode {
 #define PASS_MODE_FLAG (1ull << 61)
 #define AUTO_MODE_FLAG (1ull << 60)
 
+
 typedef struct Instruction {
     enum InstructionCode code;
     char                *filename;    // taken from the AST.

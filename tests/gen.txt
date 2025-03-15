@@ -1,1 +1,1 @@
-constructor () of y {}
+a refs b
