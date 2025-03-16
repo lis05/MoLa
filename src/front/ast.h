@@ -185,7 +185,7 @@ typedef struct AstNode {
         int64_t int_value;
         double  float_value;
         char   *string_value;
-        ident   identifier_value;
+        ident   ident_value;
     };
 } AstNode;
 

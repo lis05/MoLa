@@ -1,1 +1,14 @@
-a refs b
+function swap(pass a, pass b) {
+    var c = a;
+    a = b;
+    b = c;
+}
+
+function bubbleSort(array) {
+    for i = 0; i < array.size(); i = i + 1 {
+        for ii = 1; ii < array.size() - i; ii = ii + 1 {
+            if array[ii - 1] > array[ii] 
+                swap(array[ii - 1], array[ii]);
+        }
+    }
+}

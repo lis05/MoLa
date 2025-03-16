@@ -1269,7 +1269,7 @@ YY_RULE_SETUP
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, IDENTIFIER_OPTION, lineno, 0);
-                        yylval.node->identifier_value = symtabInsert(lex_symtab, yytext);
+                        yylval.node->ident_value = symtabInsert(lex_symtab, yytext);
                         return IDENTIFIER;                    
 }
 	YY_BREAK

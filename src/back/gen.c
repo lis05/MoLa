@@ -1232,7 +1232,8 @@ static void __inodeLink(inode *first, inode *second) {
 }
 
 void ilistLink(ilist *first, ilist *second) {
-    first->size += second->size;
+    first->size  += second->size;
+    second->size  = 0;
     if (first->head == NULL) {
         first->head  = second->head;
         first->tail  = second->tail;
@@ -1247,6 +1248,12 @@ void ilistLink(ilist *first, ilist *second) {
     __inodeLink(first->tail, second->head);
     first->tail  = second->tail;
     second->head = second->tail = NULL;
+}
+
+void ilistSwap(ilist *first, ilist *second) {
+    ilist temp = *first;
+    *first     = *second;
+    *second    = temp;
 }
 
 void ilistAppend(ilist *list, Instruction ins) {
@@ -1317,12 +1324,8 @@ static ilist gen_break_stmt(AstNode *node);
 static ilist gen_return_stmt(AstNode *node);
 static ilist gen_assignment_stmt(AstNode *node);
 static ilist gen_try_catch_stmt(AstNode *node);
-static ilist gen_catch_item_list(AstNode *node);
-static ilist gen_catch_item(AstNode *node);
 static ilist gen_signal_stmt(AstNode *node);
 static ilist gen_var_stmt(AstNode *node);
-static ilist gen_assignment_item_list(AstNode *node);
-static ilist gen_assignment_item(AstNode *node);
 static ilist gen_expr(AstNode *node);
 static ilist gen_assignment(AstNode *node);
 static ilist gen_inline_if(AstNode *node);
@@ -1350,7 +1353,7 @@ static ilist gen_identifier_list(AstNode *node);
 static ilist gen(AstNode *node) {
     assert(node != NULL);
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     switch (node->type) {
     case PROGRAM_NODE : {
@@ -1413,23 +1416,11 @@ static ilist gen(AstNode *node) {
     case TRY_CATCH_STMT_NODE : {
         return gen_try_catch_stmt(node);
     }
-    case CATCH_ITEM_LIST_NODE : {
-        return gen_catch_item_list(node);
-    }
-    case CATCH_ITEM_NODE : {
-        return gen_catch_item(node);
-    }
     case SIGNAL_STMT_NODE : {
         return gen_signal_stmt(node);
     }
     case VAR_STMT_NODE : {
         return gen_var_stmt(node);
-    }
-    case ASSIGNMENT_ITEM_LIST_NODE : {
-        return gen_assignment_item_list(node);
-    }
-    case ASSIGNMENT_ITEM_NODE : {
-        return gen_assignment_item(node);
     }
     case EXPR_NODE : {
         return gen_expr(node);
@@ -1513,7 +1504,7 @@ static cvector_vector_type(int64_t) ctx_open_scopes_since_loop = NULL;
 
 static ilist gen_program(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     switch (node->option) {
     case NO_OPTION : {
@@ -1581,7 +1572,7 @@ static void constructModulePath(AstNode *node, charvec *res) {
 
         while (body != NULL) {
             // a.b.c.d
-            char  *id = symtabIdentToString(body->nodes[0]->identifier_value);
+            char  *id = symtabIdentToString(body->nodes[0]->ident_value);
             size_t n  = strlen(id);
             for (size_t i = 0; i < n; i++) {
                 cvector_push_back(*res, id[i]);
@@ -1609,7 +1600,7 @@ static void constructModulePath(AstNode *node, charvec *res) {
 
 static ilist gen_import_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > IMPORT module_path AS IDENTIFIER
@@ -1623,14 +1614,14 @@ static ilist gen_import_stmt(AstNode *node) {
     constructModulePath(node->nodes[0], &module_path);
     cvector_push_back(module_path, '\0');    // for copying
 
-    ilistAppend(&output, genInsIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->identifier_value));
+    ilistAppend(&output, genInsIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->ident_value));
 
     return output;
 }
 
 static ilist gen_export_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > EXPORT e1 as n1, ..., ek as nk
@@ -1648,7 +1639,7 @@ static ilist gen_export_stmt(AstNode *node) {
         temp                 = gen(export_item->nodes[0]);
         ilistLink(&output, &temp);
 
-        ilistAppend(&output, genInsEXPORT_OBJECT(info(node), export_item->nodes[1]->identifier_value));
+        ilistAppend(&output, genInsEXPORT_OBJECT(info(node), export_item->nodes[1]->ident_value));
 
         if (list->n_nodes == 2) {
             list = list->nodes[1];
@@ -1663,7 +1654,7 @@ static ilist gen_export_stmt(AstNode *node) {
 
 static ilist gen_global_variable_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > GLOBAL a, b, c, d
@@ -1677,7 +1668,7 @@ static ilist gen_global_variable_stmt(AstNode *node) {
     while (list != NULL) {
         AstNode *global_item = list->nodes[0];
 
-        ilistAppend(&output, genInsCREATE_GLOBAL(info(node), global_item->identifier_value));
+        ilistAppend(&output, genInsCREATE_GLOBAL(info(node), global_item->ident_value));
 
         if (list->n_nodes == 2) {
             list = list->nodes[1];
@@ -1692,7 +1683,7 @@ static ilist gen_global_variable_stmt(AstNode *node) {
 
 static ilist gen_function_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > FUNCTION name '(' m1 p1 ... mn pn ')' block_stmt
@@ -1711,7 +1702,7 @@ static ilist gen_function_stmt(AstNode *node) {
     cvector_vector_type(ident) params = NULL;
     while (args != NULL) {
         struct AstNode *item  = args->nodes[0];
-        ident           value = item->nodes[0]->identifier_value;
+        ident           value = item->nodes[0]->ident_value;
 
         if (item->option == PARAM_COPY_MODE_OPTION) {
             value ^= COPY_MODE_FLAG;
@@ -1740,9 +1731,9 @@ static ilist gen_function_stmt(AstNode *node) {
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
-    ilistAppend(&output, genInsCREATE_FUNCTION(info(node), name->identifier_value, n_args, margs));
+    ilistAppend(&output, genInsCREATE_FUNCTION(info(node), name->ident_value, n_args, margs));
 
-    char *name_str = symtabIdentToString(node->identifier_value);
+    char *name_str = symtabIdentToString(node->ident_value);
 
     if (strcmp(name_str, "constructor") == 0 || strcmp(name_str, "destructor") == 0) {
         // should print an error. however, i dont yet have a way to handle compile time errors
@@ -1767,7 +1758,7 @@ static ilist gen_function_stmt(AstNode *node) {
 
 static ilist gen_type_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > type name {f1 ... fn m1 ... mk}
@@ -1785,10 +1776,10 @@ static ilist gen_type_stmt(AstNode *node) {
         AstNode *item = params->nodes[0];
 
         if (item->option == MEMBER_METHOD_OPTION) {
-            cvector_push_back(methods, item->nodes[0]->identifier_value);
+            cvector_push_back(methods, item->nodes[0]->ident_value);
         }
         else {
-            cvector_push_back(fields, item->nodes[0]->identifier_value);
+            cvector_push_back(fields, item->nodes[0]->ident_value);
         }
 
         if (params->n_nodes == 2) {
@@ -1806,7 +1797,7 @@ static ilist gen_type_stmt(AstNode *node) {
 
     ilistAppend(&output,
                 genInsCREATE_TYPE(info(node),
-                                  name->identifier_value,
+                                  name->ident_value,
                                   cvector_size(fields),
                                   fields_copy,
                                   cvector_size(methods),
@@ -1821,7 +1812,7 @@ extern Symtab *lex_symtab;
 
 static ilist gen_method_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > method name '(' m1 p1 ... mn pn ')' of type block_stmt
@@ -1844,7 +1835,7 @@ static ilist gen_method_stmt(AstNode *node) {
 
     while (args != NULL) {
         struct AstNode *item  = args->nodes[0];
-        ident           value = item->nodes[0]->identifier_value;
+        ident           value = item->nodes[0]->ident_value;
 
         if (item->option == PARAM_COPY_MODE_OPTION) {
             value ^= COPY_MODE_FLAG;
@@ -1873,9 +1864,9 @@ static ilist gen_method_stmt(AstNode *node) {
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
-    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+    ilistAppend(&output, genInsLOAD(info(node), type->ident_value));
 
-    ilistAppend(&output, genInsCREATE_METHOD(info(node), name->identifier_value, n_args, margs));
+    ilistAppend(&output, genInsCREATE_METHOD(info(node), name->ident_value, n_args, margs));
 
     ctx_is_inside_function         = 1;
     ctx_open_scopes_since_function = 0;
@@ -1894,7 +1885,7 @@ static ilist gen_method_stmt(AstNode *node) {
 
 static ilist gen_constructor_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > constructor '(' m1 p1 ... mn pn ')' of type block_stmt
@@ -1916,7 +1907,7 @@ static ilist gen_constructor_stmt(AstNode *node) {
 
     while (args != NULL) {
         struct AstNode *item  = args->nodes[0];
-        ident           value = item->nodes[0]->identifier_value;
+        ident           value = item->nodes[0]->ident_value;
 
         if (item->option == PARAM_COPY_MODE_OPTION) {
             value ^= COPY_MODE_FLAG;
@@ -1945,7 +1936,7 @@ static ilist gen_constructor_stmt(AstNode *node) {
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
-    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+    ilistAppend(&output, genInsLOAD(info(node), type->ident_value));
 
     ilistAppend(&output, genInsCREATE_METHOD(info(node), symtabInsert(lex_symtab, "constructor"), n_args, margs));
 
@@ -1966,7 +1957,7 @@ static ilist gen_constructor_stmt(AstNode *node) {
 
 static ilist gen_destructor_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > destructor of type block_stmt
@@ -1990,7 +1981,7 @@ static ilist gen_destructor_stmt(AstNode *node) {
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
-    ilistAppend(&output, genInsLOAD(info(node), type->identifier_value));
+    ilistAppend(&output, genInsLOAD(info(node), type->ident_value));
 
     ilistAppend(&output, genInsCREATE_METHOD(info(node), symtabInsert(lex_symtab, "destructor"), n_args, margs));
 
@@ -2026,7 +2017,7 @@ static ilist gen_stmt(AstNode *node) {
 
 static ilist gen_block_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
     /*
     > '{' stmt '}'
     < CREATE_SCOPE WITH_PARENT_ACCESS
@@ -2067,7 +2058,7 @@ static ilist gen_block_stmt(AstNode *node) {
 
 static ilist gen_stmt_list(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
     /*
     > s1 ... sn
     < gen(s1)
@@ -2091,7 +2082,7 @@ static ilist gen_stmt_list(AstNode *node) {
 
 static ilist gen_while_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     > while e s
@@ -2141,7 +2132,7 @@ static ilist gen_while_stmt(AstNode *node) {
 
 static ilist gen_for_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     AstNode *init = node->nodes[0];    // may be NULL
     AstNode *cond = node->nodes[1];    // may be NULL
@@ -2258,7 +2249,7 @@ static ilist gen_for_stmt(AstNode *node) {
 
 static ilist gen_if_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     AstNode *cond       = node->nodes[0];
     AstNode *block      = node->nodes[1];
@@ -2310,7 +2301,7 @@ static ilist gen_if_stmt(AstNode *node) {
 
 static ilist gen_continue_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     >   continue
@@ -2338,7 +2329,7 @@ static ilist gen_continue_stmt(AstNode *node) {
 
 static ilist gen_break_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     >   break
@@ -2366,7 +2357,7 @@ static ilist gen_break_stmt(AstNode *node) {
 
 static ilist gen_return_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (!ctx_is_inside_function) {
         return output;
@@ -2413,7 +2404,7 @@ static ilist gen_return_stmt(AstNode *node) {
 
 static ilist gen_assignment_stmt(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     /*
     >   a mode b
@@ -2440,19 +2431,193 @@ static ilist gen_assignment_stmt(AstNode *node) {
     return output;
 }
 
-static ilist gen_try_catch_stmt(AstNode *node) {}
+static ilist gen_try_catch_stmt(AstNode *node) {
+    ilist output  = ilistCreate();
+    ilist temp    = ilistCreate();
+    ilist handler = ilistCreate();
 
-static ilist gen_catch_item_list(AstNode *node) {}
+    /*
+    Kowalski, Analysis!
 
-static ilist gen_catch_item(AstNode *node) {}
+    >   try try_stmt
+    >   catch expr1 as name1 catch_stmt1
+    >   ...
+    >   catch exprk as namek catch_stmtk
+    >   catch * as namef catch_stmtf
 
-static ilist gen_signal_stmt(AstNode *node) {}
+    Handlers are generated in reversed order (final, k, ..., 1)
+    This is needed because handlers are crated on the stack, meaning
+    that the order of them is reversed. - * - = +
 
-static ilist gen_var_stmt(AstNode *node) {}
+    Handler:
+    >   gen(expr)            // LOAD_INT -1 if final (universal) handler
+    >   REGISTER_CATCH
+    >   JUMP REL@1
+    >   DESTROY_CATCH 1  // current one
+    >   SWITCH_ENV_INS
+    >   CREATE_VAR name
+    >   gen(block_stmt)
+    >   DESTROY_CATCH *total handlers - pos of this one*    // all others
+    >   JUMP REL@*first instruction after the try-catch statement* = X
+    1
 
-static ilist gen_assignment_item_list(AstNode *node) {}
+    Each handler must destroy all other handlers after successful execution.
+    If an error happens inside the handler, the vm will jump to the "next" one
+    which is going to be right above this one.
 
-static ilist gen_assignment_item(AstNode *node) {}
+    The last instructions are:
+    >   gen(try_block)
+    >   DESTROY_CATCH *total number of handlers*
+    X
+
+    */
+
+    AstNode *try_stmt        = node->nodes[0];
+    AstNode *handlers_list   = node->nodes[1];
+    AstNode *universal_name  = node->nodes[2];
+    AstNode *universal_block = node->nodes[3];
+
+    int64_t  n_handlers = universal_name != NULL;
+    AstNode *tnode      = handlers_list;
+    while (tnode != NULL) {
+        n_handlers++;
+        if (tnode->n_nodes == 2) {
+            tnode = tnode->nodes[1];
+        }
+        else {
+            tnode = NULL;
+        }
+    }
+
+    // try_stmt
+    temp = gen(try_stmt);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsDESTROY_CATCH(info(node), n_handlers));
+
+    int64_t handler_index = 0;
+
+    // normal handlers
+    tnode = handlers_list;
+    while (tnode != NULL) {
+        handler_index++;
+        AstNode *item       = tnode->nodes[0];
+        AstNode *expr_node  = item->nodes[0];
+        AstNode *name_node  = item->nodes[1];
+        AstNode *block_node = item->nodes[2];
+
+        ilist expr  = gen(expr_node);
+        ilist block = gen(block_node);
+
+        ilistLink(&handler, &expr);
+        ilistAppend(&handler, genInsREGISTER_CATCH(info(name_node)));
+        ilistAppend(&handler, genInsJUMP(info(block_node), 5 + block.size));
+        ilistAppend(&handler, genInsDESTROY_CATCH(info(block_node), 1));
+        ilistAppend(&handler, genInsSWITCH_ENV_INS(info(block_node)));
+        ilistAppend(&handler, genInsCREATE_VAR(info(name_node), name_node->ident_value));
+        ilistLink(&handler, &block);
+        ilistAppend(&handler, genInsDESTROY_CATCH(info(block_node), n_handlers - handler_index));
+        ilistAppend(&handler, genInsJUMP(info(block_node), output.size + 1));
+
+        ilistLink(&handler, &output);
+        ilistSwap(&handler, &output);
+
+        if (tnode->n_nodes == 2) {
+            tnode = tnode->nodes[1];
+        }
+        else {
+            tnode = NULL;
+        }
+    }
+
+    // universal handler
+    if (universal_name != NULL) {
+        ilist block = gen(universal_block);
+
+        ilistAppend(&handler, genInsLOAD_INT(info(universal_name), -1));
+        ilistAppend(&handler, genInsREGISTER_CATCH(info(universal_name)));
+        ilistAppend(&handler, genInsJUMP(info(universal_block), 5 + block.size));
+        ilistAppend(&handler, genInsDESTROY_CATCH(info(universal_block), 1));
+        ilistAppend(&handler, genInsSWITCH_ENV_INS(info(universal_block)));
+        ilistAppend(&handler, genInsCREATE_VAR(info(universal_name), universal_name->ident_value));
+        ilistLink(&handler, &block);
+        ilistAppend(&handler, genInsJUMP(info(universal_block), output.size + 1));
+
+        ilistLink(&handler, &output);
+        ilistSwap(&handler, &output);
+    }
+
+    return output;
+}
+
+static ilist gen_signal_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp   = ilistCreate();
+
+    /*
+    >   signal a because b
+
+    <   gen(b)
+    <   gen(a)
+    <   SIGNAL_ERROR
+    */
+
+    temp = gen(node->nodes[1]);
+    ilistLink(&output, &temp);
+
+    temp = gen(node->nodes[0]);
+    ilistLink(&output, &temp);
+
+    ilistAppend(&output, genInsSIGNAL_ERROR(info(node)));
+
+    return output;
+}
+
+static ilist gen_var_stmt(AstNode *node) {
+    ilist output = ilistCreate();
+    ilist temp   = ilistCreate();
+
+    /*
+    >   var a = b, c = d, ..., e, ...
+
+    <   gen(b)
+    <   COPY_BY_AUTO
+    <   CREATE_VAR a
+    <   gen(d)
+    <   COPY_BY_AUTO
+    <   CREATE_VAR c
+        ...
+    <   LOAD_NULL
+    <   CREATE_VAR e
+        ...
+    */
+
+    AstNode *list = node->nodes[0];
+
+    while (list != NULL) {
+        AstNode *item = list->nodes[0];
+
+        if (item->nodes[1] == NULL) {
+            ilistAppend(&output, genInsLOAD_NULL(info(item)));
+            ilistAppend(&output, genInsCREATE_VAR(info(item), item->nodes[0]->ident_value));
+        }
+        else {
+            temp = gen(item->nodes[1]);
+            ilistLink(&output, &temp);
+            ilistAppend(&output, genInsCOPY_BY_VALUE(info(item)));
+            ilistAppend(&output, genInsCREATE_VAR(info(item), item->nodes[0]->ident_value));
+        }
+
+        if (list->n_nodes == 2) {
+            list = list->nodes[1];
+        }
+        else {
+            list = NULL;
+        }
+    }
+
+    return output;
+}
 
 static ilist gen_expr(AstNode *node) {
     return gen_assignment(node->nodes[0]);    // satisfaction
@@ -2460,7 +2625,7 @@ static ilist gen_expr(AstNode *node) {
 
 static ilist gen_assignment(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == INLINE_IF_OPTION) {
         return gen_inline_if(node->nodes[0]);
@@ -2493,7 +2658,7 @@ static ilist gen_assignment(AstNode *node) {
 
 static ilist gen_inline_if(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == NEW_OPTION) {
         return gen_new(node->nodes[0]);
@@ -2529,7 +2694,7 @@ static ilist gen_inline_if(AstNode *node) {
 
 static ilist gen_new(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == LOGICAL_OR_OPTION) {
         return gen_logical_or(node->nodes[0]);
@@ -2560,7 +2725,7 @@ static ilist gen_new(AstNode *node) {
 
 static ilist gen_logical_or(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == LOGICAL_AND_OPTION) {
         return gen_logical_and(node->nodes[0]);
@@ -2590,7 +2755,7 @@ static ilist gen_logical_or(AstNode *node) {
 
 static ilist gen_logical_and(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == BITWISE_OR_OPTION) {
         return gen_bitwise_or(node->nodes[0]);
@@ -2620,7 +2785,7 @@ static ilist gen_logical_and(AstNode *node) {
 
 static ilist gen_bitwise_or(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == BITWISE_XOR_OPTION) {
         return gen_bitwise_xor(node->nodes[0]);
@@ -2650,7 +2815,7 @@ static ilist gen_bitwise_or(AstNode *node) {
 
 static ilist gen_bitwise_xor(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == BITWISE_AND_OPTION) {
         return gen_bitwise_and(node->nodes[0]);
@@ -2680,7 +2845,7 @@ static ilist gen_bitwise_xor(AstNode *node) {
 
 static ilist gen_bitwise_and(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == EQUALITY_OPTION) {
         return gen_equality(node->nodes[0]);
@@ -2710,7 +2875,7 @@ static ilist gen_bitwise_and(AstNode *node) {
 
 static ilist gen_equality(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == RELATIONAL_OPTION) {
         return gen_relational(node->nodes[0]);
@@ -2745,7 +2910,7 @@ static ilist gen_equality(AstNode *node) {
 
 static ilist gen_relational(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == SUM_OPTION) {
         return gen_sum(node->nodes[0]);
@@ -2786,7 +2951,7 @@ static ilist gen_relational(AstNode *node) {
 
 static ilist gen_sum(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == BITWISE_SHIFT_OPTION) {
         return gen_bitwise_shift(node->nodes[0]);
@@ -2821,7 +2986,7 @@ static ilist gen_sum(AstNode *node) {
 
 static ilist gen_bitwise_shift(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == TERM_OPTION) {
         return gen_term(node->nodes[0]);
@@ -2856,7 +3021,7 @@ static ilist gen_bitwise_shift(AstNode *node) {
 
 static ilist gen_term(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == PREFIX_OP_OPTION) {
         return gen_prefix_op(node->nodes[0]);
@@ -2894,7 +3059,7 @@ static ilist gen_term(AstNode *node) {
 
 static ilist gen_prefix_op(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == PRIMARY_OPTION) {
         return gen_primary(node->nodes[0]);
@@ -2930,7 +3095,7 @@ static ilist gen_prefix_op(AstNode *node) {
 
 static ilist gen_primary(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     if (node->option == ELEMENTARY_OPTION) {
         return gen_elementary(node->nodes[0]);
@@ -3002,7 +3167,7 @@ static ilist gen_primary(AstNode *node) {
         temp = gen_primary(A);
         ilistLink(&output, &temp);
 
-        ilistAppend(&output, genInsLOAD_FIELD(info(node), B->identifier_value));
+        ilistAppend(&output, genInsLOAD_FIELD(info(node), B->ident_value));
 
         return output;
     }
@@ -3011,7 +3176,7 @@ static ilist gen_primary(AstNode *node) {
         temp = gen_primary(A);
         ilistLink(&output, &temp);
 
-        ilistAppend(&output, genInsLOAD_METHOD(info(node), B->identifier_value));
+        ilistAppend(&output, genInsLOAD_METHOD(info(node), B->ident_value));
 
         return output;
     }
@@ -3054,7 +3219,7 @@ static ilist gen_literal(AstNode *node) {
         return output;
     }
     if (node->option == IDENTIFIER_OPTION) {
-        ilistAppend(&output, genInsLOAD(info(node), node->identifier_value));
+        ilistAppend(&output, genInsLOAD(info(node), node->ident_value));
         return output;
     }
 }
@@ -3067,7 +3232,7 @@ static ilist gen_module_path_compact(AstNode *node) {}
 
 static ilist gen_expr_list(AstNode *node) {
     ilist output = ilistCreate();
-    ilist temp;
+    ilist temp   = ilistCreate();
 
     while (node != NULL) {
         temp = gen(node->nodes[0]);

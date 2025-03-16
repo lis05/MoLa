@@ -2389,7 +2389,7 @@ yyreduce:
   case 82: /* try_catch_stmt: TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt  */
 #line 434 "rules.y"
                                                             {
-        (yyval.node) = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_UNIVERSAL_OPTION, (yyvsp[-6].num), 3, (yyvsp[-5].node), (yyvsp[-1].node), (yyvsp[0].node));
+        (yyval.node) = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_UNIVERSAL_OPTION, (yyvsp[-6].num), 4, (yyvsp[-5].node), NULL, (yyvsp[-1].node), (yyvsp[0].node));
     }
 #line 2395 "rules.tab.c"
     break;
@@ -2397,7 +2397,7 @@ yyreduce:
   case 83: /* try_catch_stmt: TRY block_stmt catch_item_list  */
 #line 437 "rules.y"
                                      {
-        (yyval.node) = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_SPECIFIC_OPTION, (yyvsp[-2].num), 2, (yyvsp[-1].node), (yyvsp[0].node));
+        (yyval.node) = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_SPECIFIC_OPTION, (yyvsp[-2].num), 4, (yyvsp[-1].node), (yyvsp[0].node), NULL, NULL);
     }
 #line 2403 "rules.tab.c"
     break;

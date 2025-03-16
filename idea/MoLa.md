@@ -853,7 +853,7 @@ Error handlers are generated in reversed order. For a specific error handler (`c
 0   REGISTER_CATCH
 1   JUMP REL@6
 2   DESTROY_CATCH 1
-3   SWITCH_ENV 
+3   SWITCH_ENV_INS 
 4   CREATE_VAR identifier
 #   gen(block_stmt)
 #   DESTROY_CATCH *total handlers - pos of this one*
@@ -866,7 +866,7 @@ For a universal error handler (`catch * as identifier block_stmt`), the followin
 0   REGISTER_CATCH
 1   JUMP REL@6
 2   DESTROY_CATCH 1
-3   SWITCH_ENV 
+3   SWITCH_ENV_INS 
 4   CREATE_VAR identifier
 #   gen(block_stmt)
 5   JUMP REL@*first instruction after the try-catch statement
@@ -895,7 +895,7 @@ will be compiled into:
 #   REGISTER_CATCH
 #   JUMP REL@1
 #   DESTROY_CATCH 1
-#   SWITCH_ENV 
+#   SWITCH_ENV_INS 
 #   CREATE_VAR name3
 #   gen(catch_stmt3)
 #   JUMP REL@4
@@ -904,7 +904,7 @@ will be compiled into:
 #   REGISTER_CATCH
 #   JUMP REL@2
 #   DESTROY_CATCH 1
-#   SWITCH_ENV 
+#   SWITCH_ENV_INS 
 #   CREATE_VAR name2
 #   gen(catch_stmt2)
 #   DESTROY_CATCH 1
@@ -914,7 +914,7 @@ will be compiled into:
 #   REGISTER_CATCH
 #   JUMP REL@3
 #   DESTROY_CATCH 1
-#   SWITCH_ENV 
+#   SWITCH_ENV_INS 
 #   CREATE_VAR name1
 #   gen(catch_stmt1)
 #   DESTROY_CATCH 2

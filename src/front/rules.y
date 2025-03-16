@@ -432,10 +432,10 @@ try_catch_stmt:
         $$ = make(TRY_CATCH_STMT_NODE, TRY_CATCH_FULL_OPTION, $1, 4, $2, $3, $7, $8);
     }
     | TRY block_stmt FINALLY CATCH AS IDENTIFIER block_stmt {
-        $$ = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_UNIVERSAL_OPTION, $1, 3, $2, $6, $7);
+        $$ = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_UNIVERSAL_OPTION, $1, 4, $2, NULL, $6, $7);
     }
     | TRY block_stmt catch_item_list {
-        $$ = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_SPECIFIC_OPTION, $1, 2, $2, $3);
+        $$ = make(TRY_CATCH_STMT_NODE, TRY_CATCH_ONLY_SPECIFIC_OPTION, $1, 4, $2, $3, NULL, NULL);
     }
     ;
 
@@ -479,7 +479,7 @@ assignment_item:
         $$ = make(ASSIGNMENT_ITEM_NODE, ASSIGNMENT_ITEM_FULL_OPTION, $1->lineno, 2, $1, $3);
     }
     | IDENTIFIER {
-        $$ = make(ASSIGNMENT_ITEM_NODE, ASSIGNMENT_ITEM_NAME_OPTION, $1->lineno, 1, $1);
+        $$ = make(ASSIGNMENT_ITEM_NODE, ASSIGNMENT_ITEM_NAME_OPTION, $1->lineno, 2, $1, NULL);
     }
 
 expr:
