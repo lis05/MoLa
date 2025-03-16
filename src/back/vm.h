@@ -4,6 +4,6 @@
 struct Instruction;
 
 struct Instruction *vmCurrentInstruction();
-void                vmExecute(size_t count, struct Instruction *code);
+void                vmExecute(ivec instructions);
 
 #endif

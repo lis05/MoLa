@@ -529,7 +529,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
 
-        printf("value=%f", instr->float_arg1);
+        printf("value=%e", instr->float_arg1);
 
         printf("\n");
         return;
@@ -1348,7 +1348,6 @@ static ilist gen_module_path(AstNode *node);
 static ilist gen_module_path_upwards(AstNode *node);
 static ilist gen_module_path_compact(AstNode *node);
 static ilist gen_expr_list(AstNode *node);
-static ilist gen_identifier_list(AstNode *node);
 
 static ilist gen(AstNode *node) {
     assert(node != NULL);
@@ -1487,9 +1486,6 @@ static ilist gen(AstNode *node) {
     }
     case EXPR_LIST_NODE : {
         return gen_expr_list(node);
-    }
-    case IDENTIFIER_LIST_NODE : {
-        return gen_identifier_list(node);
     }
     default : {
         return ilistCreate();
@@ -2102,10 +2098,12 @@ static ilist gen_while_stmt(AstNode *node) {
     ilist e = gen(node->nodes[0]);
     ilist s = gen(node->nodes[1]);
 
+    int64_t total = e.size + s.size;
+
     ilistLink(&output, &e);
     ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), s.size + 2));
     ilistLink(&output, &s);
-    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)s.size + 1 + e.size)));
+    ilistAppend(&output, genInsJUMP(info(node), -(total + 1)));
 
     cvector_pop_back(ctx_open_scopes_since_loop);
 
@@ -2123,7 +2121,7 @@ static ilist gen_while_stmt(AstNode *node) {
             ins->int_arg1 = (int64_t)output.size - offset;
         }
         else {
-            molalog("Strange instruction (JUMP, offset = 0)\n");
+            molalog("Strange instruction (JUMP, offset = 0) in %s, line %d\n", ins->filename, ins->lineno);
         }
     }
 
@@ -2163,13 +2161,17 @@ static ilist gen_for_stmt(AstNode *node) {
         ilist ste = step != NULL ? gen(step) : ilistCreate();
         ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
 
+        int64_t stmsize = stm.size;
+        int64_t stesize = ste.size;
+        int64_t consize = con.size;
+
         ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
         ilistLink(&output, &ini);
         ilistLink(&output, &con);
-        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), stm.size + ste.size + 2));
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), stmsize + stesize + 2));
         ilistLink(&output, &stm);
         ilistLink(&output, &ste);
-        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)ste.size + stm.size + 1 + con.size)));
+        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 1 + consize)));
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
         ctx_open_scopes_since_function--;
@@ -2189,7 +2191,7 @@ static ilist gen_for_stmt(AstNode *node) {
                 ins->int_arg1 = (int64_t)output.size - offset - 1;
             }
             else {
-                molalog("Strange instruction (JUMP, offset = 0)\n");
+                molalog("Strange instruction (JUMP, offset = 0) in %s, line %d\n", ins->filename, ins->lineno);
             }
         }
 
@@ -2216,11 +2218,15 @@ static ilist gen_for_stmt(AstNode *node) {
     ilist ste = step != NULL ? gen(step) : ilistCreate();
     ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
 
+    int64_t stmsize = stm.size;
+    int64_t stesize = ste.size;
+    int64_t inisize = ini.size;
+
     ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
     ilistLink(&output, &ini);
     ilistLink(&output, &stm);
     ilistLink(&output, &ste);
-    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)ste.size + stm.size)));
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize)));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
     ctx_open_scopes_since_function--;
@@ -2234,13 +2240,13 @@ static ilist gen_for_stmt(AstNode *node) {
         }
 
         if (ins->flags == LOOP_CONTINUE_FLAG) {
-            ins->int_arg1 = -offset + 1 + ini.size;
+            ins->int_arg1 = -offset + 1 + inisize;
         }
         else if (ins->flags == LOOP_BREAK_FLAG) {
             ins->int_arg1 = (int64_t)output.size - offset - 1;
         }
         else {
-            molalog("Strange instruction (JUMP, offset = 0)\n");
+            molalog("Strange instruction (JUMP, offset = 0) in %s, line %d\n", ins->filename, ins->lineno);
         }
     }
 
@@ -3248,5 +3254,3 @@ static ilist gen_expr_list(AstNode *node) {
 
     return output;
 }
-
-static ilist gen_identifier_list(AstNode *node) {}

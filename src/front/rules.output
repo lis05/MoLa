@@ -3,6 +3,7 @@ State 70 conflicts: 1 shift/reduce
 State 103 conflicts: 1 shift/reduce
 State 166 conflicts: 2 shift/reduce
 State 167 conflicts: 1 shift/reduce
+State 170 conflicts: 1 shift/reduce
 State 186 conflicts: 2 shift/reduce
 State 187 conflicts: 2 shift/reduce
 State 188 conflicts: 2 shift/reduce
@@ -110,13 +111,13 @@ Grammar
 
    61 while_stmt: WHILE expr stmt
 
-   62 for_stmt: FOR expr ';' expr ';' expr stmt
+   62 for_stmt: FOR stmt ';' expr ';' expr stmt
    63         | FOR ';' expr ';' expr stmt
-   64         | FOR expr ';' ';' expr stmt
-   65         | FOR expr ';' expr ';' stmt
+   64         | FOR stmt ';' ';' expr stmt
+   65         | FOR stmt ';' expr ';' stmt
    66         | FOR ';' ';' expr stmt
    67         | FOR ';' expr ';' stmt
-   68         | FOR expr ';' ';' stmt
+   68         | FOR stmt ';' ';' stmt
    69         | FOR ';' ';' stmt
 
    70 if_stmt: IF expr stmt ELSE stmt
@@ -420,7 +421,7 @@ Nonterminals, with rules where they appear
         on right: 88 89
     expr <node> (109)
         on left: 92
-        on right: 22 44 61 62 63 64 65 66 67 68 70 71 74 75 76 77 78 79 85 86 90 135 139 148 149
+        on right: 22 44 61 62 63 64 65 66 67 70 71 74 75 76 77 78 79 85 86 90 135 139 148 149
     assignment <node> (110)
         on left: 93 94
         on right: 92 93
@@ -930,13 +931,13 @@ State 25
 
 State 26
 
-   62 for_stmt: FOR • expr ';' expr ';' expr stmt
+   62 for_stmt: FOR • stmt ';' expr ';' expr stmt
    63         | FOR • ';' expr ';' expr stmt
-   64         | FOR • expr ';' ';' expr stmt
-   65         | FOR • expr ';' expr ';' stmt
+   64         | FOR • stmt ';' ';' expr stmt
+   65         | FOR • stmt ';' expr ';' stmt
    66         | FOR • ';' ';' expr stmt
    67         | FOR • ';' expr ';' stmt
-   68         | FOR • expr ';' ';' stmt
+   68         | FOR • stmt ';' ';' stmt
    69         | FOR • ';' ';' stmt
 
     BOOL        shift, and go to state 3
@@ -946,33 +947,55 @@ State 26
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
+    CONTINUE    shift, and go to state 18
+    BREAK       shift, and go to state 19
+    RETURN      shift, and go to state 20
+    VAR         shift, and go to state 21
+    TRY         shift, and go to state 22
+    SIGNAL      shift, and go to state 23
+    IF          shift, and go to state 24
+    WHILE       shift, and go to state 25
+    FOR         shift, and go to state 26
     WHEN        shift, and go to state 27
     NEW         shift, and go to state 28
     NOT         shift, and go to state 29
+    '{'         shift, and go to state 30
     '+'         shift, and go to state 31
     '-'         shift, and go to state 32
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
     ';'         shift, and go to state 100
 
-    expr           go to state 101
-    assignment     go to state 56
-    inline_if      go to state 57
-    new            go to state 58
-    logical_or     go to state 59
-    logical_and    go to state 60
-    bitwise_or     go to state 61
-    bitwise_xor    go to state 62
-    bitwise_and    go to state 63
-    equality       go to state 64
-    relational     go to state 65
-    sum            go to state 66
-    bitwise_shift  go to state 67
-    term           go to state 68
-    prefix_op      go to state 69
-    primary        go to state 70
-    elementary     go to state 71
-    literal        go to state 72
+    stmt             go to state 101
+    block_stmt       go to state 44
+    while_stmt       go to state 45
+    for_stmt         go to state 46
+    if_stmt          go to state 47
+    continue_stmt    go to state 48
+    break_stmt       go to state 49
+    return_stmt      go to state 50
+    assignment_stmt  go to state 51
+    try_catch_stmt   go to state 52
+    signal_stmt      go to state 53
+    var_stmt         go to state 54
+    expr             go to state 55
+    assignment       go to state 56
+    inline_if        go to state 57
+    new              go to state 58
+    logical_or       go to state 59
+    logical_and      go to state 60
+    bitwise_or       go to state 61
+    bitwise_xor      go to state 62
+    bitwise_and      go to state 63
+    equality         go to state 64
+    relational       go to state 65
+    sum              go to state 66
+    bitwise_shift    go to state 67
+    term             go to state 68
+    prefix_op        go to state 69
+    primary          go to state 70
+    elementary       go to state 71
+    literal          go to state 72
 
 
 State 27
@@ -2052,10 +2075,11 @@ State 100
 
 State 101
 
-   62 for_stmt: FOR expr • ';' expr ';' expr stmt
-   64         | FOR expr • ';' ';' expr stmt
-   65         | FOR expr • ';' expr ';' stmt
-   68         | FOR expr • ';' ';' stmt
+   56 stmt: stmt • ';'
+   62 for_stmt: FOR stmt • ';' expr ';' expr stmt
+   64         | FOR stmt • ';' ';' expr stmt
+   65         | FOR stmt • ';' expr ';' stmt
+   68         | FOR stmt • ';' ';' stmt
 
     ';'  shift, and go to state 170
 
@@ -3352,10 +3376,11 @@ State 169
 
 State 170
 
-   62 for_stmt: FOR expr ';' • expr ';' expr stmt
-   64         | FOR expr ';' • ';' expr stmt
-   65         | FOR expr ';' • expr ';' stmt
-   68         | FOR expr ';' • ';' stmt
+   56 stmt: stmt ';' •
+   62 for_stmt: FOR stmt ';' • expr ';' expr stmt
+   64         | FOR stmt ';' • ';' expr stmt
+   65         | FOR stmt ';' • expr ';' stmt
+   68         | FOR stmt ';' • ';' stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3372,6 +3397,8 @@ State 170
     '~'         shift, and go to state 33
     '('         shift, and go to state 34
     ';'         shift, and go to state 233
+
+    ';'  [reduce using rule 56 (stmt)]
 
     expr           go to state 234
     assignment     go to state 56
@@ -4192,8 +4219,8 @@ State 232
 
 State 233
 
-   64 for_stmt: FOR expr ';' ';' • expr stmt
-   68         | FOR expr ';' ';' • stmt
+   64 for_stmt: FOR stmt ';' ';' • expr stmt
+   68         | FOR stmt ';' ';' • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4254,8 +4281,8 @@ State 233
 
 State 234
 
-   62 for_stmt: FOR expr ';' expr • ';' expr stmt
-   65         | FOR expr ';' expr • ';' stmt
+   62 for_stmt: FOR stmt ';' expr • ';' expr stmt
+   65         | FOR stmt ';' expr • ';' stmt
 
     ';'  shift, and go to state 259
 
@@ -4554,7 +4581,7 @@ State 256
 State 257
 
    56 stmt: stmt • ';'
-   68 for_stmt: FOR expr ';' ';' stmt •
+   68 for_stmt: FOR stmt ';' ';' stmt •
 
     ';'  shift, and go to state 112
 
@@ -4565,7 +4592,7 @@ State 257
 State 258
 
    44 stmt: expr •
-   64 for_stmt: FOR expr ';' ';' expr • stmt
+   64 for_stmt: FOR stmt ';' ';' expr • stmt
    78 assignment_stmt: expr • COPIES expr
    79                | expr • REFS expr
 
@@ -4656,8 +4683,8 @@ State 258
 
 State 259
 
-   62 for_stmt: FOR expr ';' expr ';' • expr stmt
-   65         | FOR expr ';' expr ';' • stmt
+   62 for_stmt: FOR stmt ';' expr ';' • expr stmt
+   65         | FOR stmt ';' expr ';' • stmt
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -4857,7 +4884,7 @@ State 273
 State 274
 
    56 stmt: stmt • ';'
-   64 for_stmt: FOR expr ';' ';' expr stmt •
+   64 for_stmt: FOR stmt ';' ';' expr stmt •
 
     ';'  shift, and go to state 112
 
@@ -4868,7 +4895,7 @@ State 274
 State 275
 
    56 stmt: stmt • ';'
-   65 for_stmt: FOR expr ';' expr ';' stmt •
+   65 for_stmt: FOR stmt ';' expr ';' stmt •
 
     ';'  shift, and go to state 112
 
@@ -4879,7 +4906,7 @@ State 275
 State 276
 
    44 stmt: expr •
-   62 for_stmt: FOR expr ';' expr ';' expr • stmt
+   62 for_stmt: FOR stmt ';' expr ';' expr • stmt
    78 assignment_stmt: expr • COPIES expr
    79                | expr • REFS expr
 
@@ -5024,7 +5051,7 @@ State 283
 State 284
 
    56 stmt: stmt • ';'
-   62 for_stmt: FOR expr ';' expr ';' expr stmt •
+   62 for_stmt: FOR stmt ';' expr ';' expr stmt •
 
     ';'  shift, and go to state 112
 

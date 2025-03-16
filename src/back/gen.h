@@ -82,7 +82,7 @@ typedef struct Instruction {
 
     size_t env_id;                    // set when the module is run (or imported)
 
-    int8_t   flags;
+    int64_t  flags;
     size_t   n_args;
     int64_t *args;
 
@@ -94,6 +94,8 @@ typedef struct Instruction {
         char   *string_arg1;
     };
 } Instruction;
+
+typedef cvector_vector_type(Instruction) ivec;
 
 void genPrintInstrShort(int64_t pos, Instruction *instr);
 
