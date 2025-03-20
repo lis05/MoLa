@@ -105,7 +105,7 @@ After the compilations is complete, a loop will locate all loops and continue/br
 changing the rel_offset afterwards.
 */
 
-/* these consume any pointers. */
+/*
 Instruction genInsPOP(char *filename, size_t lineno);
 Instruction genInsSWAP(char *filename, size_t lineno);
 Instruction genInsCREATE_ENV(char *filename, size_t lineno);
@@ -172,7 +172,7 @@ Instruction genInsLOAD(char *filename, size_t lineno, ident name);
 Instruction genInsLOAD_FIELD(char *filename, size_t lineno, ident name);
 Instruction genInsLOAD_METHOD(char *filename, size_t lineno, ident name);
 Instruction genInsNEW(char *filename, size_t lineno);
-
+*/
 struct AstNode;
 
 typedef struct inode {

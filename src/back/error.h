@@ -26,6 +26,7 @@ extern jmp_buf __mola_errorbuf;
 #define setErrorReturnPoint() setjmp(__mola_errorbuf)
 
 // error located in vmCurrentInstruction()
+// DOES NOT RETURN!
 void signalError(int64_t code, char *reason);
 
 void errorInit();

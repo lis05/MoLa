@@ -35,6 +35,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "POP");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -43,6 +44,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "SWAP");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -51,6 +53,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_ENV");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -59,6 +62,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "SWITCH_ENV_INS");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -67,6 +71,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "SWITCH_ENV_OBJ");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -75,6 +80,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "IMPORT_MODULE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("module_path=%s\t", instr->string_arg1);
         printf("import_as=");
@@ -87,6 +93,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "EXPORT_OBJECT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("export_as=");
         printIdent(instr->ident_arg1);
@@ -98,6 +105,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_GLOBAL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -109,6 +117,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_FUNCTION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -136,6 +145,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_TYPE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -162,6 +172,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_METHOD");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -189,6 +200,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_SCOPE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf(instr->flags ? "WITH_PARENT_ACCESS" : "WITHOUT_PARENT_ACCESS");
 
@@ -199,6 +211,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "DESTROY_SCOPE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -207,6 +220,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "JUMP_IF_FALSE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("offset=%lld (abs=%lld)", instr->int_arg1, pos + instr->int_arg1);
 
@@ -217,6 +231,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "JUMP");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("offset=%lld (abs=%lld)", instr->int_arg1, pos + instr->int_arg1);
 
@@ -227,6 +242,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "RETURN");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -235,6 +251,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "REGISTER_CATCH");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -243,6 +260,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "DESTROY_CATCH");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("n=%lld", instr->int_arg1);
 
@@ -253,6 +271,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "SIGNAL_ERROR");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -261,6 +280,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CREATE_VAR");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -272,6 +292,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "COPY_BY_VALUE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -280,6 +301,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "COPY_BY_REFERENCE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -288,6 +310,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "COPY_BY_AUTO");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -296,6 +319,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "ASSIGNMENT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -304,6 +328,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOGICAL_OR");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -312,6 +337,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOGICAL_AND");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -320,6 +346,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "BITWISE_OR");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -328,6 +355,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "BITWISE_XOR");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -336,6 +364,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "BITWISE_AND");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -344,6 +373,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "EQUAL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -352,6 +382,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "NOT_EQUAL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -360,6 +391,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LESS_THAN");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -368,6 +400,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LESS_EQUAL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -376,6 +409,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "GREATER_THAN");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -384,6 +418,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "GREATER_EQUAL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -392,6 +427,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "ADDITION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -400,6 +436,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "SUBTRACTION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -408,6 +445,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LSHIFT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -416,6 +454,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "RSHIFT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -424,6 +463,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "MULTIPLICATION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -432,6 +472,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "DIVISION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -440,6 +481,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "REMAINDER");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -448,6 +490,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "POSITIVE");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -456,6 +499,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "NEGATION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -464,6 +508,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "INVERTION");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -472,6 +517,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOGICAL_NOT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -480,6 +526,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "CALL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("n=%lld", instr->int_arg1);
 
@@ -490,6 +537,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "ACCESS");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -498,6 +546,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_BOOL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("value=%s", instr->int_arg1 ? "true" : "false");
 
@@ -508,6 +557,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_BOOL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("value=%s", getChar(instr->char_arg1));
 
@@ -518,6 +568,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_INT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("value=%lld", instr->int_arg1);
 
@@ -528,6 +579,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_FLOAT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("value=%e", instr->float_arg1);
 
@@ -538,6 +590,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_STRING");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("value=\"%s\"", instr->string_arg1);
 
@@ -548,6 +601,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_NULL");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -556,6 +610,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -567,6 +622,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_FIELD");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -578,6 +634,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "LOAD_METHOD");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("name=");
         printIdent(instr->ident_arg1);
@@ -589,6 +646,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "NEW");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -597,6 +655,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("%-20s    ", "INVALID");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
 
         printf("\n");
         return;
@@ -604,60 +663,66 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
     }
 }
 
-Instruction genInsPOP(char *filename, size_t lineno) {
+Instruction genInsPOP(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = POP_IC;
     return res;
 }
 
-Instruction genInsSWAP(char *filename, size_t lineno) {
+Instruction genInsSWAP(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = SWAP_IC;
     return res;
 }
 
-Instruction genInsCREATE_ENV(char *filename, size_t lineno) {
+Instruction genInsCREATE_ENV(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = CREATE_ENV_IC;
     return res;
 }
 
-Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno) {
+Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = SWITCH_ENV_INS_IC;
     return res;
 }
 
-Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno) {
+Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = SWITCH_ENV_OBJ_IC;
     return res;
 }
 
-Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, char *module_path, ident name) {
+Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, int64_t env_id, char *module_path, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
 
     res.code        = IMPORT_MODULE_IC;
     res.string_arg1 = module_path;
@@ -665,10 +730,11 @@ Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, char *module_path
     return res;
 }
 
-Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, ident name) {
+Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = EXPORT_OBJECT_IC;
@@ -676,10 +742,11 @@ Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, ident name) {
+Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = CREATE_GLOBAL_IC;
@@ -687,10 +754,12 @@ Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
+Instruction
+genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
 
     res.code       = CREATE_FUNCTION_IC;
     res.ident_arg1 = name;
@@ -699,16 +768,18 @@ Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, ident name, siz
     return res;
 }
 
-Instruction genInsCREATE_TYPE(char  *filename,
-                              size_t lineno,
-                              ident  name,
-                              size_t n_fields,
-                              ident *fields,
-                              size_t n_methods,
-                              ident *methods) {
+Instruction genInsCREATE_TYPE(char   *filename,
+                              size_t  lineno,
+                              int64_t env_id,
+                              ident   name,
+                              size_t  n_fields,
+                              ident  *fields,
+                              size_t  n_methods,
+                              ident  *methods) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
 
     res.code       = CREATE_TYPE_IC;
     res.ident_arg1 = name;
@@ -724,10 +795,11 @@ Instruction genInsCREATE_TYPE(char  *filename,
     return res;
 }
 
-Instruction genInsCREATE_METHOD(char *filename, size_t lineno, ident name, size_t n_args, ident *args) {
+Instruction genInsCREATE_METHOD(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
 
     res.code       = CREATE_METHOD_IC;
     res.ident_arg1 = name;
@@ -736,10 +808,11 @@ Instruction genInsCREATE_METHOD(char *filename, size_t lineno, ident name, size_
     return res;
 }
 
-Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode) {
+Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int64_t env_id, int8_t access_mode) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code  = CREATE_SCOPE_IC;
@@ -747,20 +820,22 @@ Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int8_t access_mode
     return res;
 }
 
-Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno) {
+Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = DESTROY_SCOPE_IC;
     return res;
 }
 
-Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset) {
+Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t env_id, int64_t offset) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = JUMP_IF_FALSE_IC;
@@ -768,10 +843,11 @@ Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t offset) {
     return res;
 }
 
-Instruction genInsJUMP(char *filename, size_t lineno, int64_t offset) {
+Instruction genInsJUMP(char *filename, size_t lineno, int64_t env_id, int64_t offset) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = JUMP_IC;
@@ -779,30 +855,33 @@ Instruction genInsJUMP(char *filename, size_t lineno, int64_t offset) {
     return res;
 }
 
-Instruction genInsRETURN(char *filename, size_t lineno) {
+Instruction genInsRETURN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = RETURN_IC;
     return res;
 }
 
-Instruction genInsREGISTER_CATCH(char *filename, size_t lineno) {
+Instruction genInsREGISTER_CATCH(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = REGISTER_CATCH_IC;
     return res;
 }
 
-Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t n) {
+Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t env_id, int64_t n) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = DESTROY_CATCH_IC;
@@ -810,20 +889,22 @@ Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t n) {
     return res;
 }
 
-Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno) {
+Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = SIGNAL_ERROR_IC;
     return res;
 }
 
-Instruction genInsCREATE_VAR(char *filename, size_t lineno, ident name) {
+Instruction genInsCREATE_VAR(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = CREATE_VAR_IC;
@@ -831,270 +912,297 @@ Instruction genInsCREATE_VAR(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsCOPY_BY_VALUE(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_VALUE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = COPY_BY_VALUE_IC;
     return res;
 }
 
-Instruction genInsCOPY_BY_REFERENCE(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_REFERENCE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = COPY_BY_REFERENCE_IC;
     return res;
 }
 
-Instruction genInsCOPY_BY_AUTO(char *filename, size_t lineno) {
+Instruction genInsCOPY_BY_AUTO(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = COPY_BY_AUTO_IC;
     return res;
 }
 
-Instruction genInsASSIGNMENT(char *filename, size_t lineno) {
+Instruction genInsASSIGNMENT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = ASSIGNMENT_IC;
     return res;
 }
 
-Instruction genInsLOGICAL_OR(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_OR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LOGICAL_OR_IC;
     return res;
 }
 
-Instruction genInsLOGICAL_AND(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_AND(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LOGICAL_AND_IC;
     return res;
 }
 
-Instruction genInsBITWISE_OR(char *filename, size_t lineno) {
+Instruction genInsBITWISE_OR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = BITWISE_OR_IC;
     return res;
 }
 
-Instruction genInsBITWISE_XOR(char *filename, size_t lineno) {
+Instruction genInsBITWISE_XOR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = BITWISE_XOR_IC;
     return res;
 }
 
-Instruction genInsBITWISE_AND(char *filename, size_t lineno) {
+Instruction genInsBITWISE_AND(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = BITWISE_AND_IC;
     return res;
 }
 
-Instruction genInsEQUAL(char *filename, size_t lineno) {
+Instruction genInsEQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = EQUAL_IC;
     return res;
 }
 
-Instruction genInsNOT_EQUAL(char *filename, size_t lineno) {
+Instruction genInsNOT_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = NOT_EQUAL_IC;
     return res;
 }
 
-Instruction genInsLESS_THAN(char *filename, size_t lineno) {
+Instruction genInsLESS_THAN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LESS_THAN_IC;
     return res;
 }
 
-Instruction genInsLESS_EQUAL(char *filename, size_t lineno) {
+Instruction genInsLESS_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LESS_EQUAL_IC;
     return res;
 }
 
-Instruction genInsGREATER_THAN(char *filename, size_t lineno) {
+Instruction genInsGREATER_THAN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = GREATER_THAN_IC;
     return res;
 }
 
-Instruction genInsGREATER_EQUAL(char *filename, size_t lineno) {
+Instruction genInsGREATER_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = GREATER_EQUAL_IC;
     return res;
 }
 
-Instruction genInsADDITION(char *filename, size_t lineno) {
+Instruction genInsADDITION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = ADDITION_IC;
     return res;
 }
 
-Instruction genInsSUBTRACTION(char *filename, size_t lineno) {
+Instruction genInsSUBTRACTION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = SUBTRACTION_IC;
     return res;
 }
 
-Instruction genInsLSHIFT(char *filename, size_t lineno) {
+Instruction genInsLSHIFT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LSHIFT_IC;
     return res;
 }
 
-Instruction genInsRSHIFT(char *filename, size_t lineno) {
+Instruction genInsRSHIFT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = RSHIFT_IC;
     return res;
 }
 
-Instruction genInsMULTIPLICATION(char *filename, size_t lineno) {
+Instruction genInsMULTIPLICATION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = MULTIPLICATION_IC;
     return res;
 }
 
-Instruction genInsDIVISION(char *filename, size_t lineno) {
+Instruction genInsDIVISION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = DIVISION_IC;
     return res;
 }
 
-Instruction genInsREMAINDER(char *filename, size_t lineno) {
+Instruction genInsREMAINDER(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = REMAINDER_IC;
     return res;
 }
 
-Instruction genInsPOSITIVE(char *filename, size_t lineno) {
+Instruction genInsPOSITIVE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = POSITIVE_IC;
     return res;
 }
 
-Instruction genInsNEGATION(char *filename, size_t lineno) {
+Instruction genInsNEGATION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = NEGATION_IC;
     return res;
 }
 
-Instruction genInsINVERTION(char *filename, size_t lineno) {
+Instruction genInsINVERTION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = INVERTION_IC;
     return res;
 }
 
-Instruction genInsLOGICAL_NOT(char *filename, size_t lineno) {
+Instruction genInsLOGICAL_NOT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LOGICAL_NOT_IC;
     return res;
 }
 
-Instruction genInsCALL(char *filename, size_t lineno, int64_t n) {
+Instruction genInsCALL(char *filename, size_t lineno, int64_t env_id, int64_t n) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = CALL_IC;
@@ -1102,20 +1210,22 @@ Instruction genInsCALL(char *filename, size_t lineno, int64_t n) {
     return res;
 }
 
-Instruction genInsACCESS(char *filename, size_t lineno) {
+Instruction genInsACCESS(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = ACCESS_IC;
     return res;
 }
 
-Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int8_t value) {
+Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int64_t env_id, int8_t value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = LOAD_BOOL_IC;
@@ -1123,10 +1233,11 @@ Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int8_t value) {
     return res;
 }
 
-Instruction genInsLOAD_CHAR(char *filename, size_t lineno, char value) {
+Instruction genInsLOAD_CHAR(char *filename, size_t lineno, int64_t env_id, char value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code      = LOAD_CHAR_IC;
@@ -1134,10 +1245,11 @@ Instruction genInsLOAD_CHAR(char *filename, size_t lineno, char value) {
     return res;
 }
 
-Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t value) {
+Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t env_id, int64_t value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code     = LOAD_INT_IC;
@@ -1145,10 +1257,11 @@ Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t value) {
     return res;
 }
 
-Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, double value) {
+Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, int64_t env_id, double value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = LOAD_FLOAT_IC;
@@ -1156,10 +1269,11 @@ Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, double value) {
     return res;
 }
 
-Instruction genInsLOAD_STRING(char *filename, size_t lineno, char *value) {
+Instruction genInsLOAD_STRING(char *filename, size_t lineno, int64_t env_id, char *value) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code        = LOAD_STRING_IC;
@@ -1167,20 +1281,22 @@ Instruction genInsLOAD_STRING(char *filename, size_t lineno, char *value) {
     return res;
 }
 
-Instruction genInsLOAD_NULL(char *filename, size_t lineno) {
+Instruction genInsLOAD_NULL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = LOAD_NULL_IC;
     return res;
 }
 
-Instruction genInsLOAD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = LOAD_IC;
@@ -1188,10 +1304,11 @@ Instruction genInsLOAD(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsLOAD_FIELD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD_FIELD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = LOAD_FIELD_IC;
@@ -1199,10 +1316,11 @@ Instruction genInsLOAD_FIELD(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsLOAD_METHOD(char *filename, size_t lineno, ident name) {
+Instruction genInsLOAD_METHOD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code       = LOAD_METHOD_IC;
@@ -1210,10 +1328,11 @@ Instruction genInsLOAD_METHOD(char *filename, size_t lineno, ident name) {
     return res;
 }
 
-Instruction genInsNEW(char *filename, size_t lineno) {
+Instruction genInsNEW(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
+    res.env_id   = env_id;
     res.n_args   = 0;
 
     res.code = NEW_IC;
@@ -1284,7 +1403,7 @@ void ilistDestroy(ilist *list) {
 static ilist gen(AstNode *node);
 
 static size_t curEnvId;
-#define info(node) (node)->filename, (node)->lineno
+#define info(node) (node)->filename, (node)->lineno, curEnvId
 
 ilist genCompile(AstNode *node) {
     assert(node != NULL);

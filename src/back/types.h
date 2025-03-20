@@ -164,7 +164,8 @@ typedef struct MolaFunctionValue {
     int      gc_mark   : 1;
 } MolaFunctionValue;
 
-MolaFunctionValue *molaFunctionValueCreate(struct ModuleValue *module, int64_t rel_offset, size_t n_args, ident *args, int8_t *modes);
+MolaFunctionValue *
+molaFunctionValueCreate(struct ModuleValue *module, int64_t rel_offset, size_t n_args, ident *args, int8_t *modes);
 MolaFunctionValue *molaFunctionValueCopyByAuto(MolaFunctionValue *val);
 void               molaFunctionValueDestroy(MolaFunctionValue *val);
 void               molaFunctionValueRef(MolaFunctionValue *unit);
@@ -173,8 +174,9 @@ void               molaFunctionValueUnref(MolaFunctionValue *unit);
 typedef struct Object *(*CFunction)(size_t n_args, struct Object **args);
 
 typedef struct CFunctionValue {
-    size_t  n_args;
-    int8_t *modes;
+    struct ModuleValue *module;
+    size_t              n_args;
+    int8_t             *modes;
 
     CFunction function;
 
@@ -182,7 +184,7 @@ typedef struct CFunctionValue {
     int      gc_mark   : 1;
 } CFunctionValue;
 
-CFunctionValue *cFunctionValueCreate(size_t n_args, int8_t *modes, CFunction function);
+CFunctionValue *cFunctionValueCreate(struct ModuleValue *module, size_t n_args, int8_t *modes, CFunction function);
 CFunctionValue *cFunctionValueCopyByAuto(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);

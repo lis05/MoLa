@@ -6,14 +6,14 @@
 static Env   *envs[MAX_ENVS];
 static size_t n_envs = 0;
 
-size_t envGenAvailableId() {
+int64_t envGenAvailableId() {
     return n_envs;
 }
 
-struct Env *envGetById(size_t id) {
+struct Env *envGetById(int64_t id) {
     return NULL;
 }
 
-void envCreate() {}
+int64_t envCreate() {}
 
 void envInit() {}

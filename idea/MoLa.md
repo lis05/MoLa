@@ -188,7 +188,7 @@ An instruction may access the arguments stack. By convention:
 
 
 Structures:
-1. Objects stack (arguments stack). Contains objects that are indended to be used as arugments in the instructions. 
+1. Objects stack (arguments stack). Contains objects that are intended to be used as arugments in the instructions. 
 2. A stack of registered error handlers. Each handler (a catch block) is a tuple of:
     - error code.
     - absolute offset (of the catch block) to where the program has to jump.
@@ -209,6 +209,7 @@ Swaps two top elements on the stack. Signals an InternalError if there are less 
 #### `CREATE_ENV`
 Creates a new environment. The environment gets assigned an id, which is later used to switch to that environment. 
 This id is assigned during runtime. The root program get's assigned the id of 0.
+The VM then switches to the created environment implicitly.
 
 #### `SWITCH_ENV_INS`
 Switches the current environment to the environment of the module where this instruction is located.
@@ -216,6 +217,7 @@ Switches the current environment to the environment of the module where this ins
 #### `SWITCH_ENV_OBJ`
 - The stack must contain an object which is a function.
 Switches the current environment to the environment of the function located on the stack.
+If the object on the stack is not a function, signals an InternalError.
 
 #### `IMPORT_MODULE module_path identifier`
 - `module_path` is the path to the module we want to import.
@@ -294,10 +296,14 @@ If the object on the stack is `false`, jumps to the instruction at the position 
 
 Signals a ValueError if the object on the stack is not boolean, InternalError if the stack is empty.
 
+Signals an InternalError if the address of the jump is out of bounds.
+
 #### `JUMP offset`
 - `offset` is the relative offset of the instruction where the VM has to jump.
 
 Jumps to the instruction at the position `offset` relative to the current instruction.
+
+Signals an InternalError if the address of the jump is out of bounds.
 
 #### `RETURN`
 - the stack must contain an object.
@@ -772,7 +778,9 @@ In these cases, continue must destroy all the scopes where it is contained.
 Otherwise, the instruction is ignored.
 
 #### `'return' ('copy' | 'ref' | 'pass' | ) expr`
-The stack must contain the return address. 
+- The stack must contain the return address. 
+
+Returns to the address provided on the stack.
 
 The return statement only makes sense in one case:
 ```
