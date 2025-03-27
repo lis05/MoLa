@@ -5,6 +5,8 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
+// https://github.com/Wirtos/cmap
+
 #ifndef CMAP_H
 #define CMAP_H
 
@@ -31,26 +33,26 @@ typedef struct {
     struct map_node_t *node;
 } map_iter_t;
 
-#define map_pair_t(KT, VT)                                                                                                                 \
-    struct {                                                                                                                               \
-        KT k;                                                                                                                              \
-        VT v;                                                                                                                              \
+#define map_pair_t(KT, VT)                                                                                             \
+    struct {                                                                                                           \
+        KT k;                                                                                                          \
+        VT v;                                                                                                          \
     }
 
-#define map_t(KT, VT)                                                                                                                      \
-    struct {                                                                                                                               \
-        map_base_t base;                                                                                                                   \
-        KT         tmpkey;                                                                                                                 \
-        VT         tmpval;                                                                                                                 \
-        KT        *keyref;                                                                                                                 \
-        VT        *valref;                                                                                                                 \
+#define map_t(KT, VT)                                                                                                  \
+    struct {                                                                                                           \
+        map_base_t base;                                                                                               \
+        KT         tmpkey;                                                                                             \
+        VT         tmpval;                                                                                             \
+        KT        *keyref;                                                                                             \
+        VT        *valref;                                                                                             \
     }
 
-#define map_init(m, key_cmp_func, key_hash_func)                                                                                           \
-    (void)((m)->base.nbuckets  = 0,                                                                                                        \
-           (m)->base.nnodes    = 0,                                                                                                        \
-           (m)->base.buckets   = NULL,                                                                                                     \
-           (m)->base.cmp_func  = (key_cmp_func != NULL) ? key_cmp_func : map_generic_cmp,                                                  \
+#define map_init(m, key_cmp_func, key_hash_func)                                                                       \
+    (void)((m)->base.nbuckets  = 0,                                                                                    \
+           (m)->base.nnodes    = 0,                                                                                    \
+           (m)->base.buckets   = NULL,                                                                                 \
+           (m)->base.cmp_func  = (key_cmp_func != NULL) ? key_cmp_func : map_generic_cmp,                              \
            (m)->base.hash_func = (key_hash_func != NULL) ? key_hash_func : map_generic_hash)
 
 #define map_stdinit(m) map_init(m, NULL, NULL)
@@ -59,51 +61,52 @@ typedef struct {
 
 #define map_get(m, key) ((m)->tmpkey = key, (m)->valref = map_get_(&(m)->base, &(m)->tmpkey, sizeof((m)->tmpkey)))
 
-#define map_set(m, key, value)                                                                                                             \
-    ((m)->tmpval = (value),                                                                                                                \
-     (m)->tmpkey = (key),                                                                                                                  \
-     map_set_(&(m)->base,                                                                                                                  \
-              &(m)->tmpkey,                                                                                                                \
-              sizeof((m)->tmpkey),                                                                                                         \
-              map_boffset_(&(m)->tmpkey, &(m)->base.buckets),                                                                              \
-              &(m)->tmpval,                                                                                                                \
-              sizeof((m)->tmpval),                                                                                                         \
+#define map_set(m, key, value)                                                                                         \
+    ((m)->tmpval = (value),                                                                                            \
+     (m)->tmpkey = (key),                                                                                              \
+     map_set_(&(m)->base,                                                                                              \
+              &(m)->tmpkey,                                                                                            \
+              sizeof((m)->tmpkey),                                                                                     \
+              map_boffset_(&(m)->tmpkey, &(m)->base.buckets),                                                          \
+              &(m)->tmpval,                                                                                            \
+              sizeof((m)->tmpval),                                                                                     \
               map_boffset_(&(m)->tmpval, &(m)->base.buckets)))
 
 #define map_remove(m, key) ((m)->tmpkey = (key), map_remove_(&(m)->base, &(m)->tmpkey, sizeof((m)->tmpkey)))
 
 #define map_iter(m) map_iter_()
 
-#define map_next(m, iter, kptr) ((m)->keyref = map_next_(&(m)->base, iter), ((m)->keyref) ? ((*kptr = *(m)->keyref), 1) : 0)
+#define map_next(m, iter, kptr)                                                                                        \
+    ((m)->keyref = map_next_(&(m)->base, iter), ((m)->keyref) ? ((*kptr = *(m)->keyref), 1) : 0)
 
-#define map_equal(m1, m2, val_cmp_func)                                                                                                    \
-    (map_sametype_(&(m1)->tmpkey, &(m2)->tmpkey),                                                                                          \
-     map_sametype_(&(m1)->tmpval, &(m2)->tmpval),                                                                                          \
+#define map_equal(m1, m2, val_cmp_func)                                                                                \
+    (map_sametype_(&(m1)->tmpkey, &(m2)->tmpkey),                                                                      \
+     map_sametype_(&(m1)->tmpval, &(m2)->tmpval),                                                                      \
      map_equal_(&(m1)->base, &(m2)->base, sizeof((m2)->tmpkey), sizeof((m2)->tmpval), (val_cmp_func)))
 
-#define map_from_pairs(m, count, pairs)                                                                                                    \
-    (((count) > 0) ? (map_sametype_(&(m)->tmpkey, &(pairs)->k),                                                                            \
-                      map_sametype_(&(m)->tmpval, &(pairs)->v),                                                                            \
-                      map_from_pairs_(&(m)->base,                                                                                          \
-                                      (count),                                                                                             \
-                                      sizeof(*pairs),                                                                                      \
-                                      &(pairs)->k,                                                                                         \
-                                      sizeof((m)->tmpkey),                                                                                 \
-                                      map_boffset_(&(m)->tmpkey, &(m)->base.buckets),                                                      \
-                                      &(pairs)->v,                                                                                         \
-                                      sizeof((m)->tmpval),                                                                                 \
-                                      map_boffset_(&(m)->tmpval, &(m)->base.buckets)))                                                     \
+#define map_from_pairs(m, count, pairs)                                                                                \
+    (((count) > 0) ? (map_sametype_(&(m)->tmpkey, &(pairs)->k),                                                        \
+                      map_sametype_(&(m)->tmpval, &(pairs)->v),                                                        \
+                      map_from_pairs_(&(m)->base,                                                                      \
+                                      (count),                                                                         \
+                                      sizeof(*pairs),                                                                  \
+                                      &(pairs)->k,                                                                     \
+                                      sizeof((m)->tmpkey),                                                             \
+                                      map_boffset_(&(m)->tmpkey, &(m)->base.buckets),                                  \
+                                      &(pairs)->v,                                                                     \
+                                      sizeof((m)->tmpval),                                                             \
+                                      map_boffset_(&(m)->tmpval, &(m)->base.buckets)))                                 \
                    : 1)
 
 /* copy from m2 into m1 */
-#define map_copy(m1, m2)                                                                                                                   \
-    (map_sametype_(&(m1)->tmpkey, &(m2)->tmpkey),                                                                                          \
-     map_sametype_(&(m1)->tmpval, &(m2)->tmpval),                                                                                          \
-     map_copy_(&(m1)->base,                                                                                                                \
-               &(m2)->base,                                                                                                                \
-               sizeof((m1)->tmpkey),                                                                                                       \
-               map_boffset_(&(m1)->tmpkey, &(m1)->base.buckets),                                                                           \
-               sizeof((m1)->tmpval),                                                                                                       \
+#define map_copy(m1, m2)                                                                                               \
+    (map_sametype_(&(m1)->tmpkey, &(m2)->tmpkey),                                                                      \
+     map_sametype_(&(m1)->tmpval, &(m2)->tmpval),                                                                      \
+     map_copy_(&(m1)->base,                                                                                            \
+               &(m2)->base,                                                                                            \
+               sizeof((m1)->tmpkey),                                                                                   \
+               map_boffset_(&(m1)->tmpkey, &(m1)->base.buckets),                                                       \
+               sizeof((m1)->tmpval),                                                                                   \
                map_boffset_(&(m2)->tmpval, &(m2)->base.buckets)))
 
 size_t map_generic_hash(const void *mem, size_t memsize);

@@ -764,7 +764,7 @@ genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name,
     res.code       = CREATE_FUNCTION_IC;
     res.ident_arg1 = name;
     res.n_args     = n_args;
-    res.args       = args;
+    res.args       = args; // first 4 bits store mode
     return res;
 }
 

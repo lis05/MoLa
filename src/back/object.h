@@ -4,16 +4,17 @@
 #include "../util.h"
 #include "types.h"
 
+// if type is RETURN_ADDRESS_TYPE, the object is just a meaningless shell containing the return address in value
 typedef struct Object {
     enum Type type;
-    void     *value;    // not null
+    void     *value;
 
     uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint     gc_mark   : 1;
 } Object;
 
 Object *objectCreate(enum Type type, void *value);
-void    objectDestroy(Object *object);
+void    objectDestroy(Object *object);    // used by gc
 void    ref(Object *unit);
 void    unref(Object *unit);
 

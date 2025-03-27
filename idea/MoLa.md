@@ -19,9 +19,9 @@ When a module code is executed, it has access to the things that it would have a
 
 In an application, a module can only be imported once. This means that next `import` statements will return a new reference to the already created module structure.
 
-Each module has it's own environment. The module structure has a pointer to that environment.
+Each module has it's own environment.
 
-A module structure holds the absolute offset of the first instruction of its code.
+A module structure is just a shell allowing the user to switch to a different environment
 
 ## Objects
 Object are references to values: Object -> Value.
@@ -166,6 +166,8 @@ An environment is a data structure assigned to each module. It holds all the var
 
 An environment also contains all exported objects of the module, and lets other modules use those objects.
 
+An environment has an absolute offset of the first instruction in its module.
+
 ## Global variables
 Global variables are stored in the module's environment.
 
@@ -248,9 +250,9 @@ Creates a global variable in the current environment, initially with value `null
 - `mode_i` is the mode of the i-th argument (copy, ref, pass, or auto).
 - `arg_i` is the name of the i-th argument.
 
-Creates a new function object under the given name. The object will have a list of modifiers and argument names, which will be used when calling the function. The function objecmts contains 2 values:
+Creates a new function object under the given name. The object will have a list of modifiers and argument names, which will be used when calling the function. The function object contains 2 values:
 1. (Absolute) position of the second next instruction (after this one) in its module.
-2. A pointer to the module structure (which contains the absolute module offset).
+2. A pointer to the environment where it is created.
 
 Signals a NameCollisionError if an accessible object with the given name already exists. Signals a DuplicateNameError if there are duplicate argument names. 
 

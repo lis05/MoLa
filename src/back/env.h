@@ -9,11 +9,14 @@ struct Object;
 
 typedef struct Env {
     map_t(ident, struct Object *) exported_objects, globals;    // globals are global variables, functions, and types
+    int64_t absolute_offset;                                    // of the first instruction in the module
+
 } Env;
 
 int64_t     envGenAvailableId();
 struct Env *envGetById(int64_t id);
-int64_t     envCreate();
+int64_t     envCreate(int64_t absolute_offset);
 void        envInit();
+
 
 #endif

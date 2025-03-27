@@ -26,6 +26,23 @@ void scopeInsert(Scope *scope, ident name, struct Object *obj) {
 
 struct Object *scopeRecursiveLookup(Scope *scope, ident name) {
     assert(scope != NULL);
+
+    while (1) {
+        Object *res = *map_get(&scope->map, name);
+        if (res != NULL) {
+            return res;
+        }
+
+        if (scope->can_access_parent) {
+            scope = scope->parent;
+        }
+        else {
+            break;
+        }
+    }
+
+    signalError(NAME_ERROR_CODE, errstrfmt("Cannot locate '%s'.", symtabIdentToString(name)));
+    return NULL;
 }
 
 void scopeDestroy(Scope *scope) {

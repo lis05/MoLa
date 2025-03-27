@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "alloc.h"
+#include "cmap.h"
 #include "env.h"
 #include "error.h"
 #include "gc.h"
@@ -79,6 +80,29 @@ static cvector_vector_type(Object *) objects_stack;
 static cvector_vector_type(ErrorHandler) error_handlers_stack;
 Env   *current_env;
 Scope *root_scope, *current_scope;
+
+void pushOntoObjectsStack(Object *obj) {
+    ref(obj);
+    cvector_push_back(objects_stack, obj);
+}
+
+int isObjectsStackEmpty() {
+    return cvector_empty(objects_stack);
+}
+
+size_t objectsStackSize() {
+    return cvector_size(objects_stack);
+}
+
+Object *objectsStackGetTop() {
+    return *cvector_back(objects_stack);
+}
+
+void popFromObjectsStack() {
+    // if stack's empty, you're screwed
+    unref(*cvector_back(objects_stack));
+    cvector_pop_back(objects_stack);
+}
 
 static void handleError();
 
@@ -355,71 +379,166 @@ void vmExecute(ivec instructions) {
 }
 
 static void exec_POP(Instruction *instr) {
-    if (cvector_empty(objects_stack)) {
+    if (isObjectsStackEmpty()) {
         signalError(INTERNAL_ERROR_CODE, "POP failed: empty objects_stack");
     }
 
-    cvector_pop_back(objects_stack);
+    popFromObjectsStack();
+
+    ipointer++;
 }
 
 static void exec_SWAP(Instruction *instr) {
-    if (cvector_size(objects_stack) < 2) {
+    if (objectsStackSize() < 2) {
         signalError(INTERNAL_ERROR_CODE, "SWAP failed: less that 2 elements on objects_stack");
     }
 
-    size_t size = cvector_size(objects_stack);
+    size_t size = objectsStackSize();
 
     Object *t               = objects_stack[size - 1];
     objects_stack[size - 1] = objects_stack[size - 2];
     objects_stack[size - 2] = t;
+
+    ipointer++;
 }
 
 static void exec_CREATE_ENV(Instruction *instr) {
-    current_env = envGetById(envCreate());
+    // root module, so offset is 0
+    current_env = envGetById(envCreate(0));
+
+    ipointer++;
 }
 
 static void exec_SWITCH_ENV_INS(Instruction *instr) {
     current_env = envGetById(instr->env_id);
+
+    ipointer++;
 }
 
 static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
-    if (cvector_empty(objects_stack)) {
+    if (isObjectsStackEmpty()) {
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: empty objects_stack");
     }
 
-    Object *obj = *cvector_back(objects_stack);
+    Object *obj = objectsStackGetTop();
 
     if (obj->type != C_FUNCTION_TYPE && obj->type != MOLA_FUNCTION_TYPE) {
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: object on the stack is not a function");
     }
 
-    // what if module is NULL? can it even happen?
-
     if (obj->type == C_FUNCTION_TYPE) {
-        current_env = ((CFunctionValue *)obj->value)->module->env;
+        current_env = ((CFunctionValue *)obj->value)->env;
     }
     else {
-        current_env = ((MolaFunctionValue *)obj->value)->module->env;
+        current_env = ((MolaFunctionValue *)obj->value)->env;
     }
+
+    ipointer++;
+
+    // note: we do not pop the object from the stack!
 }
 
-static void exec_IMPORT_MODULE(Instruction *instr) {}
+static void exec_IMPORT_MODULE(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_EXPORT_OBJECT(Instruction *instr) {}
+static void exec_EXPORT_OBJECT(Instruction *instr) {
+    if (isObjectsStackEmpty()) {
+        signalError(INTERNAL_ERROR_CODE, "EXPORT_OBJECT failed: empty objects_stack");
+    }
 
-static void exec_CREATE_GLOBAL(Instruction *instr) {}
+    if (map_get(&current_env->exported_objects, instr->ident_arg1) != NULL) {
+        signalError(NAME_COLLISION_ERROR_CODE,
+                    errstrfmt("Exported object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+    }
 
-static void exec_CREATE_FUNCTION(Instruction *instr) {}
+    map_set(&current_env->exported_objects, instr->ident_arg1, objectsStackGetTop());
+    // ref
 
-static void exec_CREATE_TYPE(Instruction *instr) {}
+    popFromObjectsStack();
+    // unref, no work needed
 
-static void exec_CREATE_METHOD(Instruction *instr) {}
+    ipointer++;
+}
 
-static void exec_CREATE_SCOPE(Instruction *instr) {}
+static void exec_CREATE_GLOBAL(Instruction *instr) {
+    if (map_get(&current_env->globals, instr->ident_arg1) != NULL) {
+        signalError(NAME_COLLISION_ERROR_CODE,
+                    errstrfmt("Global object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+    }
 
-static void exec_DESTROY_SCOPE(Instruction *instr) {}
+    Object *obj = objectCreate(NULL_TYPE, NULL);
+    ref(obj);
 
-static void exec_JUMP_IF_FALSE(Instruction *instr) {}
+    map_set(&current_env->globals, instr->ident_arg1, objectsStackGetTop());
+    // ref
+
+    popFromObjectsStack();
+    // unref, no work needed
+
+    ipointer++;
+}
+
+static void exec_CREATE_FUNCTION(Instruction *instr) {
+    if (map_get(&current_env->globals, instr->ident_arg1) != NULL) {
+        signalError(NAME_COLLISION_ERROR_CODE,
+                    errstrfmt("Global object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+    }
+
+    int64_t offset = ipointer + 2 - current_env->absolute_offset;
+
+    int64_t n_args = instr->n_args;
+    ident  *args   = memalloc(n_args * sizeof(ident));
+    memcpy(args, instr->args, n_args * sizeof(ident));
+    for (int64_t i = 0; i < n_args; i++) {
+        args[i] &= (1ll << 60) - 1;    // cancel modes
+    }
+
+    int8_t *modes = memalloc(n_args * sizeof(int8_t));
+    for (int64_t i = 0; i < n_args; i++) {
+        if (instr->args[i] & COPY_MODE_FLAG) {
+            modes[i] = FUNCTION_ARG_MODE_COPY;
+        }
+        else if (instr->args[i] & REF_MODE_FLAG) {
+            modes[i] = FUNCTION_ARG_MODE_REF;
+        }
+        else if (instr->args[i] & PASS_MODE_FLAG) {
+            modes[i] = FUNCTION_ARG_MODE_PASS;
+        }
+        else {
+            modes[i] = FUNCTION_ARG_MODE_AUTO;
+        }
+    }
+
+    MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args, modes);
+
+    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, func_value);
+
+    map_set(&current_env->globals, instr->ident_arg1, obj);
+    ref(obj);
+
+    ipointer++;
+}
+
+static void exec_CREATE_TYPE(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_CREATE_METHOD(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_CREATE_SCOPE(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_DESTROY_SCOPE(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_JUMP_IF_FALSE(Instruction *instr) {
+    ipointer++;
+}
 
 static void exec_JUMP(Instruction *instr) {
     if (!(0 <= ipointer + instr->int_arg1 && ipointer + instr->int_arg1 < cvector_size(instructions_list))) {
@@ -429,90 +548,205 @@ static void exec_JUMP(Instruction *instr) {
     ipointer += instr->int_arg1;
 }
 
-static void exec_RETURN(Instruction *instr) {}
+static void exec_RETURN(Instruction *instr) {
+    if (cvector_empty(objects_stack)) {
+        signalError(INTERNAL_ERROR_CODE, "RETURN failed: empty objects_stack");
+    }
+    Object *top = *cvector_back(objects_stack);
+    cvector_pop_back(objects_stack);
 
-static void exec_REGISTER_CATCH(Instruction *instr) {}
+    if (top->type != RETURN_ADDRESS_TYPE) {
+        signalError(INTERNAL_ERROR_CODE, "RETURN failed: object is not a return address");
+    }
 
-static void exec_DESTROY_CATCH(Instruction *instr) {}
+    int64_t return_address = (int64_t)top->value;
+    if (!(0 <= return_address && return_address < cvector_size(instructions_list))) {
+        signalError(INTERNAL_ERROR_CODE, "RETURN failed: address out of bounds");
+    }
 
-static void exec_SIGNAL_ERROR(Instruction *instr) {}
+    ipointer = return_address;
+}
 
-static void exec_CREATE_VAR(Instruction *instr) {}
+static void exec_REGISTER_CATCH(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_COPY_BY_VALUE(Instruction *instr) {}
+static void exec_DESTROY_CATCH(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_COPY_BY_REFERENCE(Instruction *instr) {}
+static void exec_SIGNAL_ERROR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_COPY_BY_AUTO(Instruction *instr) {}
+static void exec_CREATE_VAR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_ASSIGNMENT(Instruction *instr) {}
+static void exec_COPY_BY_VALUE(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOGICAL_OR(Instruction *instr) {}
+static void exec_COPY_BY_REFERENCE(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOGICAL_AND(Instruction *instr) {}
+static void exec_COPY_BY_AUTO(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_BITWISE_OR(Instruction *instr) {}
+static void exec_ASSIGNMENT(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_BITWISE_XOR(Instruction *instr) {}
+static void exec_LOGICAL_OR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_BITWISE_AND(Instruction *instr) {}
+static void exec_LOGICAL_AND(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_EQUAL(Instruction *instr) {}
+static void exec_BITWISE_OR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_NOT_EQUAL(Instruction *instr) {}
+static void exec_BITWISE_XOR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LESS_THAN(Instruction *instr) {}
+static void exec_BITWISE_AND(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LESS_EQUAL(Instruction *instr) {}
+static void exec_EQUAL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_GREATER_THAN(Instruction *instr) {}
+static void exec_NOT_EQUAL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_GREATER_EQUAL(Instruction *instr) {}
+static void exec_LESS_THAN(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_ADDITION(Instruction *instr) {}
+static void exec_LESS_EQUAL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_SUBTRACTION(Instruction *instr) {}
+static void exec_GREATER_THAN(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LSHIFT(Instruction *instr) {}
+static void exec_GREATER_EQUAL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_RSHIFT(Instruction *instr) {}
+static void exec_ADDITION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_MULTIPLICATION(Instruction *instr) {}
+static void exec_SUBTRACTION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_DIVISION(Instruction *instr) {}
+static void exec_LSHIFT(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_REMAINDER(Instruction *instr) {}
+static void exec_RSHIFT(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_POSITIVE(Instruction *instr) {}
+static void exec_MULTIPLICATION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_NEGATION(Instruction *instr) {}
+static void exec_DIVISION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_INVERTION(Instruction *instr) {}
+static void exec_REMAINDER(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOGICAL_NOT(Instruction *instr) {}
+static void exec_POSITIVE(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_CALL(Instruction *instr) {}
+static void exec_NEGATION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_ACCESS(Instruction *instr) {}
+static void exec_INVERTION(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_BOOL(Instruction *instr) {}
+static void exec_LOGICAL_NOT(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_CHAR(Instruction *instr) {}
+static void exec_CALL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_INT(Instruction *instr) {}
+static void exec_ACCESS(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_FLOAT(Instruction *instr) {}
+static void exec_LOAD_BOOL(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_STRING(Instruction *instr) {}
+static void exec_LOAD_CHAR(Instruction *instr) {
+    ipointer++;
+}
 
-static void exec_LOAD_NULL(Instruction *instr) {}
+static void exec_LOAD_INT(Instruction *instr) {
+    IntValue *value = intValueCreate(instr->int_arg1);
+    Object   *obj   = objectCreate(INT_TYPE, value);
 
-static void exec_LOAD(Instruction *instr) {}
+    pushOntoObjectsStack(obj);
+    ipointer++;
+}
 
-static void exec_LOAD_FIELD(Instruction *instr) {}
+static void exec_LOAD_FLOAT(Instruction *instr) {
+    IntValue *value = floatValueCreate(instr->float_arg1);
+    Object   *obj   = objectCreate(FLOAT_TYPE, value);
 
-static void exec_LOAD_METHOD(Instruction *instr) {}
+    pushOntoObjectsStack(obj);
+    ipointer++;
+}
 
-static void exec_NEW(Instruction *instr) {}
+static void exec_LOAD_STRING(Instruction *instr) {
+    IntValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
+    Object   *obj   = objectCreate(STRING_TYPE, value);
 
-static void handleError() {}
+    pushOntoObjectsStack(obj);
+    ipointer++;
+}
+
+static void exec_LOAD_NULL(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_LOAD(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_LOAD_FIELD(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_LOAD_METHOD(Instruction *instr) {
+    ipointer++;
+}
+
+static void exec_NEW(Instruction *instr) {
+    ipointer++;
+}
+
+static void handleError() {
+    ipointer++;
+}

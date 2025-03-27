@@ -1,5 +1,6 @@
 #include "env.h"
 #include "../util.h"
+#include "object.h"
 
 #define MAX_ENVS 10000    // if you need more - go see a doctor
 
@@ -14,6 +15,6 @@ struct Env *envGetById(int64_t id) {
     return NULL;
 }
 
-int64_t envCreate() {}
+int64_t envCreate(int64_t absolute_offset) {}
 
 void envInit() {}

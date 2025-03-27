@@ -6,7 +6,6 @@
 #include "cmap.h"
 
 enum Type {
-    NONE_TYPE,
     BOOL_TYPE,
     INT_TYPE,
     CHAR_TYPE,
@@ -17,7 +16,9 @@ enum Type {
     INSTANCE_TYPE,
     MOLA_FUNCTION_TYPE,
     C_FUNCTION_TYPE,
-    MODULE_TYPE
+    MODULE_TYPE,
+    NULL_TYPE,
+    RETURN_ADDRESS_TYPE
 };
 
 struct ModuleValue;
@@ -26,7 +27,16 @@ struct MolaFunctionValue;
 struct Object;
 struct Env;
 
-// NoneValue is redundant
+typedef struct NullValue {
+    uint32_t ref_count : 31;
+    int      gc_mark   : 1;
+} NullValue;
+
+NullValue *nullValueCreate();
+NullValue *nullValueCopyByAuto(NullValue *val);
+void       nullValueDestroy(NullValue *val);
+void       nullValueRef(NullValue *unit);
+void       nullValueUnref(NullValue *unit);
 
 typedef struct BoolValue {
     int value : 1;
@@ -153,8 +163,8 @@ void           instanceValueUnref(InstanceValue *unit);
 #define FUNCTION_ARG_MODE_AUTO 3
 
 typedef struct MolaFunctionValue {
-    struct ModuleValue *module;
-    int64_t             relative_offset;    // offset (relative to the module) of the first function instruction
+    struct Env *env;
+    int64_t     relative_offset;    // offset (relative to the module) of the first function instruction
 
     size_t  n_args;
     ident  *args;
@@ -165,7 +175,7 @@ typedef struct MolaFunctionValue {
 } MolaFunctionValue;
 
 MolaFunctionValue *
-molaFunctionValueCreate(struct ModuleValue *module, int64_t rel_offset, size_t n_args, ident *args, int8_t *modes);
+molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args, int8_t *modes);
 MolaFunctionValue *molaFunctionValueCopyByAuto(MolaFunctionValue *val);
 void               molaFunctionValueDestroy(MolaFunctionValue *val);
 void               molaFunctionValueRef(MolaFunctionValue *unit);
@@ -174,9 +184,9 @@ void               molaFunctionValueUnref(MolaFunctionValue *unit);
 typedef struct Object *(*CFunction)(size_t n_args, struct Object **args);
 
 typedef struct CFunctionValue {
-    struct ModuleValue *module;
-    size_t              n_args;
-    int8_t             *modes;
+    struct Env *env;
+    size_t      n_args;
+    int8_t     *modes;
 
     CFunction function;
 
@@ -184,7 +194,7 @@ typedef struct CFunctionValue {
     int      gc_mark   : 1;
 } CFunctionValue;
 
-CFunctionValue *cFunctionValueCreate(struct ModuleValue *module, size_t n_args, int8_t *modes, CFunction function);
+CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, int8_t *modes, CFunction function);
 CFunctionValue *cFunctionValueCopyByAuto(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
@@ -192,7 +202,6 @@ void            cFunctionValueUnref(CFunctionValue *unit);
 
 typedef struct ModuleValue {
     struct Env *env;
-    int64_t     absolute_offset;    // offset of the first instruction
 
     uint32_t ref_count : 31;
     int      gc_mark   : 1;
