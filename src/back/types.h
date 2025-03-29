@@ -27,69 +27,6 @@ struct MolaFunctionValue;
 struct Object;
 struct Env;
 
-typedef struct NullValue {
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} NullValue;
-
-NullValue *nullValueCreate();
-NullValue *nullValueCopyByAuto(NullValue *val);
-void       nullValueDestroy(NullValue *val);
-void       nullValueRef(NullValue *unit);
-void       nullValueUnref(NullValue *unit);
-
-typedef struct BoolValue {
-    int value : 1;
-
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} BoolValue;
-
-BoolValue *boolValueCreate(int value);
-BoolValue *boolValueCopyByAuto(BoolValue *val);
-void       boolValueDestroy(BoolValue *val);
-void       boolValueRef(BoolValue *unit);
-void       boolValueUnref(BoolValue *unit);
-
-typedef struct IntValue {
-    int64_t value;
-
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} IntValue;
-
-IntValue *intValueCreate(int64_t value);
-IntValue *intValueCopyByAuto(IntValue *val);
-void      intValueDestroy(IntValue *val);
-void      intValueRef(IntValue *unit);
-void      intValueUnref(IntValue *unit);
-
-typedef struct CharValue {
-    char value;
-
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} CharValue;
-
-CharValue *charValueCreate(char value);
-CharValue *charValueCopyByAuto(CharValue *val);
-void       charValueDestroy(CharValue *val);
-void       charValueRef(CharValue *unit);
-void       charValueUnref(CharValue *unit);
-
-typedef struct FloatValue {
-    double value;
-
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} FloatValue;
-
-FloatValue *floatValueCreate(double value);
-FloatValue *floatValueCopyByAuto(FloatValue *val);
-void        floatValueDestroy(FloatValue *val);
-void        floatValueRef(FloatValue *unit);
-void        floatValueUnref(FloatValue *unit);
-
 typedef struct StringValue {
     size_t length;
     char  *string;    // NULL-terminated, '\0' is not counted in length
@@ -99,7 +36,7 @@ typedef struct StringValue {
 } StringValue;
 
 StringValue   *stringValueCreate(size_t length, char *string);
-StringValue   *stringValueCopyByAuto(StringValue *val);
+StringValue   *stringValueCopy(StringValue *val);
 void           stringValueDestroy(StringValue *val);
 char           stringValueIndexAccess(StringValue *val, int64_t index);
 struct Object *stringValueLookupField(StringValue *val, ident name);
@@ -116,7 +53,7 @@ typedef struct ArrayValue {
 } ArrayValue;
 
 ArrayValue    *arrayValueCreate(char *string);
-ArrayValue    *arrayValueCopyByAuto(ArrayValue *val);
+ArrayValue    *arrayValueCopy(ArrayValue *val);
 void           arrayValueDestroy(ArrayValue *val);
 struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index);
 struct Object *arrayValueLookupField(ArrayValue *val, ident name);
@@ -134,7 +71,7 @@ typedef struct TypeValue {
 } TypeValue;
 
 TypeValue     *typeValueCreate();
-TypeValue     *typeValueCopyByAuto(TypeValue *val);
+TypeValue     *typeValueCopy(TypeValue *val);
 void           typeValueDestroy(TypeValue *val);
 void           typeValueAddMethod(TypeValue *val, ident name, struct MolaFunctionValue *method);
 struct Object *typeValueLookupMethod(TypeValue *val, ident name);
@@ -150,7 +87,7 @@ typedef struct InstanceValue {
 } InstanceValue;
 
 InstanceValue *instanceValueCreate(struct TypeValue *type);
-InstanceValue *instanceValueCopyByAuto(InstanceValue *val);
+InstanceValue *instanceValueCopy(InstanceValue *val);
 void           instanceValueDestroy(InstanceValue *val);
 struct Object *instanceValueLookupField(InstanceValue *val, ident name);
 struct Object *instanceValueLookupMethod(InstanceValue *val, ident name);
@@ -174,9 +111,8 @@ typedef struct MolaFunctionValue {
     int      gc_mark   : 1;
 } MolaFunctionValue;
 
-MolaFunctionValue *
-molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args, int8_t *modes);
-MolaFunctionValue *molaFunctionValueCopyByAuto(MolaFunctionValue *val);
+MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args);
+MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val);
 void               molaFunctionValueDestroy(MolaFunctionValue *val);
 void               molaFunctionValueRef(MolaFunctionValue *unit);
 void               molaFunctionValueUnref(MolaFunctionValue *unit);
@@ -195,7 +131,7 @@ typedef struct CFunctionValue {
 } CFunctionValue;
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, int8_t *modes, CFunction function);
-CFunctionValue *cFunctionValueCopyByAuto(CFunctionValue *val);
+CFunctionValue *cFunctionValueCopy(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
 void            cFunctionValueUnref(CFunctionValue *unit);
@@ -208,7 +144,7 @@ typedef struct ModuleValue {
 } ModuleValue;
 
 ModuleValue *moduleValueCreate(struct Env *env, int64_t absolute_offset);
-ModuleValue *moduleValueCopyByAuto(ModuleValue *val);
+ModuleValue *moduleValueCopy(ModuleValue *val);
 void         moduleValueDestroy(ModuleValue *val);
 void         moduleValueRef(ModuleValue *unit);
 void         moduleValueUnref(ModuleValue *unit);

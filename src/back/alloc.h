@@ -18,6 +18,8 @@ void  memfreesafe(void *ptr, int *error);
 struct Object;
 
 void *memallocObject();
-void  memfreeObject(struct Object *ptr);
+void *memallocScope();
+void  memfreeObject(void *ptr);
+void  memfreeScope(void *ptr);
 
 #endif

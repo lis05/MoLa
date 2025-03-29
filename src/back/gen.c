@@ -125,15 +125,6 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("    args: ");
         for (int i = 0; i < instr->n_args; i++) {
             ident arg = instr->args[i];
-            if (arg & COPY_MODE_FLAG) {
-                printf("COPY ");
-            }
-            else if (arg & REF_MODE_FLAG) {
-                printf("REF ");
-            }
-            else if (arg & PASS_MODE_FLAG) {
-                printf("PASS ");
-            }
             printIdent((arg << 4) >> 4);
             printf(", ");
         }
@@ -180,15 +171,6 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("    args: ");
         for (int i = 0; i < instr->n_args; i++) {
             ident arg = instr->args[i];
-            if (arg & COPY_MODE_FLAG) {
-                printf("COPY ");
-            }
-            else if (arg & REF_MODE_FLAG) {
-                printf("REF ");
-            }
-            else if (arg & PASS_MODE_FLAG) {
-                printf("PASS ");
-            }
             printIdent((arg << 4) >> 4);
             printf(", ");
         }
@@ -288,26 +270,8 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
-    case COPY_BY_VALUE_IC : {
-        printf("%-20s    ", "COPY_BY_VALUE");
-        printf("lineno=%-4lld ", instr->lineno);
-        printf("n_args=%-4lld ", instr->n_args);
-        printf("env=%-4lld ", instr->env_id);
-
-        printf("\n");
-        return;
-    }
-    case COPY_BY_REFERENCE_IC : {
-        printf("%-20s    ", "COPY_BY_REFERENCE");
-        printf("lineno=%-4lld ", instr->lineno);
-        printf("n_args=%-4lld ", instr->n_args);
-        printf("env=%-4lld ", instr->env_id);
-
-        printf("\n");
-        return;
-    }
-    case COPY_BY_AUTO_IC : {
-        printf("%-20s    ", "COPY_BY_AUTO");
+    case COPY_IC : {
+        printf("%-20s    ", "COPY_IC");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
         printf("env=%-4lld ", instr->env_id);
@@ -764,7 +728,7 @@ genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name,
     res.code       = CREATE_FUNCTION_IC;
     res.ident_arg1 = name;
     res.n_args     = n_args;
-    res.args       = args;    // first 4 bits store mode
+    res.args       = args;
     return res;
 }
 
@@ -912,36 +876,14 @@ Instruction genInsCREATE_VAR(char *filename, size_t lineno, int64_t env_id, iden
     return res;
 }
 
-Instruction genInsCOPY_BY_VALUE(char *filename, size_t lineno, int64_t env_id) {
+Instruction genInsCOPY(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
     res.n_args   = 0;
 
-    res.code = COPY_BY_VALUE_IC;
-    return res;
-}
-
-Instruction genInsCOPY_BY_REFERENCE(char *filename, size_t lineno, int64_t env_id) {
-    Instruction res;
-    res.filename = filename;
-    res.lineno   = lineno;
-    res.env_id   = env_id;
-    res.n_args   = 0;
-
-    res.code = COPY_BY_REFERENCE_IC;
-    return res;
-}
-
-Instruction genInsCOPY_BY_AUTO(char *filename, size_t lineno, int64_t env_id) {
-    Instruction res;
-    res.filename = filename;
-    res.lineno   = lineno;
-    res.env_id   = env_id;
-    res.n_args   = 0;
-
-    res.code = COPY_BY_AUTO_IC;
+    res.code = COPY_IC;
     return res;
 }
 
@@ -1441,7 +1383,6 @@ static ilist gen_if_stmt(AstNode *node);
 static ilist gen_continue_stmt(AstNode *node);
 static ilist gen_break_stmt(AstNode *node);
 static ilist gen_return_stmt(AstNode *node);
-static ilist gen_assignment_stmt(AstNode *node);
 static ilist gen_try_catch_stmt(AstNode *node);
 static ilist gen_signal_stmt(AstNode *node);
 static ilist gen_var_stmt(AstNode *node);
@@ -1527,9 +1468,6 @@ static ilist gen(AstNode *node) {
     }
     case RETURN_STMT_NODE : {
         return gen_return_stmt(node);
-    }
-    case ASSIGNMENT_STMT_NODE : {
-        return gen_assignment_stmt(node);
     }
     case TRY_CATCH_STMT_NODE : {
         return gen_try_catch_stmt(node);
@@ -1819,19 +1757,6 @@ static ilist gen_function_stmt(AstNode *node) {
         struct AstNode *item  = args->nodes[0];
         ident           value = item->nodes[0]->ident_value;
 
-        if (item->option == PARAM_COPY_MODE_OPTION) {
-            value ^= COPY_MODE_FLAG;
-        }
-        else if (item->option == PARAM_REF_MODE_OPTION) {
-            value ^= REF_MODE_FLAG;
-        }
-        else if (item->option == PARAM_PASS_MODE_OPTION) {
-            value ^= PASS_MODE_FLAG;
-        }
-        else {
-            value ^= AUTO_MODE_FLAG;
-        }
-
         cvector_push_back(params, value);
 
         if (args->n_nodes == 2) {
@@ -1946,24 +1871,11 @@ static ilist gen_method_stmt(AstNode *node) {
     struct AstNode *block_stmt = node->nodes[3];
 
     cvector_vector_type(ident) params = NULL;
-    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+    cvector_push_back(params, symtabInsert(lex_symtab, "this"));
 
     while (args != NULL) {
         struct AstNode *item  = args->nodes[0];
         ident           value = item->nodes[0]->ident_value;
-
-        if (item->option == PARAM_COPY_MODE_OPTION) {
-            value ^= COPY_MODE_FLAG;
-        }
-        else if (item->option == PARAM_REF_MODE_OPTION) {
-            value ^= REF_MODE_FLAG;
-        }
-        else if (item->option == PARAM_PASS_MODE_OPTION) {
-            value ^= PASS_MODE_FLAG;
-        }
-        else {
-            value ^= AUTO_MODE_FLAG;
-        }
 
         cvector_push_back(params, value);
 
@@ -2018,24 +1930,11 @@ static ilist gen_constructor_stmt(AstNode *node) {
     struct AstNode *block_stmt = node->nodes[2];
 
     cvector_vector_type(ident) params = NULL;
-    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+    cvector_push_back(params, symtabInsert(lex_symtab, "this"));
 
     while (args != NULL) {
         struct AstNode *item  = args->nodes[0];
         ident           value = item->nodes[0]->ident_value;
-
-        if (item->option == PARAM_COPY_MODE_OPTION) {
-            value ^= COPY_MODE_FLAG;
-        }
-        else if (item->option == PARAM_REF_MODE_OPTION) {
-            value ^= REF_MODE_FLAG;
-        }
-        else if (item->option == PARAM_PASS_MODE_OPTION) {
-            value ^= PASS_MODE_FLAG;
-        }
-        else {
-            value ^= AUTO_MODE_FLAG;
-        }
 
         cvector_push_back(params, value);
 
@@ -2089,7 +1988,7 @@ static ilist gen_destructor_stmt(AstNode *node) {
     struct AstNode *block_stmt = node->nodes[1];
 
     cvector_vector_type(ident) params = NULL;
-    cvector_push_back(params, REF_MODE_FLAG ^ symtabInsert(lex_symtab, "this"));
+    cvector_push_back(params, symtabInsert(lex_symtab, "this"));
 
     size_t n_args = cvector_size(params);
     ident *margs  = malloc(sizeof(ident) * n_args);
@@ -2511,47 +2410,10 @@ static ilist gen_return_stmt(AstNode *node) {
     temp = gen(node->nodes[0]);
     ilistLink(&output, &temp);
 
-    if (node->option == RETURN_COPY_MODE_OPTION) {
-        ilistAppend(&output, genInsCOPY_BY_VALUE(info(node)));
-    }
-    else if (node->option == RETURN_REF_MODE_OPTION) {
-        ilistAppend(&output, genInsCOPY_BY_REFERENCE(info(node)));
-    }
-    else if (node->option == RETURN_AUTO_MODE_OPTION) {
-        ilistAppend(&output, genInsCOPY_BY_AUTO(info(node)));
-    }
+    ilistAppend(&output, genInsCOPY(info(node)));
 
     ilistAppend(&output, genInsSWAP(info(node)));
     ilistAppend(&output, genInsRETURN(info(node)));
-
-    return output;
-}
-
-static ilist gen_assignment_stmt(AstNode *node) {
-    ilist output = ilistCreate();
-    ilist temp   = ilistCreate();
-
-    /*
-    >   a mode b
-
-    <   gen(b)
-    <   COPY_BY_mode
-    <   gen(a)
-    <   ASSIGNMENT
-    */
-
-    temp = gen(node->nodes[1]);
-    ilistLink(&output, &temp);
-
-    if (node->option == ASSIGNMENT_COPIES_OPTION) {
-        ilistAppend(&output, genInsCOPY_BY_VALUE(info(node)));
-    }
-    else {
-        ilistAppend(&output, genInsCOPY_BY_REFERENCE(info(node)));
-    }
-
-    ilistAppend(&output, genInsASSIGNMENT(info(node)));
-    ilistAppend(&output, genInsPOP(info(node)));
 
     return output;
 }
@@ -2729,7 +2591,7 @@ static ilist gen_var_stmt(AstNode *node) {
         else {
             temp = gen(item->nodes[1]);
             ilistLink(&output, &temp);
-            ilistAppend(&output, genInsCOPY_BY_AUTO(info(item)));
+            ilistAppend(&output, genInsCOPY(info(item)));
             ilistAppend(&output, genInsCREATE_VAR(info(item), item->nodes[0]->ident_value));
         }
 
@@ -2771,7 +2633,7 @@ static ilist gen_assignment(AstNode *node) {
     temp = gen_assignment(B);
     ilistLink(&output, &temp);
 
-    ilistAppend(&output, genInsCOPY_BY_AUTO(info(node)));
+    ilistAppend(&output, genInsCOPY(info(node)));
 
     temp = gen_inline_if(A);
     ilistLink(&output, &temp);

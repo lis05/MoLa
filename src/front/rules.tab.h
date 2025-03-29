@@ -70,37 +70,32 @@ extern int yydebug;
     CONSTRUCTOR = 271,             /* CONSTRUCTOR  */
     DESTRUCTOR = 272,              /* DESTRUCTOR  */
     OF = 273,                      /* OF  */
-    COPY = 274,                    /* COPY  */
-    REF = 275,                     /* REF  */
-    PASS = 276,                    /* PASS  */
-    CONTINUE = 277,                /* CONTINUE  */
-    BREAK = 278,                   /* BREAK  */
-    RETURN = 279,                  /* RETURN  */
-    VAR = 280,                     /* VAR  */
-    TRY = 281,                     /* TRY  */
-    CATCH = 282,                   /* CATCH  */
-    FINALLY = 283,                 /* FINALLY  */
-    SIGNAL = 284,                  /* SIGNAL  */
-    BECAUSE = 285,                 /* BECAUSE  */
-    IF = 286,                      /* IF  */
-    ELSE = 287,                    /* ELSE  */
-    WHILE = 288,                   /* WHILE  */
-    FOR = 289,                     /* FOR  */
-    WHEN = 290,                    /* WHEN  */
-    THEN = 291,                    /* THEN  */
-    NEW = 292,                     /* NEW  */
-    OR = 293,                      /* OR  */
-    AND = 294,                     /* AND  */
-    NOT = 295,                     /* NOT  */
-    COPIES = 296,                  /* COPIES  */
-    REFS = 297,                    /* REFS  */
-    AS = 298,                      /* AS  */
-    LSHIFT = 299,                  /* LSHIFT  */
-    RSHIFT = 300,                  /* RSHIFT  */
-    EQ = 301,                      /* EQ  */
-    NE = 302,                      /* NE  */
-    LE = 303,                      /* LE  */
-    GE = 304                       /* GE  */
+    CONTINUE = 274,                /* CONTINUE  */
+    BREAK = 275,                   /* BREAK  */
+    RETURN = 276,                  /* RETURN  */
+    VAR = 277,                     /* VAR  */
+    TRY = 278,                     /* TRY  */
+    CATCH = 279,                   /* CATCH  */
+    FINALLY = 280,                 /* FINALLY  */
+    SIGNAL = 281,                  /* SIGNAL  */
+    BECAUSE = 282,                 /* BECAUSE  */
+    IF = 283,                      /* IF  */
+    ELSE = 284,                    /* ELSE  */
+    WHILE = 285,                   /* WHILE  */
+    FOR = 286,                     /* FOR  */
+    WHEN = 287,                    /* WHEN  */
+    THEN = 288,                    /* THEN  */
+    NEW = 289,                     /* NEW  */
+    OR = 290,                      /* OR  */
+    AND = 291,                     /* AND  */
+    NOT = 292,                     /* NOT  */
+    AS = 293,                      /* AS  */
+    LSHIFT = 294,                  /* LSHIFT  */
+    RSHIFT = 295,                  /* RSHIFT  */
+    EQ = 296,                      /* EQ  */
+    NE = 297,                      /* NE  */
+    LE = 298,                      /* LE  */
+    GE = 299                       /* GE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -114,7 +109,7 @@ union YYSTYPE
     int64_t num;
     nodeptr node;
 
-#line 118 "rules.tab.h"
+#line 113 "rules.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

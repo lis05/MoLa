@@ -28,9 +28,6 @@ L			        [a-zA-Z_]
 "export"            { count(); yylval.num = lineno; return EXPORT; }
 "global"            { count(); yylval.num = lineno; return GLOBAL; }
 "function"          { count(); yylval.num = lineno; return FUNCTION; }
-"copy"              { count(); yylval.num = lineno; return COPY; }
-"ref"               { count(); yylval.num = lineno; return REF; }
-"pass"              { count(); yylval.num = lineno; return PASS; }
 "type"              { count(); yylval.num = lineno; return TYPE; }
 "method"            { count(); yylval.num = lineno; return METHOD; }
 "constructor"       { count(); yylval.num = lineno; return CONSTRUCTOR; }
@@ -43,8 +40,6 @@ L			        [a-zA-Z_]
 "continue"          { count(); yylval.num = lineno; return CONTINUE; }
 "break"             { count(); yylval.num = lineno; return BREAK; }
 "return"            { count(); yylval.num = lineno; return RETURN; }
-"copies"            { count(); yylval.num = lineno; return COPIES; }
-"refs"              { count(); yylval.num = lineno; return REFS; }
 "try"               { count(); yylval.num = lineno; return TRY; }
 "catch"             { count(); yylval.num = lineno; return CATCH; }
 "finally"           { count(); yylval.num = lineno; return FINALLY; }

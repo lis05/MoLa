@@ -25,13 +25,11 @@
 
 %token <num> IMPORT EXPORT GLOBAL FUNCTION TYPE METHOD CONSTRUCTOR DESTRUCTOR
 %token <num> OF
-%token <num> COPY REF PASS
 %token <num> CONTINUE BREAK RETURN VAR
 %token <num> TRY CATCH FINALLY SIGNAL BECAUSE
 %token <num> IF ELSE WHILE FOR
 %token <num> WHEN THEN NEW
 %token <num> OR AND NOT
-%token <num> COPIES REFS
 %token <num> AS
 %token <num> LSHIFT RSHIFT
 %token <num> EQ NE LE GE
@@ -65,14 +63,13 @@
 %type <node> continue_stmt
 %type <node> break_stmt
 %type <node> return_stmt
-%type <node> assignment_stmt
 %type <node> try_catch_stmt
 %type <node> catch_item_list
 %type <node> catch_item
 %type <node> signal_stmt
-%type <node> var_stmt
-%type <node> assignment_item_list
 %type <node> assignment_item
+%type <node> assignment_item_list
+%type <node> var_stmt
 %type <node> expr
 %type <node> assignment
 %type <node> inline_if
@@ -228,17 +225,8 @@ parameter_list:
     ;
 
 parameter_item:
-    COPY IDENTIFIER {
-        $$ = make(PARAMETER_ITEM_NODE, PARAM_COPY_MODE_OPTION, $1, 1, $2);
-    }
-    | REF IDENTIFIER {
-        $$ = make(PARAMETER_ITEM_NODE, PARAM_REF_MODE_OPTION, $1, 1, $2);
-    }
-    | PASS IDENTIFIER {
-        $$ = make(PARAMETER_ITEM_NODE, PARAM_PASS_MODE_OPTION, $1, 1, $2);
-    } 
-    | IDENTIFIER {
-        $$ = make(PARAMETER_ITEM_NODE, PARAM_AUTO_MODE_OPTION, $1->lineno, 1, $1);
+    IDENTIFIER {
+        $$ = make(PARAMETER_ITEM_NODE, DEFAULT_OPTION, $1->lineno, 1, $1);
     }
     ;
 
@@ -313,9 +301,6 @@ stmt:
     }
     | return_stmt {
         $$ = make(STMT_NODE, RETURN_STMT_OPTION, $1->lineno, 1, $1);
-    }
-    | assignment_stmt {
-        $$ = make(STMT_NODE, ASSIGNMENT_STMT_OPTION, $1->lineno, 1, $1);
     }
     | try_catch_stmt {
         $$ = make(STMT_NODE, TRY_CATCH_STMT_OPTION, $1->lineno, 1, $1);
@@ -404,26 +389,8 @@ break_stmt:
     ;
 
 return_stmt:
-    RETURN COPY expr {
-        $$ = make(RETURN_STMT_NODE, RETURN_COPY_MODE_OPTION, $1, 1, $3);
-    }
-    | RETURN REF expr {
-        $$ = make(RETURN_STMT_NODE, RETURN_REF_MODE_OPTION, $1, 1, $3);
-    }
-    | RETURN PASS expr {
-        $$ = make(RETURN_STMT_NODE, RETURN_PASS_MODE_OPTION, $1, 1, $3);
-    }
-    | RETURN expr {
-        $$ = make(RETURN_STMT_NODE, RETURN_AUTO_MODE_OPTION, $1, 1, $2);
-    }
-    ;
-
-assignment_stmt:
-    expr COPIES expr {
-        $$ = make(ASSIGNMENT_STMT_NODE, ASSIGNMENT_COPIES_OPTION, $1->lineno, 2, $1, $3);
-    }
-    | expr REFS expr {
-        $$ = make(ASSIGNMENT_STMT_NODE, ASSIGNMENT_REFS_OPTION, $1->lineno, 2, $1, $3);
+    RETURN expr {
+        $$ = make(RETURN_STMT_NODE, DEFAULT_OPTION, $1, 1, $2);
     }
     ;
 

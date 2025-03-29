@@ -29,7 +29,6 @@
 #define CONTINUE_STMT_NODE        22
 #define BREAK_STMT_NODE           23
 #define RETURN_STMT_NODE          24
-#define ASSIGNMENT_STMT_NODE      25
 #define TRY_CATCH_STMT_NODE       26
 #define CATCH_ITEM_LIST_NODE      27
 #define CATCH_ITEM_NODE           28
@@ -78,10 +77,6 @@
 #define LIST_BASE_ITEM_OPTION           14
 #define LIST_RECURSIVE_OPTION           15
 #define NO_FUNC_PARAMS_OPTION           16
-#define PARAM_COPY_MODE_OPTION          17
-#define PARAM_REF_MODE_OPTION           18
-#define PARAM_PASS_MODE_OPTION          19
-#define PARAM_AUTO_MODE_OPTION          20
 #define MEMBER_FIELD_OPTION             21
 #define MEMBER_METHOD_OPTION            22
 #define EXPR_OPTION                     23
@@ -108,12 +103,6 @@
 #define FOR_NOTHING_OPTION              44
 #define IF_WITH_ELSE_OPTION             45
 #define IF_WITHOUT_ELSE_OPTION          46
-#define RETURN_COPY_MODE_OPTION         47
-#define RETURN_REF_MODE_OPTION          48
-#define RETURN_PASS_MODE_OPTION         49
-#define RETURN_AUTO_MODE_OPTION         50
-#define ASSIGNMENT_COPIES_OPTION        51
-#define ASSIGNMENT_REFS_OPTION          52
 #define TRY_CATCH_FULL_OPTION           53
 #define TRY_CATCH_ONLY_UNIVERSAL_OPTION 54
 #define TRY_CATCH_ONLY_SPECIFIC_OPTION  55

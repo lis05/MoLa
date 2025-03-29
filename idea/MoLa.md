@@ -24,41 +24,19 @@ Each module has it's own environment.
 A module structure is just a shell allowing the user to switch to a different environment
 
 ## Objects
-Object are references to values: Object -> Value.
-- Objects always have a pointer to their type.
-- Value of object X is noted as val(X)
-- type object is an object that references a type value, which can be used to create new isntances of that type.
-- An object O -> V can be copied in 2 ways:
-    1. O` -> V (by reference)
-    2. O` -> copy(v) (by value)
-- When we copy x using rules defined by its type, we say that it is a copy by auto. we can write it as x -> copyauto(y)
-- All builtin types are copied by reference.
-- Builtin types are:
-    1. immutable, if it is bool, int, float, null, error, or a type value
-    2. mutable, if it is string, array, or a custom type
-- When we have objects A -> X and B -> Y, then we can make A reference B's value (we say A references B) if we make A -> Y.
-- When a reference/object x is removed, we simply make x point to null, and let GC deal with x.
-- When a reference/object x is destroyed, we destroy val(x) and let GC deal with x.
+There are 2 types of objects: ones that reference complex types and ones that "reference" basic types.
+1. Objects that "reference" basic types.
+Basic types are: bool, int, char, float, null
+Such objects carry the value in a field and are copied by value (always!).
+
+2. Objects that reference complex types.
+Complex types are: string, array, type, function, error.
+Such objects reference the value, and are copied by reference (always!).
 
 ## Assignment 
-- Assignment x = y is executed in steps:
-    1. if x is an identifier and a variable with such name doesn't exist - create x as an object with value null
-    2. create a copy by auto of y: z
-    3. make x a reference of z: x -> val(z)
-    4. remove reference z
-    5. __result: x -> copyauto(y)__
-- Assignment by value can be forced using: x copies y
-    1. if x is an identifier and a variable with such name doesn't exist - create x as an object with value null
-    2. create a copy of y by value
-    3. make x a reference of z: x -> val(z)
-    4. remove reference z
-    5. __result: x -> copy(val(y))__
-- Assignment by reference can be forced using: x refs y
-    1. if x is an identifier and a variable with such name doesn't exist - create x as an object with value null
-    2. create a copy of y by reference
-    3. make x a reference of z: x -> val(z)
-    4. remove reference z
-    5. __result: x -> val(y)__
+x = y is executed as 
+1. copy y 
+2. x->value = y->value
 
 ## Functions 
 - Functions are special objects that can only be created in the global scope (top level) of the module. 
@@ -245,12 +223,11 @@ Exports the objects on the stack under the name `identifier` by adding it to the
 
 Creates a global variable in the current environment, initially with value `null`. Throws NameCollisionError if there's already an accessible object with the same name in the environment.
 
-#### `CREATE_FUNCTION identifier mode_1 arg_1 ... mode_n arg_n`
+#### `CREATE_FUNCTION identifier arg_1 ... arg_n`
 - `identifier` is the name of the function.
-- `mode_i` is the mode of the i-th argument (copy, ref, pass, or auto).
 - `arg_i` is the name of the i-th argument.
 
-Creates a new function object under the given name. The object will have a list of modifiers and argument names, which will be used when calling the function. The function object contains 2 values:
+Creates a new function object under the given name. The object will have a list of argument names, which will be used when calling the function. The function object contains 2 values:
 1. (Absolute) position of the second next instruction (after this one) in its module.
 2. A pointer to the environment where it is created.
 
@@ -266,9 +243,8 @@ Creates a new type under the given name. The type object contains the informatio
 
 Signals a NameCollisionError if an accessible object with the given name already exists, or a DuplicateNameError, if there are duplicate field/method names.
 
-#### `CREATE_METHOD identifier mode_1 arg_1 ... mode_n arg_n`
+#### `CREATE_METHOD identifier arg_1 ... arg_n`
 - `identifier` is the name of the function.
-- `mode_i` is the mode of the i-th argument (copy, ref, or pass).
 - `arg_i` is the name of the i-th argument.
 - the stack must contain an object.
 
@@ -276,7 +252,7 @@ Creates a new method of the object on the stack.
 
 Note: 'this' special argument has to be passed as a normal argument; it is not automatically added to the arguments list by this instruction.
 
-The method object will have a list of modifiers and argument names, which will be used when calling the function. The object will also have a pointer to the next instruction (after the current one), which is where the method body will be generated. The type will receive a pointer to this method.
+The method object will have a list of argument names, which will be used when calling the function. The object will also have a pointer to the next instruction (after the current one), which is where the method body will be generated. The type will receive a pointer to this method.
 
 Signals an InternalError if the stack is empty. Signals a ValueError the object on the stack is not a type object. Signals a NameCollisionError if the method has already been defined. Signals an NameError if the type object didn't declare a method with such name. Signals an DuplicateNameError if there are duplicate argument names. 
 
@@ -347,21 +323,7 @@ Creates a new variable with name `identifier`, pointing to the object on the sta
 
 Signals a NameCollisionError if an accessible object with the given name already exists, InternalError if the stack is empty.
 
-#### `COPY_BY_VALUE`
-- the stack must contain an object.
-
-Copies by value the object from the stack, and pushes that created copy on the stack.
-
-Signals an InternalError if there is no object on the stack.
-
-#### `COPY_BY_REFERENCE`
-- the stack must contain an object.
-
-Copies by reference the object from the stack, and pushes that created copy on the stack.
-
-Signals an InternalError if there is no object on the stack.
-
-#### `COPY_BY_AUTO`
+#### `COPY`
 - the stack must contain an object.
 
 Copies by auto the object from the stack, and pushes that created copy on the stack.
@@ -613,9 +575,9 @@ n   EXPORT_OBJECT name_n
 1   CREATE_GLOBAL identifier
 ```
 
-#### `'function' identifier '(' mode_1 arg_1, ..., mode_n arg_n ')' block_stmt`
+#### `'function' identifier '(' arg_1, ..., arg_n ')' block_stmt`
 ```
-1   CREATE_FUNCTION identifier mode_1 arg_1 ... mode_n arg_n
+1   CREATE_FUNCTION identifier arg_1 ... arg_n
 2   JUMP REL4
 #   gen(block_stmt)
 3   RETURN
@@ -627,20 +589,20 @@ n   EXPORT_OBJECT name_n
 1   CREATE_TYPE identifier n k f_1 ... f_n m_1 ... m_k
 ```
 
-#### `'method' name '(' mode_1 arg_1, ..., mode_n ')' 'of' type_name block_stmt`
+#### `'method' name '(' arg_1, ..., ')' 'of' type_name block_stmt`
 ```
 1   LOAD type_name
-2   CREATE_METHOD name 'ref' 'this' mode_1 arg_1 ... mode_n arg_n
+2   CREATE_METHOD name 'ref' 'this' arg_1 ... arg_n
 3   JUMP REL@5
 #   gen(block_stmt)
 4   RETURN
 5
 ```
 
-#### `'constructor' '(' mode_1 arg_1, ..., mode_n ')' 'of' type_name block_stmt`
+#### `'constructor' '(' arg_1, ..., ')' 'of' type_name block_stmt`
 ```
 1   LOAD type_name
-2   CREATE_METHOD 'constructor' 'ref' 'this' mode_1 arg_1 ... mode_n arg_n
+2   CREATE_METHOD 'constructor' 'ref' 'this' arg_1 ... arg_n
 3   JUMP REL@5
 #   gen(block_stmt)
 4   RETURN
@@ -779,7 +741,7 @@ In these cases, continue must destroy all the scopes where it is contained.
 
 Otherwise, the instruction is ignored.
 
-#### `'return' ('copy' | 'ref' | 'pass' | ) expr`
+#### `'return' expr`
 - The stack must contain the return address. 
 
 Returns to the address provided on the stack.
@@ -798,64 +760,16 @@ function f(...) {
 K is the number of open scopes that contain the return statement. 
 On all other situations return is ignored.
 
-If mode is `copy`:
 ```
 #   DESTROY_SCOPE
     ...
 K   DESTROY_SCOPE
 #   gen(expr)
-1   COPY_BY_VALUE
-2   SWAP
-3   RETURN
-```
-If mode is `ref`:
-```
-#   DESTROY_SCOPE
-    ...
-K   DESTROY_SCOPE
-#   gen(expr)
-1   COPY_BY_REFERENCE
-2   SWAP
-3   RETURN
-```
-If mode is `pass`:
-```
-#   DESTROY_SCOPE
-    ...
-K   DESTROY_SCOPE
-#   gen(expr)
-1   SWAP
-2   RETURN
-```
-If mode is absent:
-```
-#   DESTROY_SCOPE
-    ...
-K   DESTROY_SCOPE
-#   gen(expr)
-#   COPY_BY_AUTO
+#   COPY
 1   SWAP
 2   RETURN
 ```
 
-#### `expr1 ('copies' | 'refs') expr2`
-If mode is `copies`:
-```
-#   gen(expr2)
-1   COPY_BY_VALUE
-#   gen(expr1)
-2   ASSIGNMENT
-3   POP
-```
-If mode is `refs`:
-
-```
-#   gen(expr2)
-1   COPY_BY_REFERENCE
-#   gen(expr1)
-2   ASSIGNMENT
-3   POP
-```
 #### `'try' block_stmt ('catch' expr 'as' identifier block_stmt)* ('catch' '*' 'as' identifier block_stmt)?`
 Error handlers are generated in reversed order. For a specific error handler (`catch expr as identifier block_stmt`), the following is generated:
 ```
@@ -945,14 +859,14 @@ will be compiled into:
 #### `'var' identifier '=' expr`
 ```
 #   gen(expr)
-#   COPY_BY_AUTO
+#   COPY
 #   CREATE_VAR identifier
 ```
 
 #### `A `=` B`
 ```
 #   gen(B)
-#   COPY_BY_AUTO
+#   COPY
 #   gen(A)
 #   ASSIGNMENT
 ```

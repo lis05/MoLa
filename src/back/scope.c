@@ -5,7 +5,7 @@
 #include "object.h"
 
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
-    Scope *scope = memalloc(sizeof(Scope));
+    Scope *scope = memallocScope();
     assert(scope != NULL);
 
     scope->map               = identMapCreate();
@@ -49,5 +49,5 @@ void scopeDestroy(Scope *scope) {
 
     identMapDestroy(&scope->map);
 
-    free(scope);
+    memfreeScope(scope);
 }

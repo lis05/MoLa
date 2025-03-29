@@ -29,9 +29,7 @@ static void exec_REGISTER_CATCH(Instruction *instr);
 static void exec_DESTROY_CATCH(Instruction *instr);
 static void exec_SIGNAL_ERROR(Instruction *instr);
 static void exec_CREATE_VAR(Instruction *instr);
-static void exec_COPY_BY_VALUE(Instruction *instr);
-static void exec_COPY_BY_REFERENCE(Instruction *instr);
-static void exec_COPY_BY_AUTO(Instruction *instr);
+static void exec_COPY(Instruction *instr);
 static void exec_ASSIGNMENT(Instruction *instr);
 static void exec_LOGICAL_OR(Instruction *instr);
 static void exec_LOGICAL_AND(Instruction *instr);
@@ -218,16 +216,8 @@ void vmExecute(ivec instructions) {
             exec_CREATE_VAR(instr);
             break;
         }
-        case COPY_BY_VALUE_IC : {
-            exec_COPY_BY_VALUE(instr);
-            break;
-        }
-        case COPY_BY_REFERENCE_IC : {
-            exec_COPY_BY_REFERENCE(instr);
-            break;
-        }
-        case COPY_BY_AUTO_IC : {
-            exec_COPY_BY_AUTO(instr);
+        case COPY_IC : {
+            exec_COPY(instr);
             break;
         }
         case ASSIGNMENT_IC : {
@@ -463,8 +453,7 @@ static void exec_CREATE_GLOBAL(Instruction *instr) {
                     errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
 
-    NullValue *value = nullValueCreate();
-    Object    *obj   = objectCreate(NULL_TYPE, value);
+    Object *obj = objectCreate(NULL_TYPE, 0);
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
@@ -481,29 +470,10 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
     int64_t n_args = instr->n_args;
     ident  *args   = memalloc(n_args * sizeof(ident));
     memcpy(args, instr->args, n_args * sizeof(ident));
-    for (int64_t i = 0; i < n_args; i++) {
-        args[i] &= (1ll << 60) - 1;    // cancel modes
-    }
 
-    int8_t *modes = memalloc(n_args * sizeof(int8_t));
-    for (int64_t i = 0; i < n_args; i++) {
-        if (instr->args[i] & COPY_MODE_FLAG) {
-            modes[i] = FUNCTION_ARG_MODE_COPY;
-        }
-        else if (instr->args[i] & REF_MODE_FLAG) {
-            modes[i] = FUNCTION_ARG_MODE_REF;
-        }
-        else if (instr->args[i] & PASS_MODE_FLAG) {
-            modes[i] = FUNCTION_ARG_MODE_PASS;
-        }
-        else {
-            modes[i] = FUNCTION_ARG_MODE_AUTO;
-        }
-    }
+    MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
 
-    MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args, modes);
-
-    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, func_value);
+    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, (uint64_t)func_value);
 
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
@@ -550,9 +520,7 @@ static void exec_JUMP_IF_FALSE(Instruction *instr) {
         signalError(VALUE_ERROR_CODE, "Expected a boolean value");
     }
 
-    int value = ((BoolValue *)obj->value)->value;
-
-    if (value) {
+    if (obj->bool_value) {
         gcUnlock();
         ipointer++;
         return;
@@ -627,9 +595,7 @@ static void exec_COPY_BY_REFERENCE(Instruction *instr) {
     ipointer++;
 }
 
-// TODO: make basic types be stored in object.value
-// therefore eliminating the ability to reference basic types :(
-static void exec_COPY_BY_AUTO(Instruction *instr) {
+static void exec_COPY(Instruction *instr) {
     gcLock();
     if (objectsStackEmpty()) {
         gcUnlock();
@@ -647,30 +613,28 @@ static void exec_COPY_BY_AUTO(Instruction *instr) {
 
     objectsStackPop();
 
-    void *value = NULL;
+    uint64_t value = 0;
 
     switch (obj->type) {
-    case BOOL_TYPE : value = boolValueCopyByAuto(obj->value); break;
-    case INT_TYPE : value = intValueCopyByAuto(obj->value); break;
-    case CHAR_TYPE : value = charValueCopyByAuto(obj->value); break;
-    case FLOAT_TYPE : value = floatValueCopyByAuto(obj->value); break;
-    case STRING_TYPE : value = stringValueCopyByAuto(obj->value); break;
-    case ARRAY_TYPE : value = arrayValueCopyByAuto(obj->value); break;
-    case TYPE_TYPE : value = typeValueCopyByAuto(obj->value); break;
-    case INSTANCE_TYPE : value = instanceValueCopyByAuto(obj->value); break;
-    case MOLA_FUNCTION_TYPE : value = molaFunctionValueCopyByAuto(obj->value); break;
-    case C_FUNCTION_TYPE : value = cFunctionValueCopyByAuto(obj->value); break;
-    case MODULE_TYPE : value = moduleValueCopyByAuto(obj->value); break;
-    case NULL_TYPE : value = nullValueCopyByAuto(obj->value); break;
+    case BOOL_TYPE : value = (uint64_t)obj->bool_value; break;
+    case INT_TYPE : value = (uint64_t)obj->int_value; break;
+    case CHAR_TYPE : value = (uint64_t)obj->char_value; break;
+    case FLOAT_TYPE : value = (uint64_t)obj->float_value; break;
+    case STRING_TYPE : value = (uint64_t)stringValueCopy(obj->value); break;
+    case ARRAY_TYPE : value = (uint64_t)arrayValueCopy(obj->value); break;
+    case TYPE_TYPE : value = (uint64_t)typeValueCopy(obj->value); break;
+    case INSTANCE_TYPE : value = (uint64_t)instanceValueCopy(obj->value); break;
+    case MOLA_FUNCTION_TYPE : value = (uint64_t)molaFunctionValueCopy(obj->value); break;
+    case C_FUNCTION_TYPE : value = (uint64_t)cFunctionValueCopy(obj->value); break;
+    case MODULE_TYPE : value = (uint64_t)moduleValueCopy(obj->value); break;
+    case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : {
         gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "COPY_BY_AUTO failed: RETURN_ADDRESS_TYPE on the stack");
     }
     }
 
-    assert(value != NULL);
     Object *res = objectCreate(obj->type, value);
-
     objectsStackPush(res);
 
     ipointer++;
@@ -741,11 +705,9 @@ static void exec_NOT_EQUAL(Instruction *instr) {
     // temporary
     assert(x->type == INT_TYPE && y->type == INT_TYPE);
 
-    IntValue *xval = x->value, *yval = y->value;
-
     // this object is not referenced by anything other than the stack
     // so it doesn't need to be copied when we want a copy of it....
-    Object *res    = objectCreate(BOOL_TYPE, boolValueCreate(xval->value != yval->value));
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(x->int_value != y->int_value));
     res->is_rvalue = 1;
     objectsStackPush(res);
 
@@ -788,11 +750,9 @@ static void exec_ADDITION(Instruction *instr) {
     // temporary
     assert(x->type == INT_TYPE && y->type == INT_TYPE);
 
-    IntValue *xval = x->value, *yval = y->value;
-
     // this object is not referenced by anything other than the stack
     // so it doesn't need to be copied when we want a copy of it....
-    Object *res = objectCreate(INT_TYPE, intValueCreate(xval->value + yval->value));
+    Object *res = objectCreate(INT_TYPE, (uint64_t)(x->int_value + y->int_value));
     objectsStackPush(res);
     res->is_rvalue = 1;
 
@@ -844,7 +804,7 @@ static void exec_INVERTION(Instruction *instr) {
     Object *obj = objectsStackTop();
 
     if (obj->type == INT_TYPE) {
-        molalog("PRINT: Obj value: %lld\n", ((IntValue *)obj->value)->value);
+        molalog("PRINT: Obj value: %lld\n", obj->int_value);
     }
 
     ipointer++;
@@ -871,16 +831,14 @@ static void exec_LOAD_CHAR(Instruction *instr) {
 }
 
 static void exec_LOAD_INT(Instruction *instr) {
-    IntValue *value = intValueCreate(instr->int_arg1);
-    Object   *obj   = objectCreate(INT_TYPE, value);
+    Object   *obj   = objectCreate(INT_TYPE, (uint64_t)instr->int_arg1);
 
     objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
-    FloatValue *value = floatValueCreate(instr->float_arg1);
-    Object     *obj   = objectCreate(FLOAT_TYPE, value);
+    Object     *obj   = objectCreate(FLOAT_TYPE, (uint64_t)instr->float_arg1);
 
     objectsStackPush(obj);
     ipointer++;
@@ -888,15 +846,14 @@ static void exec_LOAD_FLOAT(Instruction *instr) {
 
 static void exec_LOAD_STRING(Instruction *instr) {
     StringValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
-    Object      *obj   = objectCreate(STRING_TYPE, value);
+    Object      *obj   = objectCreate(STRING_TYPE, (uint64_t)value);
 
     objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
-    NullValue *value = nullValueCreate();
-    Object    *obj   = objectCreate(STRING_TYPE, value);
+    Object    *obj   = objectCreate(STRING_TYPE, 0);
 
     objectsStackPush(obj);
     ipointer++;

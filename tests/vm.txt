@@ -1,5 +1,6 @@
 global x
 x = 0
 
-while x != 1000000 
+while x != 1000000 {
     x = x + 1
+}

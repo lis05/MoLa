@@ -26,9 +26,7 @@ enum InstructionCode {
     DESTROY_CATCH_IC,
     SIGNAL_ERROR_IC,
     CREATE_VAR_IC,
-    COPY_BY_VALUE_IC,
-    COPY_BY_REFERENCE_IC,
-    COPY_BY_AUTO_IC,
+    COPY_IC,
     ASSIGNMENT_IC,
     LOGICAL_OR_IC,
     LOGICAL_AND_IC,
@@ -69,11 +67,6 @@ enum InstructionCode {
 // instructions where the continue/break statements have to jump
 #define LOOP_CONTINUE_FLAG 1
 #define LOOP_BREAK_FLAG    2
-
-#define COPY_MODE_FLAG (1ull << 63)
-#define REF_MODE_FLAG  (1ull << 62)
-#define PASS_MODE_FLAG (1ull << 61)
-#define AUTO_MODE_FLAG (1ull << 60)
 
 typedef struct Instruction {
     enum InstructionCode code;

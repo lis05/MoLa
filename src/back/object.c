@@ -3,24 +3,26 @@
 #include "gc.h"
 #include "types.h"
 
-Object *objectCreate(enum Type type, void *value) {
+Object *objectCreate(enum Type type, uint64_t value) {
     Object *obj = memallocObject();
-    obj->type   = type;
-    obj->value  = value;
+
+    obj->type  = type;
+    obj->value = (void *)value;
+
     switch (type) {
-    case BOOL_TYPE : boolValueRef(value); break;
-    case INT_TYPE : intValueRef(value); break;
-    case CHAR_TYPE : charValueRef(value); break;
-    case FLOAT_TYPE : floatValueRef(value); break;
-    case STRING_TYPE : stringValueRef(value); break;
-    case ARRAY_TYPE : arrayValueRef(value); break;
-    case TYPE_TYPE : typeValueRef(value); break;
-    case INSTANCE_TYPE : instanceValueRef(value); break;
-    case MOLA_FUNCTION_TYPE : molaFunctionValueRef(value); break;
-    case C_FUNCTION_TYPE : cFunctionValueRef(value); break;
-    case MODULE_TYPE : moduleValueRef(value); break;
-    case NULL_TYPE : nullValueRef(value); break;
-    case RETURN_ADDRESS_TYPE : break;    // no need
+    case BOOL_TYPE : obj->bool_value = (int)value; break;
+    case INT_TYPE : obj->int_value = (int64_t)value; break;
+    case CHAR_TYPE : obj->char_value = (char)value; break;
+    case FLOAT_TYPE : obj->float_value = (double)value; break;
+    case STRING_TYPE : stringValueRef((void *)value); break;
+    case ARRAY_TYPE : arrayValueRef((void *)value); break;
+    case TYPE_TYPE : typeValueRef((void *)value); break;
+    case INSTANCE_TYPE : instanceValueRef((void *)value); break;
+    case MOLA_FUNCTION_TYPE : molaFunctionValueRef((void *)value); break;
+    case C_FUNCTION_TYPE : cFunctionValueRef((void *)value); break;
+    case MODULE_TYPE : moduleValueRef((void *)value); break;
+    case NULL_TYPE : obj->return_address = (int64_t)value;    // no need;
+    case RETURN_ADDRESS_TYPE : break;                         // no need
     }
 
     obj->ref_count = 0;
@@ -34,10 +36,10 @@ Object *objectCreate(enum Type type, void *value) {
 
 void objectDestroy(Object *obj) {
     switch (obj->type) {
-    case BOOL_TYPE : boolValueUnref(obj->value); break;
-    case INT_TYPE : intValueUnref(obj->value); break;
-    case CHAR_TYPE : charValueUnref(obj->value); break;
-    case FLOAT_TYPE : floatValueUnref(obj->value); break;
+    case BOOL_TYPE : break;
+    case INT_TYPE : break;
+    case CHAR_TYPE : break;
+    case FLOAT_TYPE : break;
     case STRING_TYPE : stringValueUnref(obj->value); break;
     case ARRAY_TYPE : arrayValueUnref(obj->value); break;
     case TYPE_TYPE : typeValueUnref(obj->value); break;
@@ -45,7 +47,7 @@ void objectDestroy(Object *obj) {
     case MOLA_FUNCTION_TYPE : molaFunctionValueUnref(obj->value); break;
     case C_FUNCTION_TYPE : cFunctionValueUnref(obj->value); break;
     case MODULE_TYPE : moduleValueUnref(obj->value); break;
-    case NULL_TYPE : nullValueUnref(obj->value); break;
+    case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : break;    // no need
     }
 

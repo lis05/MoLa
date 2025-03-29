@@ -3,16 +3,6 @@
 
 void gcDeclareGarbageObject(struct Object *unit) {}
 
-void gcDeclareGarbageNullValue(struct NullValue *unit) {}
-
-void gcDeclareGarbageBoolValue(struct BoolValue *unit) {}
-
-void gcDeclareGarbageIntValue(struct IntValue *unit) {}
-
-void gcDeclareGarbageCharValue(struct CharValue *unit) {}
-
-void gcDeclareGarbageFloatValue(struct FloatValue *unit) {}
-
 void gcDeclareGarbageStringValue(struct StringValue *unit) {}
 
 void gcDeclareGarbageArrayValue(struct ArrayValue *unit) {}
@@ -35,16 +25,6 @@ void gcRunCycle(struct VM *vm) {}
 
 // note: tracking an object does not automatically make gc tracking its value
 void gcTrackObject(struct Object *unit) {}
-
-void gcTrackNullValue(struct NullValue *unit) {}
-
-void gcTrackBoolValue(struct BoolValue *unit) {}
-
-void gcTrackIntValue(struct IntValue *unit) {}
-
-void gcTrackCharValue(struct CharValue *unit) {}
-
-void gcTrackFloatValue(struct FloatValue *unit) {}
 
 void gcTrackStringValue(struct StringValue *unit) {}
 
