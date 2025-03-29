@@ -764,7 +764,7 @@ genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name,
     res.code       = CREATE_FUNCTION_IC;
     res.ident_arg1 = name;
     res.n_args     = n_args;
-    res.args       = args; // first 4 bits store mode
+    res.args       = args;    // first 4 bits store mode
     return res;
 }
 
@@ -2220,7 +2220,7 @@ static ilist gen_while_stmt(AstNode *node) {
     int64_t total = e.size + s.size;
 
     ilistLink(&output, &e);
-    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), s.size + 2));
+    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node->nodes[0]), s.size + 2));
     ilistLink(&output, &s);
     ilistAppend(&output, genInsJUMP(info(node), -(total + 1)));
 
@@ -2287,7 +2287,7 @@ static ilist gen_for_stmt(AstNode *node) {
         ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
         ilistLink(&output, &ini);
         ilistLink(&output, &con);
-        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), stmsize + stesize + 2));
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), stmsize + stesize + 2));
         ilistLink(&output, &stm);
         ilistLink(&output, &ste);
         ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 1 + consize)));
@@ -2397,7 +2397,7 @@ static ilist gen_if_stmt(AstNode *node) {
         ilist gen_else_block = gen(else_block);
 
         ilistLink(&output, &gen_cond);
-        ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), gen_block.size + 2));
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), gen_block.size + 2));
         ilistLink(&output, &gen_block);
         ilistAppend(&output, genInsJUMP(info(node), gen_else_block.size + 1));
         ilistLink(&output, &gen_else_block);
@@ -2418,7 +2418,7 @@ static ilist gen_if_stmt(AstNode *node) {
     ilist gen_block = gen(block);
 
     ilistLink(&output, &gen_cond);
-    ilistAppend(&output, genInsJUMP_IF_FALSE(info(node), gen_block.size + 1));
+    ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), gen_block.size + 1));
     ilistLink(&output, &gen_block);
 
     return output;
@@ -2729,7 +2729,7 @@ static ilist gen_var_stmt(AstNode *node) {
         else {
             temp = gen(item->nodes[1]);
             ilistLink(&output, &temp);
-            ilistAppend(&output, genInsCOPY_BY_VALUE(info(item)));
+            ilistAppend(&output, genInsCOPY_BY_AUTO(info(item)));
             ilistAppend(&output, genInsCREATE_VAR(info(item), item->nodes[0]->ident_value));
         }
 

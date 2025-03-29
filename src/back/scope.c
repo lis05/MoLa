@@ -8,7 +8,7 @@ Scope *scopeCreate(int can_access_parent, Scope *parent) {
     Scope *scope = memalloc(sizeof(Scope));
     assert(scope != NULL);
 
-    map_init(&scope->map, NULL, NULL);
+    scope->map               = identMapCreate();
     scope->can_access_parent = can_access_parent;
     scope->parent            = parent;
 
@@ -17,18 +17,17 @@ Scope *scopeCreate(int can_access_parent, Scope *parent) {
 
 void scopeInsert(Scope *scope, ident name, struct Object *obj) {
     assert(scope != NULL);
-    Object *ptr = *map_get(&scope->map, name);
-    if (ptr != NULL) {
+    if (identMapQuery(&scope->map, name)) {
         signalError(NAME_ERROR_CODE, errstrfmt("Object with name '%s' already exists.", symtabIdentToString(name)));
     }
-    map_set(&scope->map, name, obj);
+    identMapSet(&scope->map, name, obj);
 }
 
 struct Object *scopeRecursiveLookup(Scope *scope, ident name) {
     assert(scope != NULL);
 
-    while (1) {
-        Object *res = *map_get(&scope->map, name);
+    while (scope != NULL) {
+        Object *res = identMapGet(&scope->map, name);
         if (res != NULL) {
             return res;
         }
@@ -47,5 +46,8 @@ struct Object *scopeRecursiveLookup(Scope *scope, ident name) {
 
 void scopeDestroy(Scope *scope) {
     assert(scope != NULL);
+
+    identMapDestroy(&scope->map);
+
     free(scope);
 }

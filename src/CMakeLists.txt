@@ -13,6 +13,8 @@ back/gc.c
 back/gc.h
 back/gen.c
 back/gen.h
+back/ident_map.c
+back/ident_map.h
 back/object.c
 back/object.h
 back/scope.c
@@ -21,6 +23,8 @@ back/types.c
 back/types.h
 back/vm.c
 back/vm.h
+back/xmempool.c
+back/xmempool.h
 
 front/api.h
 front/ast.c

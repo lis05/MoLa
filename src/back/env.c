@@ -1,5 +1,6 @@
 #include "env.h"
 #include "../util.h"
+#include "alloc.h"
 #include "object.h"
 
 #define MAX_ENVS 10000    // if you need more - go see a doctor
@@ -12,9 +13,20 @@ int64_t envGenAvailableId() {
 }
 
 struct Env *envGetById(int64_t id) {
-    return NULL;
+    return envs[id];
 }
 
-int64_t envCreate(int64_t absolute_offset) {}
+int64_t envCreate(int64_t absolute_offset) {
+    Env *env              = memalloc(sizeof(Env));
+    env->absolute_offset  = absolute_offset;
+    env->exported_objects = identMapCreate();
+    env->globals          = identMapCreate();
+
+    int64_t id = envGenAvailableId();
+    envs[id]   = env;
+    n_envs++;
+
+    return id;
+}
 
 void envInit() {}

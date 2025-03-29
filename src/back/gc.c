@@ -1,4 +1,5 @@
 #include "gc.h"
+#include "object.h"
 
 void gcDeclareGarbageObject(struct Object *unit) {}
 
@@ -56,3 +57,24 @@ void gcTrackInstanceValue(struct InstanceValue *unit) {}
 void gcTrackMolaFunctionValue(struct MolaFunctionValue *unit) {}
 
 void gcTrackCFunctionValue(struct CFunctionValue *unit) {}
+
+void gcMaybeGarbageObject(struct Object *unit) {
+    assert(unit != NULL);
+    if (unit->ref_count == 0) {
+        // add to garbage list
+    }
+}
+
+static int gc_lock = 0;
+
+void gcLock() {
+    gc_lock++;
+}
+
+void gcUnlock() {
+    gc_lock--;
+}
+
+int gcIsLocked() {
+    return gc_lock;
+}

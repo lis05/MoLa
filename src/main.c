@@ -44,6 +44,8 @@ int main() {
 
     molalog("Starting vm ...\n");
 
+    allocInit();
+
     t_before = clock();
     vmExecute(to_execute);
     t_after = clock();

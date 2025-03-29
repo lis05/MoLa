@@ -4,13 +4,14 @@
 #include "../front/symtab.h"
 #include "../util.h"
 #include "cmap.h"
+#include "ident_map.h"
 
 struct Object;
 
 typedef struct Scope {
-    map_t(ident, struct Object *) map;
+    IdentMap      map;
     struct Scope *parent;
-    int           can_access_parent : 1;
+    uint           can_access_parent : 1;
 } Scope;
 
 Scope         *scopeCreate(int can_access_parent, Scope *parent);

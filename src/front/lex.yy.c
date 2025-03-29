@@ -1238,7 +1238,7 @@ YY_RULE_SETUP
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, INT_OPTION, lineno, 0);
-                        yylval.node->int_value = atoi(yytext);
+                        yylval.node->int_value = atoll(yytext);
                         return INT;                    
 }
 	YY_BREAK

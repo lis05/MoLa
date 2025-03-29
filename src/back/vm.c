@@ -75,18 +75,18 @@ typedef struct ErrorHandler {
     Scope  *scope;
 } ErrorHandler;
 
-static int64_t ipointer = 0;
-static cvector_vector_type(Object *) objects_stack;
-static cvector_vector_type(ErrorHandler) error_handlers_stack;
-Env   *current_env;
-Scope *root_scope, *current_scope;
+static int64_t ipointer                                       = 0;
+static cvector_vector_type(Object *) objects_stack            = NULL;
+static cvector_vector_type(ErrorHandler) error_handlers_stack = NULL;
+Env   *current_env                                            = NULL;
+Scope *root_scope = NULL, *current_scope = NULL;
 
-void pushOntoObjectsStack(Object *obj) {
+void objectsStackPush(Object *obj) {
     ref(obj);
     cvector_push_back(objects_stack, obj);
 }
 
-int isObjectsStackEmpty() {
+int objectsStackEmpty() {
     return cvector_empty(objects_stack);
 }
 
@@ -94,11 +94,11 @@ size_t objectsStackSize() {
     return cvector_size(objects_stack);
 }
 
-Object *objectsStackGetTop() {
+Object *objectsStackTop() {
     return *cvector_back(objects_stack);
 }
 
-void popFromObjectsStack() {
+void objectsStackPop() {
     // if stack's empty, you're screwed
     unref(*cvector_back(objects_stack));
     cvector_pop_back(objects_stack);
@@ -379,11 +379,11 @@ void vmExecute(ivec instructions) {
 }
 
 static void exec_POP(Instruction *instr) {
-    if (isObjectsStackEmpty()) {
+    if (objectsStackEmpty()) {
         signalError(INTERNAL_ERROR_CODE, "POP failed: empty objects_stack");
     }
 
-    popFromObjectsStack();
+    objectsStackPop();
 
     ipointer++;
 }
@@ -403,8 +403,7 @@ static void exec_SWAP(Instruction *instr) {
 }
 
 static void exec_CREATE_ENV(Instruction *instr) {
-    // root module, so offset is 0
-    current_env = envGetById(envCreate(0));
+    current_env = envGetById(envCreate(instr->env_id));
 
     ipointer++;
 }
@@ -416,11 +415,11 @@ static void exec_SWITCH_ENV_INS(Instruction *instr) {
 }
 
 static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
-    if (isObjectsStackEmpty()) {
+    if (objectsStackEmpty()) {
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: empty objects_stack");
     }
 
-    Object *obj = objectsStackGetTop();
+    Object *obj = objectsStackTop();
 
     if (obj->type != C_FUNCTION_TYPE && obj->type != MOLA_FUNCTION_TYPE) {
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: object on the stack is not a function");
@@ -443,46 +442,38 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
 }
 
 static void exec_EXPORT_OBJECT(Instruction *instr) {
-    if (isObjectsStackEmpty()) {
+    if (objectsStackEmpty()) {
         signalError(INTERNAL_ERROR_CODE, "EXPORT_OBJECT failed: empty objects_stack");
     }
 
-    if (map_get(&current_env->exported_objects, instr->ident_arg1) != NULL) {
+    if (identMapQuery(&current_env->exported_objects, instr->ident_arg1)) {
         signalError(NAME_COLLISION_ERROR_CODE,
-                    errstrfmt("Exported object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+                    errstrfmt("Exported object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
 
-    map_set(&current_env->exported_objects, instr->ident_arg1, objectsStackGetTop());
-    // ref
-
-    popFromObjectsStack();
-    // unref, no work needed
+    identMapSet(&current_env->exported_objects, instr->ident_arg1, objectsStackTop());
+    objectsStackPop();
 
     ipointer++;
 }
 
 static void exec_CREATE_GLOBAL(Instruction *instr) {
-    if (map_get(&current_env->globals, instr->ident_arg1) != NULL) {
+    if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
         signalError(NAME_COLLISION_ERROR_CODE,
-                    errstrfmt("Global object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+                    errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
 
-    Object *obj = objectCreate(NULL_TYPE, NULL);
-    ref(obj);
-
-    map_set(&current_env->globals, instr->ident_arg1, objectsStackGetTop());
-    // ref
-
-    popFromObjectsStack();
-    // unref, no work needed
+    NullValue *value = nullValueCreate();
+    Object    *obj   = objectCreate(NULL_TYPE, value);
+    identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
 }
 
 static void exec_CREATE_FUNCTION(Instruction *instr) {
-    if (map_get(&current_env->globals, instr->ident_arg1) != NULL) {
+    if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
         signalError(NAME_COLLISION_ERROR_CODE,
-                    errstrfmt("Global object with name %s already exists", symtabIdentToString(instr->ident_arg1)));
+                    errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
 
     int64_t offset = ipointer + 2 - current_env->absolute_offset;
@@ -514,8 +505,7 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
 
     Object *obj = objectCreate(MOLA_FUNCTION_TYPE, func_value);
 
-    map_set(&current_env->globals, instr->ident_arg1, obj);
-    ref(obj);
+    identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
 }
@@ -529,22 +519,51 @@ static void exec_CREATE_METHOD(Instruction *instr) {
 }
 
 static void exec_CREATE_SCOPE(Instruction *instr) {
+    Scope *new_scope = scopeCreate((current_scope == NULL) ? 0 : instr->flags, current_scope);
+    current_scope    = new_scope;
+
     ipointer++;
 }
 
 static void exec_DESTROY_SCOPE(Instruction *instr) {
+    assert(current_scope != NULL);
+
+    Scope *parent = current_scope->parent;
+    scopeDestroy(current_scope);
+
+    current_scope = parent;
+
     ipointer++;
 }
 
 static void exec_JUMP_IF_FALSE(Instruction *instr) {
-    ipointer++;
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "JUMP_IF_FALSE failed: empty objects stack");
+    }
+
+    Object *obj = objectsStackTop();
+    objectsStackPop();
+
+    if (obj->type != BOOL_TYPE) {
+        signalError(VALUE_ERROR_CODE, "Expected a boolean value");
+    }
+
+    int value = ((BoolValue *)obj->value)->value;
+
+    if (value) {
+        gcUnlock();
+        ipointer++;
+        return;
+    }
+
+    gcMaybeGarbageObject(obj);
+    ipointer += instr->int_arg1;
+    gcUnlock();
 }
 
 static void exec_JUMP(Instruction *instr) {
-    if (!(0 <= ipointer + instr->int_arg1 && ipointer + instr->int_arg1 < cvector_size(instructions_list))) {
-        signalError(INTERNAL_ERROR_CODE, "JUMP failed: address out of bounds");
-    }
-
     ipointer += instr->int_arg1;
 }
 
@@ -560,9 +579,6 @@ static void exec_RETURN(Instruction *instr) {
     }
 
     int64_t return_address = (int64_t)top->value;
-    if (!(0 <= return_address && return_address < cvector_size(instructions_list))) {
-        signalError(INTERNAL_ERROR_CODE, "RETURN failed: address out of bounds");
-    }
 
     ipointer = return_address;
 }
@@ -580,7 +596,27 @@ static void exec_SIGNAL_ERROR(Instruction *instr) {
 }
 
 static void exec_CREATE_VAR(Instruction *instr) {
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "CREATE_VAR failed: empty objects_stack");
+    }
+
+    assert(current_scope != NULL);
+
+    if (identMapQuery(&current_scope->map, instr->ident_arg1)) {
+        gcUnlock();
+        signalError(NAME_COLLISION_ERROR_CODE,
+                    errstrfmt("Local object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
+    }
+
+    Object *top = objectsStackTop();
+    objectsStackPop();
+
+    scopeInsert(current_scope, instr->ident_arg1, top);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_COPY_BY_VALUE(Instruction *instr) {
@@ -591,12 +627,78 @@ static void exec_COPY_BY_REFERENCE(Instruction *instr) {
     ipointer++;
 }
 
+// TODO: make basic types be stored in object.value
+// therefore eliminating the ability to reference basic types :(
 static void exec_COPY_BY_AUTO(Instruction *instr) {
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "COPY_BY_AUTO failed: empty objects_stack");
+    }
+
+    Object *obj = objectsStackTop();
+
+    // any copy of an rvalue can be the rvalue itself
+    if (obj->is_rvalue) {
+        gcUnlock();
+        ipointer++;
+        return;
+    }
+
+    objectsStackPop();
+
+    void *value = NULL;
+
+    switch (obj->type) {
+    case BOOL_TYPE : value = boolValueCopyByAuto(obj->value); break;
+    case INT_TYPE : value = intValueCopyByAuto(obj->value); break;
+    case CHAR_TYPE : value = charValueCopyByAuto(obj->value); break;
+    case FLOAT_TYPE : value = floatValueCopyByAuto(obj->value); break;
+    case STRING_TYPE : value = stringValueCopyByAuto(obj->value); break;
+    case ARRAY_TYPE : value = arrayValueCopyByAuto(obj->value); break;
+    case TYPE_TYPE : value = typeValueCopyByAuto(obj->value); break;
+    case INSTANCE_TYPE : value = instanceValueCopyByAuto(obj->value); break;
+    case MOLA_FUNCTION_TYPE : value = molaFunctionValueCopyByAuto(obj->value); break;
+    case C_FUNCTION_TYPE : value = cFunctionValueCopyByAuto(obj->value); break;
+    case MODULE_TYPE : value = moduleValueCopyByAuto(obj->value); break;
+    case NULL_TYPE : value = nullValueCopyByAuto(obj->value); break;
+    case RETURN_ADDRESS_TYPE : {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "COPY_BY_AUTO failed: RETURN_ADDRESS_TYPE on the stack");
+    }
+    }
+
+    assert(value != NULL);
+    Object *res = objectCreate(obj->type, value);
+
+    objectsStackPush(res);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_ASSIGNMENT(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "ASSIGNMENT failed: less than 2 elements on the stack");
+    }
+
+    Object *obj1 = objectsStackTop();
+    objectsStackPop();
+
+    Object *obj2 = objectsStackTop();
+    objectsStackPop();
+
+    obj1->type  = obj2->type;
+    obj1->value = obj2->value;
+
+    objectsStackPush(obj1);
+
+    gcMaybeGarbageObject(obj2);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOGICAL_OR(Instruction *instr) {
@@ -624,7 +726,34 @@ static void exec_EQUAL(Instruction *instr) {
 }
 
 static void exec_NOT_EQUAL(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "NOT_EQUAL failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    // temporary
+    assert(x->type == INT_TYPE && y->type == INT_TYPE);
+
+    IntValue *xval = x->value, *yval = y->value;
+
+    // this object is not referenced by anything other than the stack
+    // so it doesn't need to be copied when we want a copy of it....
+    Object *res    = objectCreate(BOOL_TYPE, boolValueCreate(xval->value != yval->value));
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LESS_THAN(Instruction *instr) {
@@ -644,7 +773,34 @@ static void exec_GREATER_EQUAL(Instruction *instr) {
 }
 
 static void exec_ADDITION(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "ADDITION failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    // temporary
+    assert(x->type == INT_TYPE && y->type == INT_TYPE);
+
+    IntValue *xval = x->value, *yval = y->value;
+
+    // this object is not referenced by anything other than the stack
+    // so it doesn't need to be copied when we want a copy of it....
+    Object *res = objectCreate(INT_TYPE, intValueCreate(xval->value + yval->value));
+    objectsStackPush(res);
+    res->is_rvalue = 1;
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_SUBTRACTION(Instruction *instr) {
@@ -680,6 +836,17 @@ static void exec_NEGATION(Instruction *instr) {
 }
 
 static void exec_INVERTION(Instruction *instr) {
+    // TEMPORARY PRINTER
+    if (objectsStackEmpty()) {
+        signalError(INTERNAL_ERROR_CODE, "INVERTION failed: empty objects_stack");
+    }
+
+    Object *obj = objectsStackTop();
+
+    if (obj->type == INT_TYPE) {
+        molalog("PRINT: Obj value: %lld\n", ((IntValue *)obj->value)->value);
+    }
+
     ipointer++;
 }
 
@@ -707,32 +874,52 @@ static void exec_LOAD_INT(Instruction *instr) {
     IntValue *value = intValueCreate(instr->int_arg1);
     Object   *obj   = objectCreate(INT_TYPE, value);
 
-    pushOntoObjectsStack(obj);
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
-    IntValue *value = floatValueCreate(instr->float_arg1);
-    Object   *obj   = objectCreate(FLOAT_TYPE, value);
+    FloatValue *value = floatValueCreate(instr->float_arg1);
+    Object     *obj   = objectCreate(FLOAT_TYPE, value);
 
-    pushOntoObjectsStack(obj);
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_STRING(Instruction *instr) {
-    IntValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
-    Object   *obj   = objectCreate(STRING_TYPE, value);
+    StringValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
+    Object      *obj   = objectCreate(STRING_TYPE, value);
 
-    pushOntoObjectsStack(obj);
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
+    NullValue *value = nullValueCreate();
+    Object    *obj   = objectCreate(STRING_TYPE, value);
+
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD(Instruction *instr) {
+    /*
+    1. look for a global object
+    2. then look for a local object, or report error
+    */
+
+    Object *res = identMapGet(&current_env->globals, instr->ident_arg1);
+    if (res != NULL) {
+        objectsStackPush(res);
+        ipointer++;
+        return;
+    }
+
+    res = scopeRecursiveLookup(current_scope, instr->ident_arg1);
+
+    objectsStackPush(res);
     ipointer++;
+    return;
 }
 
 static void exec_LOAD_FIELD(Instruction *instr) {

@@ -56,4 +56,12 @@ void gcTrackMolaFunctionValue(struct MolaFunctionValue *unit);
 void gcTrackCFunctionValue(struct CFunctionValue *unit);
 void gcTrackModuleValue(struct ModuleValue *unit);
 
+// even if gc is locked, unit will be added to the garbage list if it is indeed garbage
+void gcMaybeGarbageObject(struct Object *unit);
+
+
+void gcLock();    // lock intended to prevent destruction of objects when executing an instruction
+void gcUnlock();
+int  gcIsLocked();
+
 #endif

@@ -9,7 +9,8 @@ typedef struct Object {
     enum Type type;
     void     *value;
 
-    uint32_t ref_count : 31;
+    uint32_t ref_count;
+    uint     is_rvalue : 1;
     uint     gc_mark   : 1;
 } Object;
 
