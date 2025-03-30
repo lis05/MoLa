@@ -103,9 +103,8 @@ typedef struct MolaFunctionValue {
     struct Env *env;
     int64_t     relative_offset;    // offset (relative to the module) of the first function instruction
 
-    size_t  n_args;
-    ident  *args;
-    int8_t *modes;
+    size_t n_args;
+    ident *args;
 
     uint32_t ref_count : 31;
     int      gc_mark   : 1;
@@ -122,7 +121,6 @@ typedef struct Object *(*CFunction)(size_t n_args, struct Object **args);
 typedef struct CFunctionValue {
     struct Env *env;
     size_t      n_args;
-    int8_t     *modes;
 
     CFunction function;
 
@@ -130,7 +128,7 @@ typedef struct CFunctionValue {
     int      gc_mark   : 1;
 } CFunctionValue;
 
-CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, int8_t *modes, CFunction function);
+CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function);
 CFunctionValue *cFunctionValueCopy(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);

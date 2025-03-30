@@ -62,18 +62,35 @@ void instanceValueRef(InstanceValue *unit) {}
 
 void instanceValueUnref(InstanceValue *unit) {}
 
-MolaFunctionValue *
-molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {}
+MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {
+    MolaFunctionValue *res = memalloc(sizeof(MolaFunctionValue));
+    res->env               = env;
+    res->relative_offset   = rel_offset;
+    res->n_args            = n_args;
+    res->args              = args;
 
-MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {}
+    res->ref_count = 0;
+    res->gc_mark   = 0;
+}
 
-void molaFunctionValueDestroy(MolaFunctionValue *val) {}
+MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {
+    return val;    // copy by ref
+}
 
-void molaFunctionValueRef(MolaFunctionValue *unit) {}
+void molaFunctionValueDestroy(MolaFunctionValue *val) {
+    memfree(val->args);
+    memfree(val);
+}
 
-void molaFunctionValueUnref(MolaFunctionValue *unit) {}
+void molaFunctionValueRef(MolaFunctionValue *unit) {
+    unit->ref_count++;
+}
 
-CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, int8_t *modes, CFunction function) {}
+void molaFunctionValueUnref(MolaFunctionValue *unit) {
+    unit->ref_count--;
+}
+
+CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {}
 
 CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {}
 

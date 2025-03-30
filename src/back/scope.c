@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "cmap.h"
 #include "error.h"
+#include "gc.h"
 #include "object.h"
 
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
@@ -18,6 +19,7 @@ Scope *scopeCreate(int can_access_parent, Scope *parent) {
 void scopeInsert(Scope *scope, ident name, struct Object *obj) {
     assert(scope != NULL);
     if (identMapQuery(&scope->map, name)) {
+        gcUnlock();
         signalError(NAME_ERROR_CODE, errstrfmt("Object with name '%s' already exists.", symtabIdentToString(name)));
     }
     identMapSet(&scope->map, name, obj);

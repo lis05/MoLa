@@ -1,9 +1,9 @@
-x = 0
+def fib(n):
+    if n == 0: return 0
+    if n == 1: return 1
 
-sum = 0
+    return fib(n + (-1)) + fib(n + (-2))
 
-while x != 10000000:
-    x = x + 1
-    sum = sum + x
 
-print(sum)
+for i in range(30):
+    print(fib(i))

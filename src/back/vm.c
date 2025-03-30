@@ -536,19 +536,24 @@ static void exec_JUMP(Instruction *instr) {
 }
 
 static void exec_RETURN(Instruction *instr) {
+    gcLock();
     if (cvector_empty(objects_stack)) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "RETURN failed: empty objects_stack");
     }
-    Object *top = *cvector_back(objects_stack);
-    cvector_pop_back(objects_stack);
+
+    Object *top = objectsStackTop();
+    objectsStackPop();
 
     if (top->type != RETURN_ADDRESS_TYPE) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "RETURN failed: object is not a return address");
     }
 
     int64_t return_address = (int64_t)top->value;
 
     ipointer = return_address;
+    gcUnlock();
 }
 
 static void exec_REGISTER_CATCH(Instruction *instr) {
@@ -654,7 +659,9 @@ static void exec_ASSIGNMENT(Instruction *instr) {
     Object *obj2 = objectsStackTop();
     objectsStackPop();
 
-    obj1->type  = obj2->type;
+    obj1->type = obj2->type;
+
+    // this works because we basically copy the entire union of obj2 into obj1
     obj1->value = obj2->value;
 
     objectsStackPush(obj1);
@@ -686,7 +693,32 @@ static void exec_BITWISE_AND(Instruction *instr) {
 }
 
 static void exec_EQUAL(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "EQUAL failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    // temporary
+    assert(x->type == INT_TYPE && y->type == INT_TYPE);
+
+    // this object is not referenced by anything other than the stack
+    // so it doesn't need to be copied when we want a copy of it....
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(x->int_value == y->int_value));
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_NOT_EQUAL(Instruction *instr) {
@@ -752,9 +784,9 @@ static void exec_ADDITION(Instruction *instr) {
 
     // this object is not referenced by anything other than the stack
     // so it doesn't need to be copied when we want a copy of it....
-    Object *res = objectCreate(INT_TYPE, (uint64_t)(x->int_value + y->int_value));
-    objectsStackPush(res);
+    Object *res    = objectCreate(INT_TYPE, (uint64_t)(x->int_value + y->int_value));
     res->is_rvalue = 1;
+    objectsStackPush(res);
 
     gcMaybeGarbageObject(x);
     gcMaybeGarbageObject(y);
@@ -815,7 +847,57 @@ static void exec_LOGICAL_NOT(Instruction *instr) {
 }
 
 static void exec_CALL(Instruction *instr) {
-    ipointer++;
+    gcLock();
+
+    int64_t n = instr->int_arg1;
+
+    if (objectsStackSize() < n + 1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "CALL failed: too few objects on the stack");
+    }
+
+    Object *f = objects_stack[objectsStackSize() - 1];
+    if (f->type != C_FUNCTION_TYPE && f->type != MOLA_FUNCTION_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Not callable");
+    }
+
+    if (f->type == C_FUNCTION_TYPE && ((CFunctionValue *)f->value)->n_args != n) {
+        gcUnlock();
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE,
+                    errstrfmt("Expected %d arguments, got %d", ((CFunctionValue *)f->value)->n_args, n));
+    }
+    else if (f->type == MOLA_FUNCTION_TYPE && ((MolaFunctionValue *)f->value)->n_args != n) {
+        gcUnlock();
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE,
+                    errstrfmt("Expected %d arguments, got %d", ((MolaFunctionValue *)f->value)->n_args, n));
+    }
+
+    for (int i = 0; i < n; i++) {
+        Object *arg = objects_stack[objectsStackSize() - 2 - (n - i - 1)];
+
+        if (f->type == MOLA_FUNCTION_TYPE) {
+            scopeInsert(current_scope, ((MolaFunctionValue *)f->value)->args[i], arg);
+        }
+        else {
+            // TODO
+        }
+    }
+
+    for (int i = 0; i < n + 1; i++) {
+        objectsStackPop();
+    }
+
+    Object *ret = objectCreate(RETURN_ADDRESS_TYPE, ipointer + 1);
+    objectsStackPush(ret);
+
+    gcUnlock();
+    if (f->type == MOLA_FUNCTION_TYPE) {
+        ipointer = ((MolaFunctionValue *)f->value)->relative_offset + current_env->absolute_offset;
+    }
+    else {
+        // TODO
+    }
 }
 
 static void exec_ACCESS(Instruction *instr) {
@@ -831,14 +913,16 @@ static void exec_LOAD_CHAR(Instruction *instr) {
 }
 
 static void exec_LOAD_INT(Instruction *instr) {
-    Object   *obj   = objectCreate(INT_TYPE, (uint64_t)instr->int_arg1);
+    Object *obj    = objectCreate(INT_TYPE, (uint64_t)instr->int_arg1);
+    obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
-    Object     *obj   = objectCreate(FLOAT_TYPE, (uint64_t)instr->float_arg1);
+    Object *obj    = objectCreate(FLOAT_TYPE, (uint64_t)instr->float_arg1);
+    obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
@@ -853,7 +937,8 @@ static void exec_LOAD_STRING(Instruction *instr) {
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
-    Object    *obj   = objectCreate(STRING_TYPE, 0);
+    Object *obj    = objectCreate(STRING_TYPE, 0);
+    obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;

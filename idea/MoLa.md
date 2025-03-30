@@ -486,14 +486,13 @@ Creates an object with the value of not x. The object is pushed on the stack.
 Signals an InternalError if there are less than 1 object on the stack. Signals a ValueError if the objects have invalid values.
 
 #### `CALL n`
-- the stack must contain n + 1 object: bottom->top: ... f arg1 arg2 ... argn
+- the stack must contain n + 1 object: bottom->top: ...  arg1 arg2 ... argn f
 
 Calls function f.
 
 1. Checks whether the amount of arguments matches the amount expected by f. Raises an WrongNumberOfArgumentsError if it doesn't match.
 2. Adds new local variables to the scope:
-    - for i-th argument, a copy is created based on the i-th mode specified in f.
-    - that copy is added to the scope under the i-th name stored in f.
+    - adds arguments as variables in the scope
 3. The address of the next instruction is pushed on the stack as the return address.
 4. Jumps to the address stored in the function object.
 

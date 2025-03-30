@@ -1744,6 +1744,8 @@ static ilist gen_function_stmt(AstNode *node) {
     < CREATE_FUNCTION name m1 p1 ... mn pn
     < JUMP REL@1
     < gen(block_stmt)
+    < LOAD_NULL
+    < SWAP
     < RETURN
     1
     */
@@ -1787,10 +1789,12 @@ static ilist gen_function_stmt(AstNode *node) {
     ctx_is_inside_function         = 0;
     ctx_is_inside_function         = 0;
 
-    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 4));
 
     ilistLink(&output, &block);
 
+    ilistAppend(&output, genInsLOAD_NULL(info(node)));
+    ilistAppend(&output, genInsSWAP(info(node)));
     ilistAppend(&output, genInsRETURN(info(node)));
 
     return output;
@@ -2022,11 +2026,18 @@ static ilist gen_stmt(AstNode *node) {
 
     > something OR something ';'
 
+    if it is an expression, we have to pop the object because otherwise it will break things
+
     < gen(something)
+    < POP if expr
 
     */
 
-    return gen(node->nodes[0]);
+    ilist res = gen(node->nodes[0]);
+    if (node->option == EXPR_OPTION) {
+        ilistAppend(&res, genInsPOP(info(node)));
+    }
+    return res;
 }
 
 static ilist gen_block_stmt(AstNode *node) {
@@ -2394,21 +2405,21 @@ static ilist gen_return_stmt(AstNode *node) {
     which serves only one function: forbid parent access
     therefore that scope will be destroyed, so SWAP is necessary
 
+    <   gen(expr)
     <   DESTROY_SCOPE
         ...
     <   DESTROY_SCOPE
-    <   gen(expr)
     <   COPY_BY_mode // if mode != pass
     <   SWAP
     <   RETURN
     */
 
+    temp = gen(node->nodes[0]);
+    ilistLink(&output, &temp);
+
     for (int64_t i = 0; i < ctx_open_scopes_since_function; i++) {
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
     }
-
-    temp = gen(node->nodes[0]);
-    ilistLink(&output, &temp);
 
     ilistAppend(&output, genInsCOPY(info(node)));
 
