@@ -631,7 +631,7 @@ static void exec_COPY(Instruction *instr) {
     case INSTANCE_TYPE : value = (uint64_t)instanceValueCopy(obj->value); break;
     case MOLA_FUNCTION_TYPE : value = (uint64_t)molaFunctionValueCopy(obj->value); break;
     case C_FUNCTION_TYPE : value = (uint64_t)cFunctionValueCopy(obj->value); break;
-    case MODULE_TYPE : value = (uint64_t)moduleValueCopy(obj->value); break;
+    case MODULE_TYPE : value = (uint64_t)obj->value; break;
     case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : {
         gcUnlock();
@@ -672,6 +672,27 @@ static void exec_ASSIGNMENT(Instruction *instr) {
     gcUnlock();
 }
 
+/*
+
+When evaluation A op B, A and B are promoted to the highest common type:
+
+String
+^
+Float
+^
+Integer
+^
+Character
+^
+Boolean
+^
+Null
+
+All other types cause an error.
+
+All other (arythmetical) operators are handled separatelly.
+*/
+
 static void exec_LOGICAL_OR(Instruction *instr) {
     ipointer++;
 }
@@ -692,6 +713,91 @@ static void exec_BITWISE_AND(Instruction *instr) {
     ipointer++;
 }
 
+// -1 x=y, 0 x>y, 1 x<y, 2 x!=y (uncomparable)
+static int compare(Object *x, Object *y) {
+    Object *res;
+    if (x->type != y->type) {
+        return 2;
+    }
+
+    switch (x->type) {
+    case NULL_TYPE : {
+        return -1;
+    } break;
+    case BOOL_TYPE : {
+        if (x->bool_value == y->bool_value) {
+            return -1;
+        }
+        return x->bool_value < y->bool_value;
+    } break;
+    case CHAR_TYPE : {
+        if (x->char_value == y->char_value) {
+            return -1;
+        }
+        return x->char_value < y->char_value;
+    } break;
+    case INT_TYPE : {
+        if (x->int_value == y->int_value) {
+            return -1;
+        }
+        return x->int_value < y->int_value;
+    } break;
+    case FLOAT_TYPE : {
+        if (x->float_value == y->float_value) {
+            return -1;
+        }
+        return x->float_value < y->float_value;
+    } break;
+    case STRING_TYPE : {
+        int r = stringCompare(x->value, y->value);
+        if (r == 0) {
+            return -1;
+        }
+        return (r == -1) ? 1 : 0;
+    } break;
+    case ARRAY_TYPE : {
+        ArrayValue *X = x->value, *Y = y->value;
+        size_t      m = (X->length < Y->length) ? X->length : Y->length;
+
+        for (size_t i = 0; i < m; i++) {
+            int r = compare(X->array[i], Y->array[i]);
+            if (r == 2) {
+                return 2;
+            }
+            if (r != -1) {
+                return r;    // 0 or 1
+            }
+        }
+
+        if (X->length < Y->length) {
+            return 1;
+        }
+        else if (X->length > Y->length) {
+            return 0;
+        }
+        return -1;
+    } break;
+    case TYPE_TYPE : {
+        return x->value == y->value ? -1 : 2;
+    } break;
+    case INSTANCE_TYPE : {
+        return 2;    // TODO
+    } break;
+    case MOLA_FUNCTION_TYPE : {
+        return x->value == y->value ? -1 : 2;
+    } break;
+    case C_FUNCTION_TYPE : {
+        return x->value == y->value ? -1 : 2;
+    } break;
+    case MODULE_TYPE : {
+        return x->value == y->value ? -1 : 2;
+    } break;
+    case RETURN_ADDRESS_TYPE : {
+        return 2;    // lol
+    } break;
+    }
+}
+
 static void exec_EQUAL(Instruction *instr) {
     gcLock();
     if (objectsStackSize() < 2) {
@@ -705,15 +811,10 @@ static void exec_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    // temporary
-    assert(x->type == INT_TYPE && y->type == INT_TYPE);
-
-    // this object is not referenced by anything other than the stack
-    // so it doesn't need to be copied when we want a copy of it....
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(x->int_value == y->int_value));
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) == -1));
     res->is_rvalue = 1;
-    objectsStackPush(res);
 
+    objectsStackPush(res);
     gcMaybeGarbageObject(x);
     gcMaybeGarbageObject(y);
 
@@ -734,15 +835,10 @@ static void exec_NOT_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    // temporary
-    assert(x->type == INT_TYPE && y->type == INT_TYPE);
-
-    // this object is not referenced by anything other than the stack
-    // so it doesn't need to be copied when we want a copy of it....
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(x->int_value != y->int_value));
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) != -1));
     res->is_rvalue = 1;
-    objectsStackPush(res);
 
+    objectsStackPush(res);
     gcMaybeGarbageObject(x);
     gcMaybeGarbageObject(y);
 
@@ -751,19 +847,102 @@ static void exec_NOT_EQUAL(Instruction *instr) {
 }
 
 static void exec_LESS_THAN(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LESS_THAN failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) == 1));
+    res->is_rvalue = 1;
+
+    objectsStackPush(res);
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LESS_EQUAL(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    int     r      = compare(x, y);
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 1 || r == -1));
+    res->is_rvalue = 1;
+
+    objectsStackPush(res);
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_GREATER_THAN(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    int     r      = compare(x, y);
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 0));
+    res->is_rvalue = 1;
+
+    objectsStackPush(res);
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_GREATER_EQUAL(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    int     r      = compare(x, y);
+    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 0 || r == -1));
+    res->is_rvalue = 1;
+
+    objectsStackPush(res);
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_ADDITION(Instruction *instr) {
@@ -778,6 +957,9 @@ static void exec_ADDITION(Instruction *instr) {
 
     Object *x = objectsStackTop();
     objectsStackPop();
+
+    /*
+     */
 
     // temporary
     assert(x->type == INT_TYPE && y->type == INT_TYPE);
@@ -835,8 +1017,15 @@ static void exec_INVERTION(Instruction *instr) {
 
     Object *obj = objectsStackTop();
 
-    if (obj->type == INT_TYPE) {
-        molalog("PRINT: Obj value: %lld\n", obj->int_value);
+    switch (obj->type) {
+    case INT_TYPE : {
+        molalog("PRINT: INT    value: %lld\n", obj->int_value);
+        break;
+    }
+    case STRING_TYPE : {
+        molalog("PRINT: STRING value: %s\n", ((StringValue *)obj->value)->string);
+        break;
+    }
     }
 
     ipointer++;
@@ -937,7 +1126,7 @@ static void exec_LOAD_STRING(Instruction *instr) {
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
-    Object *obj    = objectCreate(STRING_TYPE, 0);
+    Object *obj    = objectCreate(NULL_TYPE, 0);
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);

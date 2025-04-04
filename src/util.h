@@ -10,5 +10,4 @@
 
 typedef cvector_vector_type(char) charvec;
 
-
 #endif

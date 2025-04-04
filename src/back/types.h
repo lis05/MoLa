@@ -5,19 +5,20 @@
 #include "../util.h"
 #include "cmap.h"
 
+// order is important for type promotion!
 enum Type {
-    BOOL_TYPE,
-    INT_TYPE,
-    CHAR_TYPE,
-    FLOAT_TYPE,
-    STRING_TYPE,
+    NULL_TYPE   = 0,
+    BOOL_TYPE   = 1,
+    CHAR_TYPE   = 2,
+    INT_TYPE    = 3,
+    FLOAT_TYPE  = 4,
+    STRING_TYPE = 5,
     ARRAY_TYPE,
     TYPE_TYPE,
     INSTANCE_TYPE,
     MOLA_FUNCTION_TYPE,
     C_FUNCTION_TYPE,
     MODULE_TYPE,
-    NULL_TYPE,
     RETURN_ADDRESS_TYPE
 };
 
@@ -29,7 +30,7 @@ struct Env;
 
 typedef struct StringValue {
     size_t length;
-    char  *string;    // NULL-terminated, '\0' is not counted in length
+    char  *string;    // NULL terminated, length doesnt count the NULL character
 
     uint32_t ref_count : 31;
     int      gc_mark   : 1;
@@ -41,6 +42,7 @@ void           stringValueDestroy(StringValue *val);
 char           stringValueIndexAccess(StringValue *val, int64_t index);
 struct Object *stringValueLookupField(StringValue *val, ident name);
 struct Object *stringValueLookupMethod(StringValue *val, ident name);
+int            stringCompare(StringValue *first, StringValue *second);    // like strcmp
 void           stringValueRef(StringValue *unit);
 void           stringValueUnref(StringValue *unit);
 
@@ -133,18 +135,5 @@ CFunctionValue *cFunctionValueCopy(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
 void            cFunctionValueUnref(CFunctionValue *unit);
-
-typedef struct ModuleValue {
-    struct Env *env;
-
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
-} ModuleValue;
-
-ModuleValue *moduleValueCreate(struct Env *env, int64_t absolute_offset);
-ModuleValue *moduleValueCopy(ModuleValue *val);
-void         moduleValueDestroy(ModuleValue *val);
-void         moduleValueRef(ModuleValue *unit);
-void         moduleValueUnref(ModuleValue *unit);
 
 #endif

@@ -20,9 +20,9 @@ Object *objectCreate(enum Type type, uint64_t value) {
     case INSTANCE_TYPE : instanceValueRef((void *)value); break;
     case MOLA_FUNCTION_TYPE : molaFunctionValueRef((void *)value); break;
     case C_FUNCTION_TYPE : cFunctionValueRef((void *)value); break;
-    case MODULE_TYPE : moduleValueRef((void *)value); break;
-    case NULL_TYPE : obj->return_address = (int64_t)value;    // no need;
-    case RETURN_ADDRESS_TYPE : break;                         // no need
+    case MODULE_TYPE : obj->value = (void *)value; break;
+    case NULL_TYPE : obj->return_address = (int64_t)value;
+    case RETURN_ADDRESS_TYPE : break;    // no need
     }
 
     obj->ref_count = 0;
@@ -46,7 +46,7 @@ void objectDestroy(Object *obj) {
     case INSTANCE_TYPE : instanceValueUnref(obj->value); break;
     case MOLA_FUNCTION_TYPE : molaFunctionValueUnref(obj->value); break;
     case C_FUNCTION_TYPE : cFunctionValueUnref(obj->value); break;
-    case MODULE_TYPE : moduleValueUnref(obj->value); break;
+    case MODULE_TYPE : break;
     case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : break;    // no need
     }

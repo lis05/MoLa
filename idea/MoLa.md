@@ -26,11 +26,11 @@ A module structure is just a shell allowing the user to switch to a different en
 ## Objects
 There are 2 types of objects: ones that reference complex types and ones that "reference" basic types.
 1. Objects that "reference" basic types.
-Basic types are: bool, int, char, float, null
+Basic types are: bool, int, char, float, string, null
 Such objects carry the value in a field and are copied by value (always!).
 
 2. Objects that reference complex types.
-Complex types are: string, array, type, function, error.
+Complex types are: array, type, function, error.
 Such objects reference the value, and are copied by reference (always!).
 
 ## Assignment 

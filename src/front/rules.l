@@ -8,6 +8,7 @@
     void yyerror(const char *);
     static void comment();
     static char parseChar(char *data);
+    static char *parseString(char *data);
     static void count();
     int lineno;
     int column;
@@ -120,7 +121,7 @@ L			        [a-zA-Z_]
 \"([^\"\\]|\\.)*\" { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, STRING_OPTION, lineno, 0);
-                        yylval.node->string_value = strdup(yytext);
+                        yylval.node->string_value = parseString(yytext);
                         return STRING;                    
 }
 
@@ -172,7 +173,38 @@ static char parseChar(char *data) {
 
     return data[1];
 }
+static char *parseString(char *data) {
+    char *res   = strdup(data);
+    int   res_i = 0;
+    char *ptr   = data;
+    ptr++;    // double quote
+    while (*ptr != '"') {
+        if (ptr[0] == '\\') {
+            ptr++;
+            switch (*ptr) {
+            case 'n' : res[res_i++] = '\n'; break;
+            case 't' : res[res_i++] = '\t'; break;
+            case 'r' : res[res_i++] = '\r'; break;
+            case '\\' : res[res_i++] = '\\'; break;
+            case '\'' : res[res_i++] = '\''; break;
+            case '\"' : res[res_i++] = '\"'; break;
+            default : yyerror("Unsupported escape sequence.\n");
+            }
+        }
+        else {
+            res[res_i++] = *ptr;
+        }
+        ptr++;
+    }
 
+    res[res_i++] = '\0';
+
+    char *new_res = malloc(sizeof(char) * res_i);
+    memcpy(new_res, res, sizeof(char) * res_i);
+    free(res);
+
+    return new_res;
+}
 int yywrap(void) {
     column += column_add;
     column_add = 0;

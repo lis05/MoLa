@@ -1,22 +1,66 @@
 #include "types.h"
+#include "../util.h"
 #include "alloc.h"
+#include "error.h"
 #include "gc.h"
 
-StringValue *stringValueCreate(size_t length, char *string) {}
+StringValue *stringValueCreate(size_t length, char *string) {
+    StringValue *res = memalloc(sizeof(StringValue));
+    res->length      = length;
+    res->string      = memalloc(sizeof(char) * length + 1);
+    strcpy(res->string, string);
 
-StringValue *stringValueCopy(StringValue *val) {}
+    res->gc_mark   = 0;
+    res->ref_count = 0;
+}
 
-void stringValueDestroy(StringValue *val) {}
+StringValue *stringValueCopy(StringValue *val) {
+    return stringValueCreate(val->length, val->string);
+}
 
-char stringValueIndexAccess(StringValue *val, int64_t index) {}
+void stringValueDestroy(StringValue *val) {
+    memfree(val->string);
+    memfree(val);
+}
+
+char stringValueIndexAccess(StringValue *val, int64_t index) {
+    if (!(0 <= index && index < val->length)) {
+        gcUnlock();    // what if I was called without a gc lock?
+        signalError(OUT_OF_BOUNDS_ERROR_CODE, "Index out of bounds");
+    }
+    return val->string[index];
+}
 
 struct Object *stringValueLookupField(StringValue *val, ident name) {}
 
 struct Object *stringValueLookupMethod(StringValue *val, ident name) {}
 
-void stringValueRef(StringValue *unit) {}
+int stringCompare(StringValue *first, StringValue *second) {
+    size_t m = (first->length < second->length) ? first->length : second->length;
+    for (size_t i = 0; i < m; i++) {
+        if (first->string[i] < second->string[i]) {
+            return -1;
+        }
+        else if (first->string[i] > second->string[i]) {
+            return 1;
+        }
+    }
+    if (first->length < second->length) {
+        return -1;
+    }
+    else if (first->length > second->length) {
+        return 1;
+    }
+    return 0;
+}
 
-void stringValueUnref(StringValue *unit) {}
+void stringValueRef(StringValue *unit) {
+    unit->ref_count++;
+}
+
+void stringValueUnref(StringValue *unit) {
+    unit->ref_count--;
+}
 
 ArrayValue *arrayValueCreate(char *string) {}
 
@@ -99,13 +143,3 @@ void cFunctionValueDestroy(CFunctionValue *val) {}
 void cFunctionValueRef(CFunctionValue *unit) {}
 
 void cFunctionValueUnref(CFunctionValue *unit) {}
-
-ModuleValue *moduleValueCreate(struct Env *env, int64_t absolute_offset) {}
-
-ModuleValue *moduleValueCopy(ModuleValue *val) {}
-
-void moduleValueDestroy(ModuleValue *val) {}
-
-void moduleValueRef(ModuleValue *unit) {}
-
-void moduleValueUnref(ModuleValue *unit) {}

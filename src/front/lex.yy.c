@@ -594,13 +594,14 @@ char *yytext;
     void yyerror(const char *);
     static void comment();
     static char parseChar(char *data);
+    static char *parseString(char *data);
     static void count();
     int lineno;
     int column;
     static int column_add = 0;
     Symtab *lex_symtab;
-#line 603 "lex.yy.c"
 #line 604 "lex.yy.c"
+#line 605 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -817,9 +818,9 @@ YY_DECL
 		}
 
 	{
-#line 22 "rules.l"
+#line 23 "rules.l"
 
-#line 823 "lex.yy.c"
+#line 824 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -878,303 +879,303 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 23 "rules.l"
+#line 24 "rules.l"
 { count(); }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 25 "rules.l"
+#line 26 "rules.l"
 { count(); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 27 "rules.l"
+#line 28 "rules.l"
 { count(); yylval.num = lineno; return IMPORT; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 28 "rules.l"
+#line 29 "rules.l"
 { count(); yylval.num = lineno; return EXPORT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 29 "rules.l"
+#line 30 "rules.l"
 { count(); yylval.num = lineno; return GLOBAL; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 30 "rules.l"
+#line 31 "rules.l"
 { count(); yylval.num = lineno; return FUNCTION; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 31 "rules.l"
+#line 32 "rules.l"
 { count(); yylval.num = lineno; return TYPE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 32 "rules.l"
+#line 33 "rules.l"
 { count(); yylval.num = lineno; return METHOD; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 33 "rules.l"
+#line 34 "rules.l"
 { count(); yylval.num = lineno; return CONSTRUCTOR; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 34 "rules.l"
+#line 35 "rules.l"
 { count(); yylval.num = lineno; return DESTRUCTOR; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 35 "rules.l"
+#line 36 "rules.l"
 { count(); yylval.num = lineno; return OF; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 36 "rules.l"
+#line 37 "rules.l"
 { count(); yylval.num = lineno; return WHILE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 37 "rules.l"
+#line 38 "rules.l"
 { count(); yylval.num = lineno; return FOR; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 38 "rules.l"
+#line 39 "rules.l"
 { count(); yylval.num = lineno; return IF; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 39 "rules.l"
+#line 40 "rules.l"
 { count(); yylval.num = lineno; return ELSE; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 40 "rules.l"
+#line 41 "rules.l"
 { count(); yylval.num = lineno; return CONTINUE; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 41 "rules.l"
+#line 42 "rules.l"
 { count(); yylval.num = lineno; return BREAK; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 42 "rules.l"
+#line 43 "rules.l"
 { count(); yylval.num = lineno; return RETURN; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 43 "rules.l"
+#line 44 "rules.l"
 { count(); yylval.num = lineno; return TRY; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 44 "rules.l"
+#line 45 "rules.l"
 { count(); yylval.num = lineno; return CATCH; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 45 "rules.l"
+#line 46 "rules.l"
 { count(); yylval.num = lineno; return FINALLY; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 46 "rules.l"
+#line 47 "rules.l"
 { count(); yylval.num = lineno; return AS; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 47 "rules.l"
+#line 48 "rules.l"
 { count(); yylval.num = lineno; return SIGNAL; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 48 "rules.l"
+#line 49 "rules.l"
 { count(); yylval.num = lineno; return BECAUSE; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 49 "rules.l"
+#line 50 "rules.l"
 { count(); yylval.num = lineno; return VAR; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 50 "rules.l"
+#line 51 "rules.l"
 { count(); yylval.num = lineno; return WHEN; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 51 "rules.l"
+#line 52 "rules.l"
 { count(); yylval.num = lineno; return THEN; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 52 "rules.l"
+#line 53 "rules.l"
 { count(); yylval.num = lineno; return NEW; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 53 "rules.l"
+#line 54 "rules.l"
 { count(); yylval.num = lineno; return OR; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 54 "rules.l"
+#line 55 "rules.l"
 { count(); yylval.num = lineno; return AND; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 55 "rules.l"
+#line 56 "rules.l"
 { count(); yylval.num = lineno; return LSHIFT; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 56 "rules.l"
+#line 57 "rules.l"
 { count(); yylval.num = lineno; return RSHIFT; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 57 "rules.l"
+#line 58 "rules.l"
 { count(); yylval.num = lineno; return NOT; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 58 "rules.l"
+#line 59 "rules.l"
 { count(); yylval.num = lineno; return EQ; }       
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 59 "rules.l"
+#line 60 "rules.l"
 { count(); yylval.num = lineno; return NE; }       
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 60 "rules.l"
+#line 61 "rules.l"
 { count(); yylval.num = lineno; return LE; }       
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 61 "rules.l"
+#line 62 "rules.l"
 { count(); yylval.num = lineno; return GE; }   
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 62 "rules.l"
+#line 63 "rules.l"
 { count(); yylval.num = lineno; return '('; }  
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 63 "rules.l"
+#line 64 "rules.l"
 { count(); yylval.num = lineno; return ')'; }  
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 64 "rules.l"
+#line 65 "rules.l"
 { count(); yylval.num = lineno; return '{'; } 
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 65 "rules.l"
+#line 66 "rules.l"
 { count(); yylval.num = lineno; return '}'; }  
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 66 "rules.l"
+#line 67 "rules.l"
 { count(); yylval.num = lineno; return '['; } 
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 67 "rules.l"
+#line 68 "rules.l"
 { count(); yylval.num = lineno; return ']'; } 
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 68 "rules.l"
+#line 69 "rules.l"
 { count(); yylval.num = lineno; return ','; } 
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 69 "rules.l"
+#line 70 "rules.l"
 { count(); yylval.num = lineno; return ';'; } 
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 70 "rules.l"
+#line 71 "rules.l"
 { count(); yylval.num = lineno; return '*'; } 
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 71 "rules.l"
+#line 72 "rules.l"
 { count(); yylval.num = lineno; return '/'; } 
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 72 "rules.l"
+#line 73 "rules.l"
 { count(); yylval.num = lineno; return '%'; } 
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 73 "rules.l"
+#line 74 "rules.l"
 { count(); yylval.num = lineno; return '+'; } 
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 74 "rules.l"
+#line 75 "rules.l"
 { count(); yylval.num = lineno; return '-'; } 
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 75 "rules.l"
+#line 76 "rules.l"
 { count(); yylval.num = lineno; return '~'; } 
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 76 "rules.l"
+#line 77 "rules.l"
 { count(); yylval.num = lineno; return '='; } 
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 77 "rules.l"
+#line 78 "rules.l"
 { count(); yylval.num = lineno; return '|'; } 
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 78 "rules.l"
+#line 79 "rules.l"
 { count(); yylval.num = lineno; return '^'; } 
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 79 "rules.l"
+#line 80 "rules.l"
 { count(); yylval.num = lineno; return '&'; } 
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 80 "rules.l"
+#line 81 "rules.l"
 { count(); yylval.num = lineno; return '<'; } 
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 81 "rules.l"
+#line 82 "rules.l"
 { count(); yylval.num = lineno; return '>'; } 
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 82 "rules.l"
+#line 83 "rules.l"
 { count(); yylval.num = lineno; return '.'; } 
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 83 "rules.l"
+#line 84 "rules.l"
 { count(); yylval.num = lineno; return ':'; } 
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 86 "rules.l"
+#line 87 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, NULL_OPTION, lineno, 0);
@@ -1183,7 +1184,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 92 "rules.l"
+#line 93 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, BOOL_OPTION, lineno, 0);
@@ -1194,7 +1195,7 @@ YY_RULE_SETUP
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
-#line 99 "rules.l"
+#line 100 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, CHAR_OPTION, lineno, 0);
@@ -1204,7 +1205,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 106 "rules.l"
+#line 107 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, INT_OPTION, lineno, 0);
@@ -1214,7 +1215,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 113 "rules.l"
+#line 114 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, FLOAT_OPTION, lineno, 0);
@@ -1225,17 +1226,17 @@ YY_RULE_SETUP
 case 65:
 /* rule 65 can match eol */
 YY_RULE_SETUP
-#line 120 "rules.l"
+#line 121 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, STRING_OPTION, lineno, 0);
-                        yylval.node->string_value = strdup(yytext);
+                        yylval.node->string_value = parseString(yytext);
                         return STRING;                    
 }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 127 "rules.l"
+#line 128 "rules.l"
 { 
                         count(); 
                         yylval.node = make(LITERAL_NODE, IDENTIFIER_OPTION, lineno, 0);
@@ -1246,20 +1247,20 @@ YY_RULE_SETUP
 case 67:
 /* rule 67 can match eol */
 YY_RULE_SETUP
-#line 134 "rules.l"
+#line 135 "rules.l"
 { count(); }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 136 "rules.l"
+#line 137 "rules.l"
 yyerror("invalid character");
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 138 "rules.l"
+#line 139 "rules.l"
 ECHO;
 	YY_BREAK
-#line 1263 "lex.yy.c"
+#line 1264 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2264,7 +2265,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 138 "rules.l"
+#line 139 "rules.l"
 
 
 // stolen from https://www.lysator.liu.se/c/ANSI-C-grammar-l.html
@@ -2302,7 +2303,38 @@ static char parseChar(char *data) {
 
     return data[1];
 }
+static char *parseString(char *data) {
+    char *res   = strdup(data);
+    int   res_i = 0;
+    char *ptr   = data;
+    ptr++;    // double quote
+    while (*ptr != '"') {
+        if (ptr[0] == '\\') {
+            ptr++;
+            switch (*ptr) {
+            case 'n' : res[res_i++] = '\n'; break;
+            case 't' : res[res_i++] = '\t'; break;
+            case 'r' : res[res_i++] = '\r'; break;
+            case '\\' : res[res_i++] = '\\'; break;
+            case '\'' : res[res_i++] = '\''; break;
+            case '\"' : res[res_i++] = '\"'; break;
+            default : yyerror("Unsupported escape sequence.\n");
+            }
+        }
+        else {
+            res[res_i++] = *ptr;
+        }
+        ptr++;
+    }
 
+    res[res_i++] = '\0';
+
+    char *new_res = malloc(sizeof(char) * res_i);
+    memcpy(new_res, res, sizeof(char) * res_i);
+    free(res);
+
+    return new_res;
+}
 int yywrap(void) {
     column += column_add;
     column_add = 0;

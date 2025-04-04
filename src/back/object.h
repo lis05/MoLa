@@ -4,7 +4,7 @@
 #include "../util.h"
 #include "types.h"
 
-// if type is RETURN_ADDRESS_TYPE, the object is just a meaningless shell containing the return address in value
+// Null, Bool, Char, Int, Float, Module(environment_ptr), ReturnAddress are stored in the union
 typedef struct Object {
     enum Type type;
 
