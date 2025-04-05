@@ -473,7 +473,7 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
 
     MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
 
-    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, (uint64_t)func_value);
+    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, raw64(func_value));
 
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
@@ -620,18 +620,38 @@ static void exec_COPY(Instruction *instr) {
 
     uint64_t value = 0;
 
+    void *ptr;
+
     switch (obj->type) {
-    case BOOL_TYPE : value = (uint64_t)obj->bool_value; break;
-    case INT_TYPE : value = (uint64_t)obj->int_value; break;
-    case CHAR_TYPE : value = (uint64_t)obj->char_value; break;
-    case FLOAT_TYPE : value = (uint64_t)obj->float_value; break;
-    case STRING_TYPE : value = (uint64_t)stringValueCopy(obj->value); break;
-    case ARRAY_TYPE : value = (uint64_t)arrayValueCopy(obj->value); break;
-    case TYPE_TYPE : value = (uint64_t)typeValueCopy(obj->value); break;
-    case INSTANCE_TYPE : value = (uint64_t)instanceValueCopy(obj->value); break;
-    case MOLA_FUNCTION_TYPE : value = (uint64_t)molaFunctionValueCopy(obj->value); break;
-    case C_FUNCTION_TYPE : value = (uint64_t)cFunctionValueCopy(obj->value); break;
-    case MODULE_TYPE : value = (uint64_t)obj->value; break;
+    case BOOL_TYPE : value = raw64(obj->bool_value); break;
+    case INT_TYPE : value = raw64(obj->int_value); break;
+    case CHAR_TYPE : value = raw64(obj->char_value); break;
+    case FLOAT_TYPE : value = raw64(obj->float_value); break;
+    case STRING_TYPE :
+        ptr   = (stringValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case ARRAY_TYPE :
+        ptr   = (arrayValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case TYPE_TYPE :
+        ptr   = (typeValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case INSTANCE_TYPE :
+        ptr   = (instanceValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case MOLA_FUNCTION_TYPE :
+        ptr   = (molaFunctionValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case C_FUNCTION_TYPE :
+        ptr   = (cFunctionValueCopy(obj->value));
+        value = raw64(ptr);
+        break;
+    case MODULE_TYPE : value = raw64(obj->value); break;
     case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : {
         gcUnlock();
@@ -811,7 +831,8 @@ static void exec_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) == -1));
+    int     r      = compare(x, y) == -1;
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -835,7 +856,8 @@ static void exec_NOT_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) != -1));
+    int     r      = compare(x, y) != -1;
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -859,7 +881,8 @@ static void exec_LESS_THAN(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(compare(x, y) == 1));
+    int     r      = compare(x, y) == 1;
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -883,8 +906,9 @@ static void exec_LESS_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    int     r      = compare(x, y);
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 1 || r == -1));
+    int r          = compare(x, y);
+    r              = (r == 1 || r == -1);
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -908,8 +932,8 @@ static void exec_GREATER_THAN(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    int     r      = compare(x, y);
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 0));
+    int     r      = compare(x, y) == 0;
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -933,8 +957,9 @@ static void exec_GREATER_EQUAL(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    int     r      = compare(x, y);
-    Object *res    = objectCreate(BOOL_TYPE, (uint64_t)(r == 0 || r == -1));
+    int r          = compare(x, y);
+    r              = r == 0 || r == -1;
+    Object *res    = objectCreate(BOOL_TYPE, raw64(r));
     res->is_rvalue = 1;
 
     objectsStackPush(res);
@@ -944,6 +969,95 @@ static void exec_GREATER_EQUAL(Instruction *instr) {
     ipointer++;
     gcUnlock();
 }
+
+/*
+Arythmetic operations are executed on ints, floats, or strings
+Promotions take place
+*/
+
+#define promoteToINT()                                                                                                           \
+    switch (x->type) {                                                                                                           \
+    case NULL_TYPE : {                                                                                                           \
+        x_int = (int64_t)0;                                                                                                      \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case BOOL_TYPE : {                                                                                                           \
+        x_int = (int64_t)x->bool_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case CHAR_TYPE : {                                                                                                           \
+        x_int = (int64_t)x->char_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case INT_TYPE : {                                                                                                            \
+        x_int = (int64_t)x->int_value;                                                                                           \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    }                                                                                                                            \
+    switch (y->type) {                                                                                                           \
+    case NULL_TYPE : {                                                                                                           \
+        y_int = (int64_t)0;                                                                                                      \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case BOOL_TYPE : {                                                                                                           \
+        y_int = (int64_t)y->bool_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case CHAR_TYPE : {                                                                                                           \
+        y_int = (int64_t)y->char_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case INT_TYPE : {                                                                                                            \
+        y_int = (int64_t)y->int_value;                                                                                           \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    }
+
+#define promoteToFLOAT()                                                                                                         \
+    switch (x->type) {                                                                                                           \
+    case NULL_TYPE : {                                                                                                           \
+        x_float = (double)0;                                                                                                     \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case BOOL_TYPE : {                                                                                                           \
+        x_float = (double)x->bool_value;                                                                                         \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case CHAR_TYPE : {                                                                                                           \
+        x_float = (double)x->char_value;                                                                                         \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case INT_TYPE : {                                                                                                            \
+        x_float = (double)x->int_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case FLOAT_TYPE : {                                                                                                          \
+        x_float = (double)x->float_value;                                                                                        \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    }                                                                                                                            \
+    switch (y->type) {                                                                                                           \
+    case NULL_TYPE : {                                                                                                           \
+        y_float = (double)0;                                                                                                     \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case BOOL_TYPE : {                                                                                                           \
+        y_float = (double)y->bool_value;                                                                                         \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case CHAR_TYPE : {                                                                                                           \
+        y_float = (double)y->char_value;                                                                                         \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case INT_TYPE : {                                                                                                            \
+        y_float = (double)y->int_value;                                                                                          \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    case FLOAT_TYPE : {                                                                                                          \
+        y_float = (double)y->float_value;                                                                                        \
+        break;                                                                                                                   \
+    }                                                                                                                            \
+    }
 
 static void exec_ADDITION(Instruction *instr) {
     gcLock();
@@ -958,15 +1072,52 @@ static void exec_ADDITION(Instruction *instr) {
     Object *x = objectsStackTop();
     objectsStackPop();
 
-    /*
-     */
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
 
-    // temporary
-    assert(x->type == INT_TYPE && y->type == INT_TYPE);
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
 
-    // this object is not referenced by anything other than the stack
-    // so it doesn't need to be copied when we want a copy of it....
-    Object *res    = objectCreate(INT_TYPE, (uint64_t)(x->int_value + y->int_value));
+    if (type > STRING_TYPE) {
+        goto OP_ERROR;
+    }
+
+    if (type == INT_TYPE) {
+        promoteToINT();
+
+        x_int = x_int + y_int;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    else if (type == FLOAT_TYPE) {
+        promoteToFLOAT();
+
+        x_float = x_float + y_float;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+    else {
+        if (x->type != STRING_TYPE || y->type != STRING_TYPE) {
+            goto OP_ERROR;
+        }
+        x_string = (StringValue *)x->value;
+        y_string = (StringValue *)y->value;
+
+        x_string = stringConcat(x_string, y_string);
+        res      = objectCreate(STRING_TYPE, raw64(x_string));
+        goto OP_END;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
@@ -978,35 +1129,438 @@ static void exec_ADDITION(Instruction *instr) {
 }
 
 static void exec_SUBTRACTION(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "SUBTRACTION failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= STRING_TYPE) {
+        goto OP_ERROR;
+    }
+
+    if (type == INT_TYPE) {
+        promoteToINT();
+
+        x_int = x_int - y_int;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    else {
+        promoteToFLOAT();
+
+        x_float = x_float - y_float;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LSHIFT(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LSHIFT failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= FLOAT_OPTION) {
+        goto OP_ERROR;
+    }
+
+    promoteToINT();
+
+    x_int = x_int << y_int;
+    res   = objectCreate(INT_TYPE, raw64(x_int));
+    goto OP_END;
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_RSHIFT(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "RSHIFT failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= FLOAT_TYPE) {
+        goto OP_ERROR;
+    }
+
+    promoteToINT();
+
+    x_int = x_int >> y_int;
+    res   = objectCreate(INT_TYPE, raw64(x_int));
+    goto OP_END;
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_MULTIPLICATION(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "MULTIPLICATION failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= STRING_TYPE) {
+        goto OP_ERROR;
+    }
+
+    if (type == INT_TYPE) {
+        promoteToINT();
+
+        x_int = x_int * y_int;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    else {
+        promoteToFLOAT();
+
+        x_float = x_float * y_float;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_DIVISION(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "DIVISION failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= STRING_TYPE) {
+        goto OP_ERROR;
+    }
+
+    if (type == INT_TYPE) {
+        promoteToINT();
+
+        x_int = x_int / y_int;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    else {
+        promoteToFLOAT();
+
+        x_float = x_float / y_float;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_REMAINDER(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "REMAINDER failed: less than 2 elements on the stack");
+    }
+
+    Object *y = objectsStackTop();
+    objectsStackPop();
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object      *res;
+    static int64_t      x_int, y_int;
+    static double       x_float, y_float;
+    static StringValue *x_string, *y_string;
+    static enum Type    type;
+
+    type = x->type > y->type ? x->type : y->type;
+    if (type < INT_TYPE) {
+        type = INT_TYPE;
+    }
+
+    if (type >= FLOAT_TYPE) {
+        goto OP_ERROR;
+    }
+
+    promoteToINT();
+
+    x_int = x_int % y_int;
+    res   = objectCreate(INT_TYPE, raw64(x_int));
+    goto OP_END;
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+    gcMaybeGarbageObject(y);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_POSITIVE(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "POSITIVE failed: less than 1 element on the stack");
+    }
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object *res;
+    int64_t        x_int;
+    double         x_float;
+
+    switch (x->type) {
+    case NULL_TYPE : {
+        x_int = 0;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case BOOL_TYPE : {
+        x_int = x->bool_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case CHAR_TYPE : {
+        x_int = x->char_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case INT_TYPE : {
+        x_int = x->int_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case FLOAT_TYPE : {
+        x_float = x->float_value;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+    default : goto OP_ERROR;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_NEGATION(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "NEGATIVE failed: less than 1 element on the stack");
+    }
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object *res;
+    int64_t        x_int;
+    double         x_float;
+
+    switch (x->type) {
+    case NULL_TYPE : {
+        x_int = -0;    // lmfao
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case BOOL_TYPE : {
+        x_int = -x->bool_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case CHAR_TYPE : {
+        x_int = -x->char_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case INT_TYPE : {
+        x_int = -x->int_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case FLOAT_TYPE : {
+        x_float = -x->float_value;
+        res     = objectCreate(FLOAT_TYPE, raw64(x_float));
+        goto OP_END;
+    }
+    default : goto OP_ERROR;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_INVERTION(Instruction *instr) {
@@ -1020,6 +1574,10 @@ static void exec_INVERTION(Instruction *instr) {
     switch (obj->type) {
     case INT_TYPE : {
         molalog("PRINT: INT    value: %lld\n", obj->int_value);
+        break;
+    }
+    case FLOAT_TYPE : {
+        molalog("PRINT: FLOAT  value: %lf\n", obj->float_value);
         break;
     }
     case STRING_TYPE : {
@@ -1077,7 +1635,8 @@ static void exec_CALL(Instruction *instr) {
         objectsStackPop();
     }
 
-    Object *ret = objectCreate(RETURN_ADDRESS_TYPE, ipointer + 1);
+    int64_t r   = ipointer + 1;
+    Object *ret = objectCreate(RETURN_ADDRESS_TYPE, raw64(r));
     objectsStackPush(ret);
 
     gcUnlock();
@@ -1094,15 +1653,23 @@ static void exec_ACCESS(Instruction *instr) {
 }
 
 static void exec_LOAD_BOOL(Instruction *instr) {
+    Object *obj    = objectCreate(BOOL_TYPE, raw64(instr->int_arg1));
+    obj->is_rvalue = 1;
+
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_CHAR(Instruction *instr) {
+    Object *obj    = objectCreate(CHAR_TYPE, raw64(instr->int_arg1));
+    obj->is_rvalue = 1;
+
+    objectsStackPush(obj);
     ipointer++;
 }
 
 static void exec_LOAD_INT(Instruction *instr) {
-    Object *obj    = objectCreate(INT_TYPE, (uint64_t)instr->int_arg1);
+    Object *obj    = objectCreate(INT_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
@@ -1110,7 +1677,7 @@ static void exec_LOAD_INT(Instruction *instr) {
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
-    Object *obj    = objectCreate(FLOAT_TYPE, (uint64_t)instr->float_arg1);
+    Object *obj    = objectCreate(FLOAT_TYPE, raw64(instr->float_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
@@ -1119,7 +1686,7 @@ static void exec_LOAD_FLOAT(Instruction *instr) {
 
 static void exec_LOAD_STRING(Instruction *instr) {
     StringValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
-    Object      *obj   = objectCreate(STRING_TYPE, (uint64_t)value);
+    Object      *obj   = objectCreate(STRING_TYPE, raw64(value));
 
     objectsStackPush(obj);
     ipointer++;

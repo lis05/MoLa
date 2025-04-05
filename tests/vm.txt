@@ -2,14 +2,6 @@ function print(x) {
     ~x
 }
 
-function fib(n) {
-    if n == 0 return 0
-    if n == 1 return 1
-
-    return fib(n + (-1)) + fib(n + (-2))
-}
-
-for var i = 0; i < 10; i = i + 1 {
-    print(fib(i))
-}
-print("DONE\td\n")
+print(true + null)
+print(1.0 + 'a' lshift false)
+print(-false)

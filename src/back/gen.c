@@ -718,8 +718,7 @@ Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, int64_t env_id, i
     return res;
 }
 
-Instruction
-genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
+Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
     Instruction res;
     res.filename = filename;
     res.lineno   = lineno;
@@ -1356,9 +1355,11 @@ ilist genCompile(AstNode *node) {
 
     // will create an env with id curEnvId
     ilistAppend(&result, genInsCREATE_ENV(info(node)));
+    ilistAppend(&result, genInsCREATE_SCOPE(info(node), 0));
 
     ilist tail = gen(node);
     ilistLink(&result, &tail);
+    ilistAppend(&result, genInsDESTROY_SCOPE(info(node)));
 
     return result;
 }
@@ -1839,13 +1840,9 @@ static ilist gen_type_stmt(AstNode *node) {
     ident *methods_copy = malloc(cvector_size(methods) * sizeof(ident));
     memcpy(methods_copy, methods, cvector_size(methods) * sizeof(ident));
 
-    ilistAppend(&output,
-                genInsCREATE_TYPE(info(node),
-                                  name->ident_value,
-                                  cvector_size(fields),
-                                  fields_copy,
-                                  cvector_size(methods),
-                                  methods_copy));
+    ilistAppend(
+    &output,
+    genInsCREATE_TYPE(info(node), name->ident_value, cvector_size(fields), fields_copy, cvector_size(methods), methods_copy));
 
     cvector_free(fields);
     cvector_free(methods);

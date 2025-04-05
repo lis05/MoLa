@@ -54,6 +54,17 @@ int stringCompare(StringValue *first, StringValue *second) {
     return 0;
 }
 
+StringValue *stringConcat(StringValue *first, StringValue *second) {
+    char *str = memalloc(first->length + second->length + 1);
+    memcpy(str, first->string, first->length);
+    memcpy(str + first->length, second->string, second->length);
+    str[first->length + second->length] = '\0';
+
+    StringValue *res = stringValueCreate(first->length + second->length, str);
+    memfree(str);
+    return res;
+}
+
 void stringValueRef(StringValue *unit) {
     unit->ref_count++;
 }

@@ -26,7 +26,9 @@ void scopeInsert(Scope *scope, ident name, struct Object *obj) {
 }
 
 struct Object *scopeRecursiveLookup(Scope *scope, ident name) {
-    assert(scope != NULL);
+    if (scope == NULL) {
+        goto END_SCOPE;
+    }
 
     while (scope != NULL) {
         Object *res = identMapGet(&scope->map, name);
@@ -41,7 +43,7 @@ struct Object *scopeRecursiveLookup(Scope *scope, ident name) {
             break;
         }
     }
-
+END_SCOPE:
     signalError(NAME_ERROR_CODE, errstrfmt("Cannot locate '%s'.", symtabIdentToString(name)));
     return NULL;
 }

@@ -3,6 +3,8 @@
 #include "gc.h"
 #include "types.h"
 
+#define cooked64(x, type) *((type *)&(x))
+
 Object *objectCreate(enum Type type, uint64_t value) {
     Object *obj = memallocObject();
 
@@ -10,10 +12,10 @@ Object *objectCreate(enum Type type, uint64_t value) {
     obj->value = (void *)value;
 
     switch (type) {
-    case BOOL_TYPE : obj->bool_value = (int)value; break;
-    case INT_TYPE : obj->int_value = (int64_t)value; break;
-    case CHAR_TYPE : obj->char_value = (char)value; break;
-    case FLOAT_TYPE : obj->float_value = (double)value; break;
+    case BOOL_TYPE : obj->bool_value = cooked64(value, int); break;
+    case INT_TYPE : obj->int_value = cooked64(value, int64_t); break;
+    case CHAR_TYPE : obj->char_value = cooked64(value, char); break;
+    case FLOAT_TYPE : obj->float_value = cooked64(value, double); break;
     case STRING_TYPE : stringValueRef((void *)value); break;
     case ARRAY_TYPE : arrayValueRef((void *)value); break;
     case TYPE_TYPE : typeValueRef((void *)value); break;
@@ -21,7 +23,7 @@ Object *objectCreate(enum Type type, uint64_t value) {
     case MOLA_FUNCTION_TYPE : molaFunctionValueRef((void *)value); break;
     case C_FUNCTION_TYPE : cFunctionValueRef((void *)value); break;
     case MODULE_TYPE : obj->value = (void *)value; break;
-    case NULL_TYPE : obj->return_address = (int64_t)value;
+    case NULL_TYPE : obj->return_address = cooked64(value, int64_t);
     case RETURN_ADDRESS_TYPE : break;    // no need
     }
 

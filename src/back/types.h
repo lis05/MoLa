@@ -43,6 +43,7 @@ char           stringValueIndexAccess(StringValue *val, int64_t index);
 struct Object *stringValueLookupField(StringValue *val, ident name);
 struct Object *stringValueLookupMethod(StringValue *val, ident name);
 int            stringCompare(StringValue *first, StringValue *second);    // like strcmp
+StringValue   *stringConcat(StringValue *first, StringValue *second);
 void           stringValueRef(StringValue *unit);
 void           stringValueUnref(StringValue *unit);
 
