@@ -32,8 +32,8 @@ typedef struct StringValue {
     size_t length;
     char  *string;    // NULL terminated, length doesnt count the NULL character
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark : 1;
 } StringValue;
 
 StringValue   *stringValueCreate(size_t length, char *string);
@@ -51,8 +51,8 @@ typedef struct ArrayValue {
     size_t          length;
     struct Object **array;
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark : 1;
 } ArrayValue;
 
 ArrayValue    *arrayValueCreate(char *string);
@@ -69,8 +69,8 @@ typedef struct TypeValue {
     ident *fields;
     map_t(ident, struct MolaFunctionValue *) methods;
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark : 1;
 } TypeValue;
 
 TypeValue     *typeValueCreate();
@@ -85,8 +85,8 @@ typedef struct InstanceValue {
     struct TypeValue *type;
     map_t(ident, struct Object *) fields;
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark : 1;
 } InstanceValue;
 
 InstanceValue *instanceValueCreate(struct TypeValue *type);
@@ -109,8 +109,9 @@ typedef struct MolaFunctionValue {
     size_t n_args;
     ident *args;
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark   : 1;
+    uint32_t is_method : 1;
 } MolaFunctionValue;
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args);
@@ -121,14 +122,20 @@ void               molaFunctionValueUnref(MolaFunctionValue *unit);
 
 typedef struct Object *(*CFunction)(size_t n_args, struct Object **args);
 
+// CFunctions receives arguments in an array, and must return an object.
+// this object will be pushed on the stack.
+#define UNLIMITED_ARGS (1ull << 60)
+
 typedef struct CFunctionValue {
     struct Env *env;
-    size_t      n_args;
+    size_t      n_args;    // or UNLIMITED_ARGS
 
     CFunction function;
 
-    uint32_t ref_count : 31;
-    int      gc_mark   : 1;
+    uint32_t ref_count;
+    uint32_t gc_mark   : 1;
+    uint32_t is_method : 1;
+
 } CFunctionValue;
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function);

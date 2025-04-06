@@ -485,6 +485,7 @@ static void exec_CREATE_TYPE(Instruction *instr) {
 }
 
 static void exec_CREATE_METHOD(Instruction *instr) {
+    // func_value->is_method = 1;
     ipointer++;
 }
 
@@ -1590,44 +1591,128 @@ static void exec_INVERTION(Instruction *instr) {
 }
 
 static void exec_LOGICAL_NOT(Instruction *instr) {
+    gcLock();
+    if (objectsStackSize() < 1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LOGICAL_NOT failed: less than 1 element on the stack");
+    }
+
+    Object *x = objectsStackTop();
+    objectsStackPop();
+
+    static Object *res;
+    int64_t        x_int;
+    double         x_float;
+
+    switch (x->type) {
+    case NULL_TYPE : {
+        x_int = 1;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case BOOL_TYPE : {
+        x_int = !x->bool_value;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case CHAR_TYPE : {
+        x_int = !x->char_value;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case INT_TYPE : {
+        x_int = !x->int_value;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case FLOAT_TYPE : {
+        x_int = !x->float_value;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case STRING_TYPE : {
+        x_int = ((StringValue *)x->value)->length == 0;
+        res   = objectCreate(BOOL_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    default : goto OP_ERROR;
+    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
+
     ipointer++;
+    gcUnlock();
 }
+
+/* when executiong A:B, caller is set to A
+so that it is possible to pass it as the owner in case we want to call the retrieved method*/
+static Object *caller = NULL;
 
 static void exec_CALL(Instruction *instr) {
     gcLock();
 
-    int64_t n = instr->int_arg1;
+    static int64_t n = 0;
+    n                = instr->int_arg1;
+
+    static MolaFunctionValue *mola_function = NULL;
+    static CFunctionValue    *c_function    = NULL;
 
     if (objectsStackSize() < n + 1) {
         gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "CALL failed: too few objects on the stack");
     }
 
-    Object *f = objects_stack[objectsStackSize() - 1];
+    static Object *f = NULL;
+    f                = objects_stack[objectsStackSize() - 1];
+    mola_function    = (MolaFunctionValue *)f->value;
+    c_function       = (CFunctionValue *)f->value;
+
     if (f->type != C_FUNCTION_TYPE && f->type != MOLA_FUNCTION_TYPE) {
         gcUnlock();
         signalError(VALUE_ERROR_CODE, "Not callable");
     }
 
-    if (f->type == C_FUNCTION_TYPE && ((CFunctionValue *)f->value)->n_args != n) {
+    if (f->type == C_FUNCTION_TYPE && c_function->n_args != UNLIMITED_ARGS && c_function->n_args != n) {
         gcUnlock();
-        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE,
-                    errstrfmt("Expected %d arguments, got %d", ((CFunctionValue *)f->value)->n_args, n));
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", c_function->n_args, n));
     }
-    else if (f->type == MOLA_FUNCTION_TYPE && ((MolaFunctionValue *)f->value)->n_args != n) {
+    else if (f->type == MOLA_FUNCTION_TYPE && mola_function->n_args != n) {
         gcUnlock();
-        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE,
-                    errstrfmt("Expected %d arguments, got %d", ((MolaFunctionValue *)f->value)->n_args, n));
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", mola_function->n_args, n));
     }
 
-    for (int i = 0; i < n; i++) {
-        Object *arg = objects_stack[objectsStackSize() - 2 - (n - i - 1)];
-
-        if (f->type == MOLA_FUNCTION_TYPE) {
-            scopeInsert(current_scope, ((MolaFunctionValue *)f->value)->args[i], arg);
+    static Object **args        = NULL;
+    size_t          passed_args = 0;
+    if (f->type == MOLA_FUNCTION_TYPE) {
+        int offset = 0;
+        if (mola_function->is_method) {
+            scopeInsert(current_scope, mola_function->args[0], caller);
+            offset = 1;
         }
-        else {
-            // TODO
+        for (int64_t i = 0; i < n; i++) {
+            Object *arg = objects_stack[objectsStackSize() - 2 - (n - i - 1)];
+
+            scopeInsert(current_scope, mola_function->args[i + offset], arg);
+        }
+    }
+    else {
+        passed_args = n + c_function->is_method;
+        args        = memalloc(sizeof(Object *) * passed_args);
+        int offset  = 0;
+        if (c_function->is_method) {
+            args[0] = caller;
+            offset  = 1;
+        }
+        for (int64_t i = 0; i < n; i++) {
+            args[i + offset] = objects_stack[objectsStackSize() - 2 - (n - i - 1)];
         }
     }
 
@@ -1635,16 +1720,20 @@ static void exec_CALL(Instruction *instr) {
         objectsStackPop();
     }
 
-    int64_t r   = ipointer + 1;
-    Object *ret = objectCreate(RETURN_ADDRESS_TYPE, raw64(r));
-    objectsStackPush(ret);
-
-    gcUnlock();
     if (f->type == MOLA_FUNCTION_TYPE) {
-        ipointer = ((MolaFunctionValue *)f->value)->relative_offset + current_env->absolute_offset;
+        int64_t r   = ipointer + 1;
+        Object *ret = objectCreate(RETURN_ADDRESS_TYPE, raw64(r));
+        objectsStackPush(ret);
+
+        gcUnlock();
+        ipointer = mola_function->relative_offset + current_env->absolute_offset;
     }
     else {
-        // TODO
+        Object *res = c_function->function(passed_args, args);
+        objectsStackPush(res);
+
+        gcUnlock();
+        ipointer++;
     }
 }
 
@@ -1702,11 +1791,19 @@ static void exec_LOAD_NULL(Instruction *instr) {
 
 static void exec_LOAD(Instruction *instr) {
     /*
+    0. look for a global object in the builtin(0) environment
     1. look for a global object
     2. then look for a local object, or report error
     */
 
-    Object *res = identMapGet(&current_env->globals, instr->ident_arg1);
+    Object *res = identMapGet(&envGetById(0)->globals, instr->ident_arg1);
+    if (res != NULL) {
+        objectsStackPush(res);
+        ipointer++;
+        return;
+    }
+
+    res = identMapGet(&current_env->globals, instr->ident_arg1);
     if (res != NULL) {
         objectsStackPush(res);
         ipointer++;

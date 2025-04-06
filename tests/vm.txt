@@ -1,7 +1,3 @@
-function print(x) {
-    ~x
-}
+var x = "hello"
 
-print(true + null)
-print(1.0 + 'a' lshift false)
-print(-false)
+print("hello", "wor", 'a', 123, 5123)

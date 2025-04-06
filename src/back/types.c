@@ -126,6 +126,7 @@ MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, 
 
     res->ref_count = 0;
     res->gc_mark   = 0;
+    res->is_method = 0;
 }
 
 MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {
@@ -145,12 +146,29 @@ void molaFunctionValueUnref(MolaFunctionValue *unit) {
     unit->ref_count--;
 }
 
-CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {}
+CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {
+    CFunctionValue *res = memalloc(sizeof(CFunctionValue));
+    res->env            = env;
+    res->n_args         = n_args;
+    res->function       = function;
 
-CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {}
+    res->ref_count = 0;
+    res->gc_mark   = 0;
+    res->is_method = 0;
+}
 
-void cFunctionValueDestroy(CFunctionValue *val) {}
+CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {
+    return val;
+}
 
-void cFunctionValueRef(CFunctionValue *unit) {}
+void cFunctionValueDestroy(CFunctionValue *val) {
+    memfree(val);
+}
 
-void cFunctionValueUnref(CFunctionValue *unit) {}
+void cFunctionValueRef(CFunctionValue *unit) {
+    unit->ref_count++;
+}
+
+void cFunctionValueUnref(CFunctionValue *unit) {
+    unit->ref_count--;
+}
