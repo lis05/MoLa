@@ -1,3 +1,32 @@
-var x = "hello"
+function fib(n) {
+    if n <= 1 return n
+    return fib(n - 1) + fib(n - 2)
+}
 
-print("hello", "wor", 'a', 123, 5123)
+for var i = 0; i < 10; i = i + 1 {
+    print(i, fib(i))
+}
+
+type Pair {
+    first, second,
+    print(), self()
+}
+
+method print() of Pair {
+    print("I am a pair [", this.first,  this.second, "]")
+}
+method self() of Pair {
+    return this
+}
+
+var p1 = new Pair, p2 = new Pair;
+p1:print()
+p2:print()
+
+p1.first = 1;
+p2.second = 2;
+
+p1:print()
+p2:print()
+
+

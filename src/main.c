@@ -12,6 +12,10 @@ Object *printer(size_t n_args, struct Object **args) {
         Object *obj = args[i];
 
         switch (obj->type) {
+        case NULL_TYPE : {
+            printf("NULL");
+            break;
+        }
         case INT_TYPE : {
             printf("%lld", obj->int_value);
             break;

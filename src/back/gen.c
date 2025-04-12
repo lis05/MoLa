@@ -748,8 +748,8 @@ Instruction genInsCREATE_TYPE(char   *filename,
     res.ident_arg1 = name;
     res.n_args     = n_fields + n_methods + 2;
     res.args       = memalloc(res.n_args * sizeof(ident));
-    res.args[0]    = n_fields;
-    res.args[1]    = n_methods;
+    res.args[0]    = (int64_t)n_fields;
+    res.args[1]    = (int64_t)n_methods;
     memcpy(res.args + 2, fields, n_fields * sizeof(ident));
     memcpy(res.args + 2 + n_fields, methods, n_methods * sizeof(ident));
 

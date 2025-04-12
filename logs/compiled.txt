@@ -1,102 +1,178 @@
-[   0.001]  gen.c     : 0     CREATE_ENV              lineno=1    n_args=0    env=0    
-[   0.001]  gen.c     : 1     CREATE_SCOPE            lineno=1    n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.001]  gen.c     : 2     CREATE_FUNCTION         lineno=1    n_args=1    env=0    name=0[print]    args: 1[x], 
-[   0.001]  gen.c     : 3     JUMP                    lineno=1    n_args=0    env=0    offset=9 (abs=12)
-[   0.001]  gen.c     : 4     CREATE_SCOPE            lineno=1    n_args=0    env=0    WITH_PARENT_ACCESS
-[   0.001]  gen.c     : 5     LOAD                    lineno=2    n_args=0    env=0    name=1[x]
-[   0.001]  gen.c     : 6     INVERTION               lineno=2    n_args=0    env=0    
-[   0.001]  gen.c     : 7     POP                     lineno=2    n_args=0    env=0    
-[   0.001]  gen.c     : 8     DESTROY_SCOPE           lineno=1    n_args=0    env=0    
-[   0.001]  gen.c     : 9     LOAD_NULL               lineno=1    n_args=0    env=0    
-[   0.001]  gen.c     : 10    SWAP                    lineno=1    n_args=0    env=0    
-[   0.001]  gen.c     : 11    RETURN                  lineno=1    n_args=0    env=0    
-[   0.001]  gen.c     : 12    CREATE_FUNCTION         lineno=5    n_args=1    env=0    name=2[fib]    args: 3[n], 
-[   0.001]  gen.c     : 13    JUMP                    lineno=5    n_args=0    env=0    offset=47 (abs=60)
-[   0.001]  gen.c     : 14    CREATE_SCOPE            lineno=5    n_args=0    env=0    WITH_PARENT_ACCESS
-[   0.001]  gen.c     : 15    LOAD                    lineno=6    n_args=0    env=0    name=3[n]
-[   0.001]  gen.c     : 16    LOAD_INT                lineno=6    n_args=0    env=0    value=0
-[   0.001]  gen.c     : 17    EQUAL                   lineno=6    n_args=0    env=0    
-[   0.001]  gen.c     : 18    JUMP_IF_FALSE           lineno=6    n_args=0    env=0    offset=6 (abs=24)
-[   0.001]  gen.c     : 19    LOAD_INT                lineno=6    n_args=0    env=0    value=0
-[   0.001]  gen.c     : 20    DESTROY_SCOPE           lineno=6    n_args=0    env=0    
-[   0.001]  gen.c     : 21    COPY_IC                 lineno=6    n_args=0    env=0    
-[   0.001]  gen.c     : 22    SWAP                    lineno=6    n_args=0    env=0    
-[   0.001]  gen.c     : 23    RETURN                  lineno=6    n_args=0    env=0    
-[   0.001]  gen.c     : 24    LOAD                    lineno=7    n_args=0    env=0    name=3[n]
-[   0.001]  gen.c     : 25    LOAD_INT                lineno=7    n_args=0    env=0    value=1
-[   0.001]  gen.c     : 26    EQUAL                   lineno=7    n_args=0    env=0    
-[   0.001]  gen.c     : 27    JUMP_IF_FALSE           lineno=7    n_args=0    env=0    offset=6 (abs=33)
-[   0.001]  gen.c     : 28    LOAD_INT                lineno=7    n_args=0    env=0    value=1
-[   0.001]  gen.c     : 29    DESTROY_SCOPE           lineno=7    n_args=0    env=0    
-[   0.001]  gen.c     : 30    COPY_IC                 lineno=7    n_args=0    env=0    
-[   0.001]  gen.c     : 31    SWAP                    lineno=7    n_args=0    env=0    
-[   0.001]  gen.c     : 32    RETURN                  lineno=7    n_args=0    env=0    
-[   0.001]  gen.c     : 33    LOAD                    lineno=9    n_args=0    env=0    name=3[n]
-[   0.001]  gen.c     : 34    LOAD_INT                lineno=9    n_args=0    env=0    value=-1
-[   0.001]  gen.c     : 35    ADDITION                lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 36    LOAD                    lineno=9    n_args=0    env=0    name=2[fib]
-[   0.001]  gen.c     : 37    SWITCH_ENV_OBJ          lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 38    CREATE_SCOPE            lineno=9    n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.001]  gen.c     : 39    CALL                    lineno=9    n_args=0    env=0    n=1
-[   0.001]  gen.c     : 40    DESTROY_SCOPE           lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 41    SWITCH_ENV_INS          lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 42    LOAD                    lineno=9    n_args=0    env=0    name=3[n]
-[   0.001]  gen.c     : 43    LOAD_INT                lineno=9    n_args=0    env=0    value=-2
-[   0.001]  gen.c     : 44    ADDITION                lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 45    LOAD                    lineno=9    n_args=0    env=0    name=2[fib]
-[   0.001]  gen.c     : 46    SWITCH_ENV_OBJ          lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 47    CREATE_SCOPE            lineno=9    n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.001]  gen.c     : 48    CALL                    lineno=9    n_args=0    env=0    n=1
-[   0.001]  gen.c     : 49    DESTROY_SCOPE           lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 50    SWITCH_ENV_INS          lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 51    ADDITION                lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 52    DESTROY_SCOPE           lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 53    COPY_IC                 lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 54    SWAP                    lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 55    RETURN                  lineno=9    n_args=0    env=0    
-[   0.001]  gen.c     : 56    DESTROY_SCOPE           lineno=5    n_args=0    env=0    
-[   0.001]  gen.c     : 57    LOAD_NULL               lineno=5    n_args=0    env=0    
-[   0.001]  gen.c     : 58    SWAP                    lineno=5    n_args=0    env=0    
-[   0.001]  gen.c     : 59    RETURN                  lineno=5    n_args=0    env=0    
-[   0.001]  gen.c     : 60    CREATE_SCOPE            lineno=12   n_args=0    env=0    WITH_PARENT_ACCESS
-[   0.001]  gen.c     : 61    LOAD_INT                lineno=12   n_args=0    env=0    value=0
-[   0.001]  gen.c     : 62    COPY_IC                 lineno=12   n_args=0    env=0    
-[   0.001]  gen.c     : 63    CREATE_VAR              lineno=12   n_args=0    env=0    name=4[i]
-[   0.001]  gen.c     : 64    LOAD                    lineno=12   n_args=0    env=0    name=4[i]
-[   0.001]  gen.c     : 65    LOAD_INT                lineno=12   n_args=0    env=0    value=10
-[   0.001]  gen.c     : 66    LESS_THAN               lineno=12   n_args=0    env=0    
-[   0.001]  gen.c     : 67    JUMP_IF_FALSE           lineno=12   n_args=0    env=0    offset=24 (abs=91)
-[   0.001]  gen.c     : 68    CREATE_SCOPE            lineno=12   n_args=0    env=0    WITH_PARENT_ACCESS
-[   0.001]  gen.c     : 69    LOAD                    lineno=13   n_args=0    env=0    name=4[i]
-[   0.001]  gen.c     : 70    LOAD                    lineno=13   n_args=0    env=0    name=2[fib]
-[   0.001]  gen.c     : 71    SWITCH_ENV_OBJ          lineno=13   n_args=0    env=0    
-[   0.001]  gen.c     : 72    CREATE_SCOPE            lineno=13   n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.001]  gen.c     : 73    CALL                    lineno=13   n_args=0    env=0    n=1
-[   0.001]  gen.c     : 74    DESTROY_SCOPE           lineno=13   n_args=0    env=0    
-[   0.001]  gen.c     : 75    SWITCH_ENV_INS          lineno=13   n_args=0    env=0    
-[   0.001]  gen.c     : 76    LOAD                    lineno=13   n_args=0    env=0    name=0[print]
-[   0.001]  gen.c     : 77    SWITCH_ENV_OBJ          lineno=13   n_args=0    env=0    
-[   0.001]  gen.c     : 78    CREATE_SCOPE            lineno=13   n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.001]  gen.c     : 79    CALL                    lineno=13   n_args=0    env=0    n=1
-[   0.001]  gen.c     : 80    DESTROY_SCOPE           lineno=13   n_args=0    env=0    
-[   0.002]  gen.c     : 81    SWITCH_ENV_INS          lineno=13   n_args=0    env=0    
-[   0.002]  gen.c     : 82    POP                     lineno=13   n_args=0    env=0    
-[   0.002]  gen.c     : 83    DESTROY_SCOPE           lineno=12   n_args=0    env=0    
-[   0.002]  gen.c     : 84    LOAD                    lineno=12   n_args=0    env=0    name=4[i]
-[   0.002]  gen.c     : 85    LOAD_INT                lineno=12   n_args=0    env=0    value=1
-[   0.002]  gen.c     : 86    ADDITION                lineno=12   n_args=0    env=0    
-[   0.002]  gen.c     : 87    COPY_IC                 lineno=12   n_args=0    env=0    
-[   0.002]  gen.c     : 88    LOAD                    lineno=12   n_args=0    env=0    name=4[i]
-[   0.002]  gen.c     : 89    ASSIGNMENT              lineno=12   n_args=0    env=0    
-[   0.002]  gen.c     : 90    JUMP                    lineno=12   n_args=0    env=0    offset=-26 (abs=64)
-[   0.002]  gen.c     : 91    DESTROY_SCOPE           lineno=12   n_args=0    env=0    
-[   0.002]  gen.c     : 92    LOAD_STRING             lineno=15   n_args=0    env=0    value="DONE	d
-"
-[   0.002]  gen.c     : 93    LOAD                    lineno=15   n_args=0    env=0    name=0[print]
-[   0.002]  gen.c     : 94    SWITCH_ENV_OBJ          lineno=15   n_args=0    env=0    
-[   0.002]  gen.c     : 95    CREATE_SCOPE            lineno=15   n_args=0    env=0    WITHOUT_PARENT_ACCESS
-[   0.002]  gen.c     : 96    CALL                    lineno=15   n_args=0    env=0    n=1
-[   0.002]  gen.c     : 97    DESTROY_SCOPE           lineno=15   n_args=0    env=0    
-[   0.002]  gen.c     : 98    SWITCH_ENV_INS          lineno=15   n_args=0    env=0    
-[   0.002]  gen.c     : 99    POP                     lineno=15   n_args=0    env=0    
-[   0.002]  gen.c     : 100   DESTROY_SCOPE           lineno=1    n_args=0    env=0    
+[   0.001]  gen.c     : 0     CREATE_ENV              lineno=1    n_args=0    env=1    
+[   0.001]  gen.c     : 1     CREATE_SCOPE            lineno=1    n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.001]  gen.c     : 2     CREATE_FUNCTION         lineno=1    n_args=1    env=1    name=0[fib]    args: 1[n], 
+[   0.001]  gen.c     : 3     JUMP                    lineno=1    n_args=0    env=1    offset=38 (abs=41)
+[   0.001]  gen.c     : 4     CREATE_SCOPE            lineno=1    n_args=0    env=1    WITH_PARENT_ACCESS
+[   0.001]  gen.c     : 5     LOAD                    lineno=2    n_args=0    env=1    name=1[n]
+[   0.001]  gen.c     : 6     LOAD_INT                lineno=2    n_args=0    env=1    value=1
+[   0.001]  gen.c     : 7     LESS_EQUAL              lineno=2    n_args=0    env=1    
+[   0.001]  gen.c     : 8     JUMP_IF_FALSE           lineno=2    n_args=0    env=1    offset=6 (abs=14)
+[   0.001]  gen.c     : 9     LOAD                    lineno=2    n_args=0    env=1    name=1[n]
+[   0.001]  gen.c     : 10    DESTROY_SCOPE           lineno=2    n_args=0    env=1    
+[   0.001]  gen.c     : 11    COPY_IC                 lineno=2    n_args=0    env=1    
+[   0.001]  gen.c     : 12    SWAP                    lineno=2    n_args=0    env=1    
+[   0.001]  gen.c     : 13    RETURN                  lineno=2    n_args=0    env=1    
+[   0.001]  gen.c     : 14    LOAD                    lineno=3    n_args=0    env=1    name=1[n]
+[   0.001]  gen.c     : 15    LOAD_INT                lineno=3    n_args=0    env=1    value=1
+[   0.001]  gen.c     : 16    SUBTRACTION             lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 17    LOAD                    lineno=3    n_args=0    env=1    name=0[fib]
+[   0.001]  gen.c     : 18    SWITCH_ENV_OBJ          lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 19    CREATE_SCOPE            lineno=3    n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.001]  gen.c     : 20    CALL                    lineno=3    n_args=0    env=1    n=1
+[   0.001]  gen.c     : 21    DESTROY_SCOPE           lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 22    SWITCH_ENV_INS          lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 23    LOAD                    lineno=3    n_args=0    env=1    name=1[n]
+[   0.001]  gen.c     : 24    LOAD_INT                lineno=3    n_args=0    env=1    value=2
+[   0.001]  gen.c     : 25    SUBTRACTION             lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 26    LOAD                    lineno=3    n_args=0    env=1    name=0[fib]
+[   0.001]  gen.c     : 27    SWITCH_ENV_OBJ          lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 28    CREATE_SCOPE            lineno=3    n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.001]  gen.c     : 29    CALL                    lineno=3    n_args=0    env=1    n=1
+[   0.001]  gen.c     : 30    DESTROY_SCOPE           lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 31    SWITCH_ENV_INS          lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 32    ADDITION                lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 33    DESTROY_SCOPE           lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 34    COPY_IC                 lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 35    SWAP                    lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 36    RETURN                  lineno=3    n_args=0    env=1    
+[   0.001]  gen.c     : 37    DESTROY_SCOPE           lineno=1    n_args=0    env=1    
+[   0.001]  gen.c     : 38    LOAD_NULL               lineno=1    n_args=0    env=1    
+[   0.001]  gen.c     : 39    SWAP                    lineno=1    n_args=0    env=1    
+[   0.001]  gen.c     : 40    RETURN                  lineno=1    n_args=0    env=1    
+[   0.001]  gen.c     : 41    CREATE_SCOPE            lineno=6    n_args=0    env=1    WITH_PARENT_ACCESS
+[   0.001]  gen.c     : 42    LOAD_INT                lineno=6    n_args=0    env=1    value=0
+[   0.001]  gen.c     : 43    COPY_IC                 lineno=6    n_args=0    env=1    
+[   0.001]  gen.c     : 44    CREATE_VAR              lineno=6    n_args=0    env=1    name=2[i]
+[   0.001]  gen.c     : 45    LOAD                    lineno=6    n_args=0    env=1    name=2[i]
+[   0.001]  gen.c     : 46    LOAD_INT                lineno=6    n_args=0    env=1    value=10
+[   0.001]  gen.c     : 47    LESS_THAN               lineno=6    n_args=0    env=1    
+[   0.001]  gen.c     : 48    JUMP_IF_FALSE           lineno=6    n_args=0    env=1    offset=25 (abs=73)
+[   0.002]  gen.c     : 49    CREATE_SCOPE            lineno=6    n_args=0    env=1    WITH_PARENT_ACCESS
+[   0.002]  gen.c     : 50    LOAD                    lineno=7    n_args=0    env=1    name=2[i]
+[   0.002]  gen.c     : 51    LOAD                    lineno=7    n_args=0    env=1    name=2[i]
+[   0.002]  gen.c     : 52    LOAD                    lineno=7    n_args=0    env=1    name=0[fib]
+[   0.002]  gen.c     : 53    SWITCH_ENV_OBJ          lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 54    CREATE_SCOPE            lineno=7    n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 55    CALL                    lineno=7    n_args=0    env=1    n=1
+[   0.002]  gen.c     : 56    DESTROY_SCOPE           lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 57    SWITCH_ENV_INS          lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 58    LOAD                    lineno=7    n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 59    SWITCH_ENV_OBJ          lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 60    CREATE_SCOPE            lineno=7    n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 61    CALL                    lineno=7    n_args=0    env=1    n=2
+[   0.002]  gen.c     : 62    DESTROY_SCOPE           lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 63    SWITCH_ENV_INS          lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 64    POP                     lineno=7    n_args=0    env=1    
+[   0.002]  gen.c     : 65    DESTROY_SCOPE           lineno=6    n_args=0    env=1    
+[   0.002]  gen.c     : 66    LOAD                    lineno=6    n_args=0    env=1    name=2[i]
+[   0.002]  gen.c     : 67    LOAD_INT                lineno=6    n_args=0    env=1    value=1
+[   0.002]  gen.c     : 68    ADDITION                lineno=6    n_args=0    env=1    
+[   0.002]  gen.c     : 69    COPY_IC                 lineno=6    n_args=0    env=1    
+[   0.002]  gen.c     : 70    LOAD                    lineno=6    n_args=0    env=1    name=2[i]
+[   0.002]  gen.c     : 71    ASSIGNMENT              lineno=6    n_args=0    env=1    
+[   0.002]  gen.c     : 72    JUMP                    lineno=6    n_args=0    env=1    offset=-27 (abs=45)
+[   0.002]  gen.c     : 73    DESTROY_SCOPE           lineno=6    n_args=0    env=1    
+[   0.002]  gen.c     : 74    CREATE_TYPE             lineno=10   n_args=6    env=1    name=4[Pair]    fields: 5[first], 6[second],     methods: 3[print], 7[self], 
+[   0.002]  gen.c     : 75    LOAD                    lineno=15   n_args=0    env=1    name=4[Pair]
+[   0.002]  gen.c     : 76    CREATE_METHOD           lineno=15   n_args=1    env=1    name=3[print]    args: 8[this], 
+[   0.002]  gen.c     : 77    JUMP                    lineno=15   n_args=0    env=1    offset=17 (abs=94)
+[   0.002]  gen.c     : 78    CREATE_SCOPE            lineno=15   n_args=0    env=1    WITH_PARENT_ACCESS
+[   0.002]  gen.c     : 79    LOAD_STRING             lineno=16   n_args=0    env=1    value="I am a pair ["
+[   0.002]  gen.c     : 80    LOAD                    lineno=16   n_args=0    env=1    name=8[this]
+[   0.002]  gen.c     : 81    LOAD_FIELD              lineno=16   n_args=0    env=1    name=5[first]
+[   0.002]  gen.c     : 82    LOAD                    lineno=16   n_args=0    env=1    name=8[this]
+[   0.002]  gen.c     : 83    LOAD_FIELD              lineno=16   n_args=0    env=1    name=6[second]
+[   0.002]  gen.c     : 84    LOAD_STRING             lineno=16   n_args=0    env=1    value="]"
+[   0.002]  gen.c     : 85    LOAD                    lineno=16   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 86    SWITCH_ENV_OBJ          lineno=16   n_args=0    env=1    
+[   0.002]  gen.c     : 87    CREATE_SCOPE            lineno=16   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 88    CALL                    lineno=16   n_args=0    env=1    n=4
+[   0.002]  gen.c     : 89    DESTROY_SCOPE           lineno=16   n_args=0    env=1    
+[   0.002]  gen.c     : 90    SWITCH_ENV_INS          lineno=16   n_args=0    env=1    
+[   0.002]  gen.c     : 91    POP                     lineno=16   n_args=0    env=1    
+[   0.002]  gen.c     : 92    DESTROY_SCOPE           lineno=15   n_args=0    env=1    
+[   0.002]  gen.c     : 93    RETURN                  lineno=15   n_args=0    env=1    
+[   0.002]  gen.c     : 94    LOAD                    lineno=18   n_args=0    env=1    name=4[Pair]
+[   0.002]  gen.c     : 95    CREATE_METHOD           lineno=18   n_args=1    env=1    name=7[self]    args: 8[this], 
+[   0.002]  gen.c     : 96    JUMP                    lineno=18   n_args=0    env=1    offset=9 (abs=105)
+[   0.002]  gen.c     : 97    CREATE_SCOPE            lineno=18   n_args=0    env=1    WITH_PARENT_ACCESS
+[   0.002]  gen.c     : 98    LOAD                    lineno=19   n_args=0    env=1    name=8[this]
+[   0.002]  gen.c     : 99    DESTROY_SCOPE           lineno=19   n_args=0    env=1    
+[   0.002]  gen.c     : 100   COPY_IC                 lineno=19   n_args=0    env=1    
+[   0.002]  gen.c     : 101   SWAP                    lineno=19   n_args=0    env=1    
+[   0.002]  gen.c     : 102   RETURN                  lineno=19   n_args=0    env=1    
+[   0.002]  gen.c     : 103   DESTROY_SCOPE           lineno=18   n_args=0    env=1    
+[   0.002]  gen.c     : 104   RETURN                  lineno=18   n_args=0    env=1    
+[   0.002]  gen.c     : 105   LOAD                    lineno=22   n_args=0    env=1    name=4[Pair]
+[   0.002]  gen.c     : 106   NEW                     lineno=22   n_args=0    env=1    
+[   0.002]  gen.c     : 107   COPY_IC                 lineno=22   n_args=0    env=1    
+[   0.002]  gen.c     : 108   CREATE_VAR              lineno=22   n_args=0    env=1    name=9[p1]
+[   0.002]  gen.c     : 109   LOAD                    lineno=22   n_args=0    env=1    name=4[Pair]
+[   0.002]  gen.c     : 110   NEW                     lineno=22   n_args=0    env=1    
+[   0.002]  gen.c     : 111   COPY_IC                 lineno=22   n_args=0    env=1    
+[   0.002]  gen.c     : 112   CREATE_VAR              lineno=22   n_args=0    env=1    name=10[p2]
+[   0.002]  gen.c     : 113   LOAD                    lineno=23   n_args=0    env=1    name=9[p1]
+[   0.002]  gen.c     : 114   LOAD_METHOD             lineno=23   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 115   SWITCH_ENV_OBJ          lineno=23   n_args=0    env=1    
+[   0.002]  gen.c     : 116   CREATE_SCOPE            lineno=23   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 117   CALL                    lineno=23   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 118   DESTROY_SCOPE           lineno=23   n_args=0    env=1    
+[   0.002]  gen.c     : 119   SWITCH_ENV_INS          lineno=23   n_args=0    env=1    
+[   0.002]  gen.c     : 120   POP                     lineno=23   n_args=0    env=1    
+[   0.002]  gen.c     : 121   LOAD                    lineno=24   n_args=0    env=1    name=10[p2]
+[   0.002]  gen.c     : 122   LOAD_METHOD             lineno=24   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 123   SWITCH_ENV_OBJ          lineno=24   n_args=0    env=1    
+[   0.002]  gen.c     : 124   CREATE_SCOPE            lineno=24   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 125   CALL                    lineno=24   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 126   DESTROY_SCOPE           lineno=24   n_args=0    env=1    
+[   0.002]  gen.c     : 127   SWITCH_ENV_INS          lineno=24   n_args=0    env=1    
+[   0.002]  gen.c     : 128   POP                     lineno=24   n_args=0    env=1    
+[   0.002]  gen.c     : 129   LOAD_INT                lineno=26   n_args=0    env=1    value=1
+[   0.002]  gen.c     : 130   COPY_IC                 lineno=26   n_args=0    env=1    
+[   0.002]  gen.c     : 131   LOAD                    lineno=26   n_args=0    env=1    name=9[p1]
+[   0.002]  gen.c     : 132   LOAD_FIELD              lineno=26   n_args=0    env=1    name=5[first]
+[   0.002]  gen.c     : 133   ASSIGNMENT              lineno=26   n_args=0    env=1    
+[   0.002]  gen.c     : 134   POP                     lineno=26   n_args=0    env=1    
+[   0.002]  gen.c     : 135   LOAD_INT                lineno=27   n_args=0    env=1    value=2
+[   0.002]  gen.c     : 136   COPY_IC                 lineno=27   n_args=0    env=1    
+[   0.002]  gen.c     : 137   LOAD                    lineno=27   n_args=0    env=1    name=10[p2]
+[   0.002]  gen.c     : 138   LOAD_FIELD              lineno=27   n_args=0    env=1    name=6[second]
+[   0.002]  gen.c     : 139   ASSIGNMENT              lineno=27   n_args=0    env=1    
+[   0.002]  gen.c     : 140   POP                     lineno=27   n_args=0    env=1    
+[   0.002]  gen.c     : 141   LOAD                    lineno=29   n_args=0    env=1    name=9[p1]
+[   0.002]  gen.c     : 142   LOAD_METHOD             lineno=29   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 143   SWITCH_ENV_OBJ          lineno=29   n_args=0    env=1    
+[   0.002]  gen.c     : 144   CREATE_SCOPE            lineno=29   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 145   CALL                    lineno=29   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 146   DESTROY_SCOPE           lineno=29   n_args=0    env=1    
+[   0.002]  gen.c     : 147   SWITCH_ENV_INS          lineno=29   n_args=0    env=1    
+[   0.002]  gen.c     : 148   POP                     lineno=29   n_args=0    env=1    
+[   0.002]  gen.c     : 149   LOAD                    lineno=30   n_args=0    env=1    name=10[p2]
+[   0.002]  gen.c     : 150   LOAD_METHOD             lineno=30   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 151   SWITCH_ENV_OBJ          lineno=30   n_args=0    env=1    
+[   0.002]  gen.c     : 152   CREATE_SCOPE            lineno=30   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 153   CALL                    lineno=30   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 154   DESTROY_SCOPE           lineno=30   n_args=0    env=1    
+[   0.002]  gen.c     : 155   SWITCH_ENV_INS          lineno=30   n_args=0    env=1    
+[   0.002]  gen.c     : 156   POP                     lineno=30   n_args=0    env=1    
+[   0.002]  gen.c     : 157   LOAD                    lineno=32   n_args=0    env=1    name=9[p1]
+[   0.002]  gen.c     : 158   LOAD_METHOD             lineno=32   n_args=0    env=1    name=7[self]
+[   0.002]  gen.c     : 159   SWITCH_ENV_OBJ          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 160   CREATE_SCOPE            lineno=32   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 161   CALL                    lineno=32   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 162   DESTROY_SCOPE           lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 163   SWITCH_ENV_INS          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 164   LOAD_METHOD             lineno=32   n_args=0    env=1    name=7[self]
+[   0.002]  gen.c     : 165   SWITCH_ENV_OBJ          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 166   CREATE_SCOPE            lineno=32   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 167   CALL                    lineno=32   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 168   DESTROY_SCOPE           lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 169   SWITCH_ENV_INS          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 170   LOAD_METHOD             lineno=32   n_args=0    env=1    name=3[print]
+[   0.002]  gen.c     : 171   SWITCH_ENV_OBJ          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 172   CREATE_SCOPE            lineno=32   n_args=0    env=1    WITHOUT_PARENT_ACCESS
+[   0.002]  gen.c     : 173   CALL                    lineno=32   n_args=0    env=1    n=0
+[   0.002]  gen.c     : 174   DESTROY_SCOPE           lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 175   SWITCH_ENV_INS          lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 176   POP                     lineno=32   n_args=0    env=1    
+[   0.002]  gen.c     : 177   DESTROY_SCOPE           lineno=1    n_args=0    env=1    

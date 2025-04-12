@@ -4,6 +4,7 @@
 #include "../front/symtab.h"
 #include "../util.h"
 #include "cmap.h"
+#include "ident_map.h"
 
 // order is important for type promotion!
 enum Type {
@@ -65,25 +66,27 @@ void           arrayValueRef(ArrayValue *unit);
 void           arrayValueUnref(ArrayValue *unit);
 
 typedef struct TypeValue {
-    size_t n_fields;
-    ident *fields;
-    map_t(ident, struct MolaFunctionValue *) methods;
+    size_t   n_fields;
+    ident   *fields;
+    size_t   n_methods;
+    ident   *method_names;
+    IdentMap methods;    // stores MolaFunctionValue*
 
     uint32_t ref_count;
     uint32_t gc_mark : 1;
 } TypeValue;
 
-TypeValue     *typeValueCreate();
+TypeValue     *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods);    // TODO
 TypeValue     *typeValueCopy(TypeValue *val);
 void           typeValueDestroy(TypeValue *val);
-void           typeValueAddMethod(TypeValue *val, ident name, struct MolaFunctionValue *method);
+void           typeValueAddMethod(TypeValue *val, ident name, struct Object *method);
 struct Object *typeValueLookupMethod(TypeValue *val, ident name);
 void           typeValueRef(TypeValue *unit);
 void           typeValueUnref(TypeValue *unit);
 
 typedef struct InstanceValue {
     struct TypeValue *type;
-    map_t(ident, struct Object *) fields;
+    IdentMap          fields;    // stores Object*
 
     uint32_t ref_count;
     uint32_t gc_mark : 1;

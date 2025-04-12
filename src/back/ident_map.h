@@ -9,13 +9,13 @@
 struct Object;
 
 typedef struct IdentMap {
-    cvector_vector_type(struct Object *) items;
+    cvector_vector_type(void *) items;
 } IdentMap;
 
-IdentMap       identMapCreate();
-void           identMapSet(IdentMap *map, ident key, struct Object *item);
-int            identMapQuery(IdentMap *map, ident key);
-struct Object *identMapGet(IdentMap *map, ident key);    // NULL if absent
-void           identMapDestroy(IdentMap *map);
+IdentMap identMapCreate();
+void     identMapSet(IdentMap *map, ident key, void *item);
+int      identMapQuery(IdentMap *map, ident key);
+void    *identMapGet(IdentMap *map, ident key);    // NULL if absent
+void     identMapDestroy(IdentMap *map);
 
 #endif

@@ -3,6 +3,7 @@
 #include "alloc.h"
 #include "error.h"
 #include "gc.h"
+#include "object.h"
 
 StringValue *stringValueCreate(size_t length, char *string) {
     StringValue *res = memalloc(sizeof(StringValue));
@@ -89,33 +90,120 @@ void arrayValueRef(ArrayValue *unit) {}
 
 void arrayValueUnref(ArrayValue *unit) {}
 
-TypeValue *typeValueCreate() {}
+TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods) {
+    TypeValue *res = memalloc(sizeof(TypeValue));
 
-TypeValue *typeValueCopy(TypeValue *val) {}
+    res->n_fields = n_fields;
+    res->fields   = memalloc(sizeof(ident) * n_fields);
+    memcpy(res->fields, fields, sizeof(ident) * n_fields);
 
-void typeValueDestroy(TypeValue *val) {}
+    res->n_methods    = n_methods;
+    res->method_names = memalloc(sizeof(ident) * n_methods);
+    memcpy(res->method_names, methods, sizeof(ident) * n_methods);
 
-void typeValueAddMethod(TypeValue *val, ident name, struct MolaFunctionValue *method) {}
+    res->methods = identMapCreate();
 
-struct Object *typeValueLookupMethod(TypeValue *val, ident name) {}
+    res->gc_mark   = 0;
+    res->ref_count = 0;
 
-void typeValueRef(TypeValue *unit) {}
+    return res;
+}
 
-void typeValueUnref(TypeValue *unit) {}
+TypeValue *typeValueCopy(TypeValue *val) {
+    return val;
+}
 
-InstanceValue *instanceValueCreate(struct TypeValue *type) {}
+void typeValueDestroy(TypeValue *val) {
+    memfree(val->fields);
+    memfree(val->method_names);
+    identMapDestroy(&val->methods);
+    memfree(val);
+}
 
-InstanceValue *instanceValueCopy(InstanceValue *val) {}
+void typeValueAddMethod(TypeValue *val, ident name, struct Object *method) {
+    if (identMapQuery(&val->methods, name)) {
+        gcUnlock();
+        signalError(NAME_COLLISION_ERROR_CODE, "Method with this name has already been defined");
+    }
 
-void instanceValueDestroy(InstanceValue *val) {}
+    // slow, but who cares (i do care (well i don't (go kill yourself)))
+    int flag = 0;
+    for (size_t i = 0; i < val->n_methods; i++) {
+        if (val->method_names[i] == name) {
+            flag = 1;
+            break;
+        }
+    }
+    if (!flag) {
+        gcUnlock();
+        signalError(NAME_ERROR_CODE, "Invalid method name");
+    }
 
-struct Object *instanceValueLookupField(InstanceValue *val, ident name) {}
+    identMapSet(&val->methods, name, method);
+}
 
-struct Object *instanceValueLookupMethod(InstanceValue *val, ident name) {}
+struct Object *typeValueLookupMethod(TypeValue *val, ident name) {
+    void *res = identMapGet(&val->methods, name);
+    if (res == NULL) {
+        gcUnlock();
+        signalError(NAME_COLLISION_ERROR_CODE, "Failed to locate a method with this name");
+    }
 
-void instanceValueRef(InstanceValue *unit) {}
+    return res;
+}
 
-void instanceValueUnref(InstanceValue *unit) {}
+void typeValueRef(TypeValue *unit) {
+    unit->ref_count++;
+}
+
+void typeValueUnref(TypeValue *unit) {
+    unit->ref_count--;
+}
+
+InstanceValue *instanceValueCreate(struct TypeValue *type) {
+    InstanceValue *res = memalloc(sizeof(InstanceValue));
+
+    res->type   = type;
+    res->fields = identMapCreate();
+    for (size_t i = 0; i < type->n_fields; i++) {
+        identMapSet(&res->fields, type->fields[i], objectCreate(NULL_TYPE, 0));
+    }
+
+    res->ref_count = 0;
+    res->gc_mark   = 0;
+
+    return res;
+}
+
+InstanceValue *instanceValueCopy(InstanceValue *val) {
+    return val;
+}
+
+void instanceValueDestroy(InstanceValue *val) {
+    memfree(val);
+}
+
+struct Object *instanceValueLookupField(InstanceValue *val, ident name) {
+    void *res = identMapGet(&val->fields, name);
+    if (res == NULL) {
+        gcUnlock();
+        signalError(NAME_COLLISION_ERROR_CODE, "Failed to locate a field with this name");
+    }
+
+    return res;
+}
+
+struct Object *instanceValueLookupMethod(InstanceValue *val, ident name) {
+    return typeValueLookupMethod(val->type, name);
+}
+
+void instanceValueRef(InstanceValue *unit) {
+    unit->ref_count++;
+}
+
+void instanceValueUnref(InstanceValue *unit) {
+    unit->ref_count--;
+}
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {
     MolaFunctionValue *res = memalloc(sizeof(MolaFunctionValue));

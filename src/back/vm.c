@@ -481,11 +481,53 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
 }
 
 static void exec_CREATE_TYPE(Instruction *instr) {
+    gcLock();
+
+    size_t n_fields  = instr->args[0];
+    size_t n_methods = instr->args[1];
+
+    ident *fields  = instr->args + 2;
+    ident *methods = instr->args + 2 + n_fields;
+
+    TypeValue *type = typeValueCreate(n_fields, fields, n_methods, methods);
+
+    Object *obj = objectCreate(TYPE_TYPE, raw64(type));
+
+    identMapSet(&current_env->globals, instr->ident_arg1, obj);
+
+    gcUnlock();
     ipointer++;
 }
 
 static void exec_CREATE_METHOD(Instruction *instr) {
-    // func_value->is_method = 1;
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "CREATE_METHOD failed: empty objects stack");
+    }
+
+    Object *type = objectsStackTop();
+    objectsStackPop();
+
+    if (type->type != TYPE_TYPE) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "CREATE_METHOD failed: the object on the stack is not a type");
+    }
+
+    int64_t offset = ipointer + 2 - current_env->absolute_offset;
+
+    int64_t n_args = instr->n_args;
+    ident  *args   = memalloc(n_args * sizeof(ident));
+    memcpy(args, instr->args, n_args * sizeof(ident));
+
+    MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
+    func_value->is_method         = 1;
+
+    Object *obj = objectCreate(MOLA_FUNCTION_TYPE, raw64(func_value));
+
+    typeValueAddMethod(type->value, instr->ident_arg1, obj);
+
+    gcUnlock();
     ipointer++;
 }
 
@@ -1565,29 +1607,55 @@ OP_END:
 }
 
 static void exec_INVERTION(Instruction *instr) {
-    // TEMPORARY PRINTER
-    if (objectsStackEmpty()) {
-        signalError(INTERNAL_ERROR_CODE, "INVERTION failed: empty objects_stack");
+    gcLock();
+    if (objectsStackSize() < 1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "INVERTION failed: less than 1 element on the stack");
     }
 
-    Object *obj = objectsStackTop();
+    Object *x = objectsStackTop();
+    objectsStackPop();
 
-    switch (obj->type) {
+    static Object *res;
+    int64_t        x_int;
+    double         x_float;
+
+    switch (x->type) {
+    case NULL_TYPE : {
+        x_int = ~0;    // lmfao
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case BOOL_TYPE : {
+        x_int = ~x->bool_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
+    case CHAR_TYPE : {
+        x_int = ~x->char_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
+    }
     case INT_TYPE : {
-        molalog("PRINT: INT    value: %lld\n", obj->int_value);
-        break;
+        x_int = ~x->int_value;
+        res   = objectCreate(INT_TYPE, raw64(x_int));
+        goto OP_END;
     }
-    case FLOAT_TYPE : {
-        molalog("PRINT: FLOAT  value: %lf\n", obj->float_value);
-        break;
+    default : goto OP_ERROR;
     }
-    case STRING_TYPE : {
-        molalog("PRINT: STRING value: %s\n", ((StringValue *)obj->value)->string);
-        break;
-    }
-    }
+
+OP_ERROR:
+    gcUnlock();
+    signalError(VALUE_ERROR_CODE, "Unsupported operation");
+
+OP_END:
+    res->is_rvalue = 1;
+    objectsStackPush(res);
+
+    gcMaybeGarbageObject(x);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOGICAL_NOT(Instruction *instr) {
@@ -1684,7 +1752,7 @@ static void exec_CALL(Instruction *instr) {
         gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", c_function->n_args, n));
     }
-    else if (f->type == MOLA_FUNCTION_TYPE && mola_function->n_args != n) {
+    else if (f->type == MOLA_FUNCTION_TYPE && mola_function->n_args != n + mola_function->is_method) {
         gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", mola_function->n_args, n));
     }
@@ -1818,14 +1886,71 @@ static void exec_LOAD(Instruction *instr) {
 }
 
 static void exec_LOAD_FIELD(Instruction *instr) {
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LOAD_FIELD failed: empty objects stack");
+    }
+    Object *obj = objectsStackTop();
+    objectsStackPop();
+
+    // handle strings and arrays?
+    if (obj->type != INSTANCE_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Unsupported operation");
+    }
+
+    Object *field = instanceValueLookupField(obj->value, instr->ident_arg1);
+    objectsStackPush(field);
+
     ipointer++;
 }
 
 static void exec_LOAD_METHOD(Instruction *instr) {
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "LOAD_METHOD failed: empty objects stack");
+    }
+    Object *obj = objectsStackTop();
+    objectsStackPop();
+
+    // handle strings and arrays?
+    if (obj->type != INSTANCE_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Unsupported operation");
+    }
+
+    Object *field = instanceValueLookupMethod(obj->value, instr->ident_arg1);
+    objectsStackPush(field);
+
+    caller = obj;
+
     ipointer++;
 }
 
 static void exec_NEW(Instruction *instr) {
+    // TODO: handle arguments
+    gcLock();
+
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "NEW failed: objects stack empty");
+    }
+
+    Object *type = objectsStackTop();
+    objectsStackPop();
+
+    if (type->type != TYPE_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Not a type");
+    }
+
+    InstanceValue *instance = instanceValueCreate(type->value);
+    Object        *obj      = objectCreate(INSTANCE_TYPE, raw64(instance));
+    objectsStackPush(obj);
+
+    gcUnlock();
     ipointer++;
 }
 

@@ -9,7 +9,7 @@ IdentMap identMapCreate() {
     return res;
 }
 
-void identMapSet(IdentMap *map, ident key, struct Object *item) {
+void identMapSet(IdentMap *map, ident key, void *item) {
     assert(map != NULL);
     cvector_resize(map->items, 2 * key + 1, NULL);
 
@@ -27,7 +27,7 @@ int identMapQuery(IdentMap *map, ident key) {
     return map->items[key] != NULL;
 }
 
-Object *identMapGet(IdentMap *map, ident key) {
+void *identMapGet(IdentMap *map, ident key) {
     assert(map != NULL);
 
     if (cvector_size(map->items) <= key) {
