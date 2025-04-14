@@ -152,8 +152,8 @@ Grammar
    86 inline_if: WHEN new THEN new ELSE new
    87          | new
 
-   88 new: NEW logical_or '(' expr_list ')'
-   89    | NEW logical_or
+   88 new: NEW elementary '(' expr_list ')'
+   89    | NEW elementary
    90    | logical_or
 
    91 logical_or: logical_or OR logical_and
@@ -415,7 +415,7 @@ Nonterminals, with rules where they appear
         on right: 86 87
     logical_or <node> (107)
         on left: 91 92
-        on right: 88 89 90 91
+        on right: 90 91
     logical_and <node> (108)
         on left: 93 94
         on right: 91 92 93
@@ -451,7 +451,7 @@ Nonterminals, with rules where they appear
         on right: 123 124 125 126 127 128
     elementary <node> (119)
         on left: 130 131
-        on right: 129
+        on right: 88 89 129
     literal <node> (120)
         on left: 132 133 134 135 136 137 138
         on right: 131
@@ -1009,8 +1009,8 @@ State 27
 
 State 28
 
-   88 new: NEW • logical_or '(' expr_list ')'
-   89    | NEW • logical_or
+   88 new: NEW • elementary '(' expr_list ')'
+   89    | NEW • elementary
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -1019,26 +1019,10 @@ State 28
     STRING      shift, and go to state 7
     IDENTIFIER  shift, and go to state 8
     NULLV       shift, and go to state 9
-    NOT         shift, and go to state 29
-    '+'         shift, and go to state 31
-    '-'         shift, and go to state 32
-    '~'         shift, and go to state 33
     '('         shift, and go to state 34
 
-    logical_or     go to state 99
-    logical_and    go to state 59
-    bitwise_or     go to state 60
-    bitwise_xor    go to state 61
-    bitwise_and    go to state 62
-    equality       go to state 63
-    relational     go to state 64
-    sum            go to state 65
-    bitwise_shift  go to state 66
-    term           go to state 67
-    prefix_op      go to state 68
-    primary        go to state 69
-    elementary     go to state 70
-    literal        go to state 71
+    elementary  go to state 99
+    literal     go to state 71
 
 
 State 29
@@ -1932,11 +1916,9 @@ State 98
 
 State 99
 
-   88 new: NEW logical_or • '(' expr_list ')'
-   89    | NEW logical_or •
-   91 logical_or: logical_or • OR logical_and
+   88 new: NEW elementary • '(' expr_list ')'
+   89    | NEW elementary •
 
-    OR   shift, and go to state 110
     '('  shift, and go to state 160
 
     '('       [reduce using rule 89 (new)]
@@ -3168,7 +3150,7 @@ State 159
 
 State 160
 
-   88 new: NEW logical_or '(' • expr_list ')'
+   88 new: NEW elementary '(' • expr_list ')'
 
     BOOL        shift, and go to state 3
     CHAR        shift, and go to state 4
@@ -3961,7 +3943,7 @@ State 218
 
 State 219
 
-   88 new: NEW logical_or '(' expr_list • ')'
+   88 new: NEW elementary '(' expr_list • ')'
 
     ')'  shift, and go to state 244
 
@@ -4434,7 +4416,7 @@ State 243
 
 State 244
 
-   88 new: NEW logical_or '(' expr_list ')' •
+   88 new: NEW elementary '(' expr_list ')' •
 
     $default  reduce using rule 88 (new)
 

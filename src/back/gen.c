@@ -24,7 +24,7 @@ static char *getChar(char c) {
 }
 
 void genPrintInstrShort(int64_t pos, Instruction *instr) {
-    molalog("%-6d", pos);
+    molalog("%-4d id=%-4d ", pos, instr->id);
     if (instr == NULL) {
         printf("NULL\n");
         return;
@@ -627,8 +627,12 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
     }
 }
 
+static int64_t instr_id = 0;
+
 Instruction genInsPOP(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -640,6 +644,8 @@ Instruction genInsPOP(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsSWAP(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -651,6 +657,7 @@ Instruction genInsSWAP(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsCREATE_ENV(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -662,6 +669,7 @@ Instruction genInsCREATE_ENV(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -673,6 +681,7 @@ Instruction genInsSWITCH_ENV_INS(char *filename, size_t lineno, int64_t env_id) 
 
 Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -684,6 +693,7 @@ Instruction genInsSWITCH_ENV_OBJ(char *filename, size_t lineno, int64_t env_id) 
 
 Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, int64_t env_id, char *module_path, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -696,6 +706,7 @@ Instruction genInsIMPORT_MODULE(char *filename, size_t lineno, int64_t env_id, c
 
 Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -708,6 +719,7 @@ Instruction genInsEXPORT_OBJECT(char *filename, size_t lineno, int64_t env_id, i
 
 Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -720,6 +732,7 @@ Instruction genInsCREATE_GLOBAL(char *filename, size_t lineno, int64_t env_id, i
 
 Instruction genInsCREATE_FUNCTION(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -740,6 +753,7 @@ Instruction genInsCREATE_TYPE(char   *filename,
                               size_t  n_methods,
                               ident  *methods) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -760,6 +774,7 @@ Instruction genInsCREATE_TYPE(char   *filename,
 
 Instruction genInsCREATE_METHOD(char *filename, size_t lineno, int64_t env_id, ident name, size_t n_args, ident *args) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -773,6 +788,7 @@ Instruction genInsCREATE_METHOD(char *filename, size_t lineno, int64_t env_id, i
 
 Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int64_t env_id, int8_t access_mode) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -785,6 +801,7 @@ Instruction genInsCREATE_SCOPE(char *filename, size_t lineno, int64_t env_id, in
 
 Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -796,6 +813,7 @@ Instruction genInsDESTROY_SCOPE(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t env_id, int64_t offset) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -808,6 +826,7 @@ Instruction genInsJUMP_IF_FALSE(char *filename, size_t lineno, int64_t env_id, i
 
 Instruction genInsJUMP(char *filename, size_t lineno, int64_t env_id, int64_t offset) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -820,6 +839,7 @@ Instruction genInsJUMP(char *filename, size_t lineno, int64_t env_id, int64_t of
 
 Instruction genInsRETURN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -831,6 +851,7 @@ Instruction genInsRETURN(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsREGISTER_CATCH(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -842,6 +863,7 @@ Instruction genInsREGISTER_CATCH(char *filename, size_t lineno, int64_t env_id) 
 
 Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t env_id, int64_t n) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -854,6 +876,7 @@ Instruction genInsDESTROY_CATCH(char *filename, size_t lineno, int64_t env_id, i
 
 Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -865,6 +888,7 @@ Instruction genInsSIGNAL_ERROR(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsCREATE_VAR(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -877,6 +901,7 @@ Instruction genInsCREATE_VAR(char *filename, size_t lineno, int64_t env_id, iden
 
 Instruction genInsCOPY(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -888,6 +913,7 @@ Instruction genInsCOPY(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsASSIGNMENT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -899,6 +925,7 @@ Instruction genInsASSIGNMENT(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLOGICAL_OR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -910,6 +937,7 @@ Instruction genInsLOGICAL_OR(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLOGICAL_AND(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -921,6 +949,7 @@ Instruction genInsLOGICAL_AND(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsBITWISE_OR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -932,6 +961,7 @@ Instruction genInsBITWISE_OR(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsBITWISE_XOR(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -943,6 +973,7 @@ Instruction genInsBITWISE_XOR(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsBITWISE_AND(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -954,6 +985,7 @@ Instruction genInsBITWISE_AND(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsEQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -965,6 +997,7 @@ Instruction genInsEQUAL(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsNOT_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -976,6 +1009,7 @@ Instruction genInsNOT_EQUAL(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLESS_THAN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -987,6 +1021,7 @@ Instruction genInsLESS_THAN(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLESS_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -998,6 +1033,7 @@ Instruction genInsLESS_EQUAL(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsGREATER_THAN(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1009,6 +1045,7 @@ Instruction genInsGREATER_THAN(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsGREATER_EQUAL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1020,6 +1057,7 @@ Instruction genInsGREATER_EQUAL(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsADDITION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1031,6 +1069,7 @@ Instruction genInsADDITION(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsSUBTRACTION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1042,6 +1081,7 @@ Instruction genInsSUBTRACTION(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLSHIFT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1053,6 +1093,7 @@ Instruction genInsLSHIFT(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsRSHIFT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1064,6 +1105,7 @@ Instruction genInsRSHIFT(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsMULTIPLICATION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1075,6 +1117,7 @@ Instruction genInsMULTIPLICATION(char *filename, size_t lineno, int64_t env_id) 
 
 Instruction genInsDIVISION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1086,6 +1129,7 @@ Instruction genInsDIVISION(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsREMAINDER(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1097,6 +1141,7 @@ Instruction genInsREMAINDER(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsPOSITIVE(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1108,6 +1153,7 @@ Instruction genInsPOSITIVE(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsNEGATION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1119,6 +1165,7 @@ Instruction genInsNEGATION(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsINVERTION(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1130,6 +1177,7 @@ Instruction genInsINVERTION(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLOGICAL_NOT(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1141,6 +1189,7 @@ Instruction genInsLOGICAL_NOT(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsCALL(char *filename, size_t lineno, int64_t env_id, int64_t n) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1153,6 +1202,7 @@ Instruction genInsCALL(char *filename, size_t lineno, int64_t env_id, int64_t n)
 
 Instruction genInsACCESS(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1164,6 +1214,7 @@ Instruction genInsACCESS(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int64_t env_id, int8_t value) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1176,6 +1227,7 @@ Instruction genInsLOAD_BOOL(char *filename, size_t lineno, int64_t env_id, int8_
 
 Instruction genInsLOAD_CHAR(char *filename, size_t lineno, int64_t env_id, char value) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1188,6 +1240,7 @@ Instruction genInsLOAD_CHAR(char *filename, size_t lineno, int64_t env_id, char 
 
 Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t env_id, int64_t value) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1200,6 +1253,7 @@ Instruction genInsLOAD_INT(char *filename, size_t lineno, int64_t env_id, int64_
 
 Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, int64_t env_id, double value) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1212,6 +1266,7 @@ Instruction genInsLOAD_FLOAT(char *filename, size_t lineno, int64_t env_id, doub
 
 Instruction genInsLOAD_STRING(char *filename, size_t lineno, int64_t env_id, char *value) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1224,6 +1279,7 @@ Instruction genInsLOAD_STRING(char *filename, size_t lineno, int64_t env_id, cha
 
 Instruction genInsLOAD_NULL(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1235,6 +1291,7 @@ Instruction genInsLOAD_NULL(char *filename, size_t lineno, int64_t env_id) {
 
 Instruction genInsLOAD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1247,6 +1304,7 @@ Instruction genInsLOAD(char *filename, size_t lineno, int64_t env_id, ident name
 
 Instruction genInsLOAD_FIELD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1259,6 +1317,7 @@ Instruction genInsLOAD_FIELD(char *filename, size_t lineno, int64_t env_id, iden
 
 Instruction genInsLOAD_METHOD(char *filename, size_t lineno, int64_t env_id, ident name) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1271,6 +1330,7 @@ Instruction genInsLOAD_METHOD(char *filename, size_t lineno, int64_t env_id, ide
 
 Instruction genInsNEW(char *filename, size_t lineno, int64_t env_id) {
     Instruction res;
+    res.id       = instr_id++;
     res.filename = filename;
     res.lineno   = lineno;
     res.env_id   = env_id;
@@ -1801,6 +1861,8 @@ static ilist gen_function_stmt(AstNode *node) {
     return output;
 }
 
+extern Symtab *lex_symtab;
+
 static ilist gen_type_stmt(AstNode *node) {
     ilist output = ilistCreate();
     ilist temp   = ilistCreate();
@@ -1816,6 +1878,8 @@ static ilist gen_type_stmt(AstNode *node) {
     cvector_vector_type(ident) fields  = NULL;
     cvector_vector_type(ident) methods = NULL;
 
+    cvector_push_back(methods, symtabInsert(lex_symtab, "constructor"));
+    cvector_push_back(methods, symtabInsert(lex_symtab, "destructor"));
     AstNode *params = node->nodes[1];
     while (params != NULL) {
         AstNode *item = params->nodes[0];
@@ -1862,6 +1926,8 @@ static ilist gen_method_stmt(AstNode *node) {
     < CREATE_METHOD name ref 'this' m1 p1 ... mn pn
     < JUMP REL@1
     < gen(block_stmt)
+    < LOAD_NULL
+    < SWAP
     < RETURN
     1
     */
@@ -1902,10 +1968,12 @@ static ilist gen_method_stmt(AstNode *node) {
     ctx_is_inside_function         = 0;
     ctx_is_inside_function         = 0;
 
-    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 4));
 
     ilistLink(&output, &block);
 
+    ilistAppend(&output, genInsLOAD_NULL(info(node)));
+    ilistAppend(&output, genInsSWAP(info(node)));
     ilistAppend(&output, genInsRETURN(info(node)));
 
     return output;
@@ -1922,6 +1990,8 @@ static ilist gen_constructor_stmt(AstNode *node) {
     < CREATE_METHOD 'constructor' ref 'this' m1 p1 ... mn pn
     < JUMP REL@1
     < gen(block_stmt)
+    < LOAD_NULL
+    < SWAP
     < RETURN
     1
     */
@@ -1961,10 +2031,12 @@ static ilist gen_constructor_stmt(AstNode *node) {
     ctx_is_inside_function         = 0;
     ctx_is_inside_function         = 0;
 
-    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 4));
 
     ilistLink(&output, &block);
 
+    ilistAppend(&output, genInsLOAD_NULL(info(node)));
+    ilistAppend(&output, genInsSWAP(info(node)));
     ilistAppend(&output, genInsRETURN(info(node)));
 
     return output;
@@ -1981,6 +2053,8 @@ static ilist gen_destructor_stmt(AstNode *node) {
     < CREATE_METHOD 'destructor' ref 'this'
     < JUMP REL@1
     < gen(block_stmt)
+    < LOAD_NULL
+    < SWAP
     < RETURN
     1
     */
@@ -2006,10 +2080,12 @@ static ilist gen_destructor_stmt(AstNode *node) {
     ctx_is_inside_function         = 0;
     ctx_is_inside_function         = 0;
 
-    ilistAppend(&output, genInsJUMP(info(node), block.size + 2));
+    ilistAppend(&output, genInsJUMP(info(node), block.size + 4));
 
     ilistLink(&output, &block);
 
+    ilistAppend(&output, genInsLOAD_NULL(info(node)));
+    ilistAppend(&output, genInsSWAP(info(node)));
     ilistAppend(&output, genInsRETURN(info(node)));
 
     return output;
@@ -2696,24 +2772,51 @@ static ilist gen_new(AstNode *node) {
     }
 
     /*
-    > new A (B1 ... Bn)
+    >   new A (B1 ... Bn)
 
-    < gen(A)
-    < gen(B1)
-    ...
-    < gen(Bn)
-    < NEW
+    <   gen(B_1)
+        ...
+    <   gen(B_n)
+    <   gen(A)
+    <   NEW
+    <   LOAD_METHOD constructor
+    <   SWITCH_ENV *env of the function A*
+    <   CREATE_SCOPE WITHOUT_PARENT_ACCESS
+    <   CALL n
+    <   DESTROY_SCOPE
+    <   SWITCH_ENV
     */
 
-    temp = gen_logical_or(node->nodes[0]);
-    ilistLink(&output, &temp);
-
+    int64_t n = 0;
     if (node->n_nodes == 2) {
-        temp = gen_expr_list(node->nodes[1]);    // expr_list of B1 ... Bn
+        temp = gen_expr_list(node->nodes[1]);
         ilistLink(&output, &temp);
+
+        AstNode *args = node->nodes[1];
+
+        while (args != NULL) {
+            temp = gen(args->nodes[0]);
+            n++;
+
+            if (args->n_nodes == 2) {
+                args = args->nodes[1];
+            }
+            else {
+                args = NULL;
+            }
+        }
     }
 
+    temp = gen_elementary(node->nodes[0]);
+    ilistLink(&output, &temp);
+
     ilistAppend(&output, genInsNEW(info(node)));
+    ilistAppend(&output, genInsLOAD_METHOD(info(node), symtabInsert(lex_symtab, "constructor")));
+    ilistAppend(&output, genInsSWITCH_ENV_OBJ(info(node)));
+    ilistAppend(&output, genInsCREATE_SCOPE(info(node), 0));
+    ilistAppend(&output, genInsCALL(info(node), n));
+    ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
+    ilistAppend(&output, genInsSWITCH_ENV_INS(info(node)));
 
     return output;
 }

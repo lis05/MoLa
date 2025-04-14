@@ -69,6 +69,7 @@ enum InstructionCode {
 #define LOOP_BREAK_FLAG    2
 
 typedef struct Instruction {
+    int64_t              id;
     enum InstructionCode code;
     char                *filename;    // taken from the AST.
     size_t               lineno;      // taken from the AST.

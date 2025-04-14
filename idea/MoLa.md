@@ -535,12 +535,12 @@ Finds the field with name `identifier` of the object on the stack, and pushes it
 The object on the stack is put in the special "caller" register.
 Finds the method with name `identifier` of the object on the stack, and pushes it on the stack. Signals InternalError if the stack is empty, NameError if the object on the stack doesn't have a method with the given name.
 
-#### `NEW n`
-- The stack must contain n+1 objects: bottom->top: t a_1 ... a_n
+#### `NEW`
+- The stack must contain a type object.
 
-Creates an instance of the given type t, passing arguments a_1 ... a_n into the constructor.
+Creates an empty instance of the given type t, pushing it onto the stack.
 
-Raises an InternalError if there are less than n+1 objects on the stack, ValueError if t is not a type object, and other errors that could happen when calling the constructor (which is a function).
+Raises ValueError if t is not a type object.
 
 ## MoLa code -> MoLaVM instructions
 
@@ -880,13 +880,19 @@ will be compiled into:
 2
 ```
 
-#### `'new' A '(' B_1, ..., B_n ')'` (clarify)
+#### `'new' A '(' B_1, ..., B_n ')'` 
 ```
-#   gen(A)
 #   gen(B_1)
     ...
 #   gen(B_n)
-#   NEW n
+#   gen(A)
+#   NEW
+#   LOAD_METHOD constructor
+#   SWITCH_ENV *env of the function A*
+#   CREATE_SCOPE WITHOUT_PARENT_ACCESS
+#   CALL n
+#   DESTROY_SCOPE   
+#   SWITCH_ENV
 ```
 
 #### All other operators get converted in the following way: `A op B`

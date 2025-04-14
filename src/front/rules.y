@@ -474,10 +474,10 @@ inline_if:
     ;
 
 new:
-    NEW logical_or '(' expr_list ')' {
+    NEW elementary '(' expr_list ')' {
         $$ = make(NEW_NODE, NEW_OPTION, $1, 2, $2, $4);
     }
-    | NEW logical_or {
+    | NEW elementary {
         $$ = make(NEW_NODE, NEW_OPTION, $1, 1, $2);
     }
     | logical_or {

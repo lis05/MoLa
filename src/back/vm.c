@@ -647,7 +647,7 @@ static void exec_COPY(Instruction *instr) {
     gcLock();
     if (objectsStackEmpty()) {
         gcUnlock();
-        signalError(INTERNAL_ERROR_CODE, "COPY_BY_AUTO failed: empty objects_stack");
+        signalError(INTERNAL_ERROR_CODE, "COPY failed: empty objects_stack");
     }
 
     Object *obj = objectsStackTop();
@@ -1930,7 +1930,6 @@ static void exec_LOAD_METHOD(Instruction *instr) {
 }
 
 static void exec_NEW(Instruction *instr) {
-    // TODO: handle arguments
     gcLock();
 
     if (objectsStackEmpty()) {

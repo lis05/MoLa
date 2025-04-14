@@ -1,4 +1,5 @@
 #include "types.h"
+#include "../front/api.h"
 #include "../util.h"
 #include "alloc.h"
 #include "error.h"
@@ -146,7 +147,7 @@ struct Object *typeValueLookupMethod(TypeValue *val, ident name) {
     void *res = identMapGet(&val->methods, name);
     if (res == NULL) {
         gcUnlock();
-        signalError(NAME_COLLISION_ERROR_CODE, "Failed to locate a method with this name");
+        signalError(NAME_COLLISION_ERROR_CODE, errstrfmt("Failed to locate method '%s'", symtabIdentToString(name)));
     }
 
     return res;
