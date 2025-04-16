@@ -49,18 +49,16 @@ void           stringValueRef(StringValue *unit);
 void           stringValueUnref(StringValue *unit);
 
 typedef struct ArrayValue {
-    size_t          length;
-    struct Object **array;
+    cvector_vector_type(struct Object *) data;
 
     uint32_t ref_count;
     uint32_t gc_mark : 1;
 } ArrayValue;
 
-ArrayValue    *arrayValueCreate(char *string);
+ArrayValue    *arrayValueCreate();
 ArrayValue    *arrayValueCopy(ArrayValue *val);
 void           arrayValueDestroy(ArrayValue *val);
 struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index);
-struct Object *arrayValueLookupField(ArrayValue *val, ident name);
 struct Object *arrayValueLookupMethod(ArrayValue *val, ident name);
 void           arrayValueRef(ArrayValue *unit);
 void           arrayValueUnref(ArrayValue *unit);
@@ -147,4 +145,6 @@ void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
 void            cFunctionValueUnref(CFunctionValue *unit);
 
+
+void initTypes();
 #endif

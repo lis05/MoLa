@@ -75,21 +75,53 @@ void stringValueUnref(StringValue *unit) {
     unit->ref_count--;
 }
 
-ArrayValue *arrayValueCreate(char *string) {}
+ArrayValue *arrayValueCreate() {
+    ArrayValue *arr = memalloc(sizeof(ArrayValue));
+    arr->data       = NULL;
 
-ArrayValue *arrayValueCopy(ArrayValue *val) {}
+    arr->gc_mark   = 0;
+    arr->ref_count = 0;
+}
+
+ArrayValue *arrayValueCopy(ArrayValue *val) {
+    return val;
+}
 
 void arrayValueDestroy(ArrayValue *val) {}
 
-struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index) {}
+struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index) {
+    if (!(0 <= index && index < cvector_size(val->data))) {
+        gcUnlock();
+        signalError(OUT_OF_BOUNDS_ERROR_CODE, "Index out of bounds");
+    }
 
-struct Object *arrayValueLookupField(ArrayValue *val, ident name) {}
+    return val->data[index];
+}
 
-struct Object *arrayValueLookupMethod(ArrayValue *val, ident name) {}
+ident          ARRAY_METHOD_CONSTRUCTOR_IDENT;
+struct Object *ARRAY_METHOD_CONSTRUCTOR_OBJECT;
+ident          ARRAY_METHOD_RESIZE_IDENT;
+struct Object *ARRAY_METHOD_RESIZE_OBJECT;
 
-void arrayValueRef(ArrayValue *unit) {}
+struct Object *arrayValueLookupMethod(ArrayValue *val, ident name) {
+    if (name == ARRAY_METHOD_CONSTRUCTOR_IDENT) {
+        return ARRAY_METHOD_CONSTRUCTOR_OBJECT;
+    }
+    if (name == ARRAY_METHOD_RESIZE_IDENT) {
+        return ARRAY_METHOD_RESIZE_OBJECT;    // it can be overwritten, fix later
+    }
 
-void arrayValueUnref(ArrayValue *unit) {}
+    gcUnlock();
+    signalError(NAME_COLLISION_ERROR_CODE, errstrfmt("Failed to locate method '%s'", symtabIdentToString(name)));
+}
+
+void arrayValueRef(ArrayValue *unit) {
+    unit->ref_count++;
+}
+
+void arrayValueUnref(ArrayValue *unit) {
+    unit->ref_count--;
+}
 
 TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods) {
     TypeValue *res = memalloc(sizeof(TypeValue));
@@ -260,4 +292,136 @@ void cFunctionValueRef(CFunctionValue *unit) {
 
 void cFunctionValueUnref(CFunctionValue *unit) {
     unit->ref_count--;
+}
+
+// ============================================
+// Methods
+
+Object *arrayResizeMethod(size_t n_args, struct Object **args) {
+    // TODO: add unreferencing when resizing to smaller size
+    if (n_args != 2) {
+        gcUnlock();
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected one argument, got %d", n_args - 1));
+    }
+
+    Object *obj = args[0];
+    assert(obj->type == ARRAY_TYPE);
+    ArrayValue *array = obj->value;
+
+    Object *size = args[1];
+
+    if (size->type >= FLOAT_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Unsupported operation");
+    }
+
+    int64_t x_int;
+    switch (size->type) {
+    case NULL_TYPE : {
+        x_int = (int64_t)0;
+        break;
+    }
+    case BOOL_TYPE : {
+        x_int = (int64_t)size->bool_value;
+        break;
+    }
+    case CHAR_TYPE : {
+        x_int = (int64_t)size->char_value;
+        break;
+    }
+    case INT_TYPE : {
+        x_int = (int64_t)size->int_value;
+        break;
+    }
+    }
+
+    if (size < 0) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Cannot resize to negative size");
+    }
+
+    cvector_resize(array->data, x_int, NULL);
+    for (size_t i = 0; i < x_int; i++) {
+        if (array->data[i] == NULL) {
+            array->data[i] = objectCreate(NULL_TYPE, 0);
+            ref(array->data[i]);
+        }
+    }
+
+    return obj;
+}
+
+Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
+    if (n_args == 1) {
+        return args[0];
+    }
+    if (n_args != 2) {
+        gcUnlock();
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected zero or one arguments, got %d", n_args - 1));
+    }
+
+    Object *obj = args[0];
+    assert(obj->type == ARRAY_TYPE);
+    ArrayValue *array = obj->value;
+
+    Object *size = args[1];
+
+    if (size->type >= FLOAT_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Unsupported operation");
+    }
+
+    int64_t x_int;
+    switch (size->type) {
+    case NULL_TYPE : {
+        x_int = (int64_t)0;
+        break;
+    }
+    case BOOL_TYPE : {
+        x_int = (int64_t)size->bool_value;
+        break;
+    }
+    case CHAR_TYPE : {
+        x_int = (int64_t)size->char_value;
+        break;
+    }
+    case INT_TYPE : {
+        x_int = (int64_t)size->int_value;
+        break;
+    }
+    }
+
+    if (size < 0) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Cannot resize to negative size");
+    }
+
+    cvector_resize(array->data, x_int, NULL);
+    for (size_t i = 0; i < x_int; i++) {
+        if (array->data[i] == NULL) {
+            array->data[i] = objectCreate(NULL_TYPE, 0);
+            ref(array->data[i]);
+        }
+    }
+
+    return obj;
+}
+
+void initTypes() {
+    CFunctionValue *method;
+    {
+        ARRAY_METHOD_RESIZE_IDENT  = symtabInsert(lex_symtab, "resize");
+        method                     = cFunctionValueCreate(0, 2, arrayResizeMethod);
+        method->is_method          = 1;
+        ARRAY_METHOD_RESIZE_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ref(ARRAY_METHOD_RESIZE_OBJECT);
+    }
+
+    {
+        ARRAY_METHOD_CONSTRUCTOR_IDENT  = symtabInsert(lex_symtab, "constructor");
+        method                          = cFunctionValueCreate(0, UNLIMITED_ARGS, arrayConstructorMethod);
+        method->is_method               = 1;
+        ARRAY_METHOD_CONSTRUCTOR_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ref(ARRAY_METHOD_RESIZE_OBJECT);
+    }
 }

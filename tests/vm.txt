@@ -1,31 +1,6 @@
-type Pair {
-    first, second,
-    print(), self()
+var arr = new Array(5);
+
+for var i = 0; i < 10; i = i + 1 {
+    arr[i] = i;
+    print(i, arr[i])
 }
-
-constructor (x, y) of Pair {
-    print("Hi i am constructor with ", x, y);
-    this.first = x;
-    this.second = y;
-
-    return this;
-}
-method print() of Pair {
-    print("I am a pair [", this.first,  this.second, "]")
-    return this;
-}
-method self() of Pair {
-    return this
-}
-
-var p1 = new Pair(1, 2), p2 = new Pair(3, 4);
-p1:print()
-p2:print()
-
-p1.first = 7;
-p2.second = 8;
-
-p1:print()
-p2:print()
-
-

@@ -42,6 +42,8 @@ Object *printer(size_t n_args, struct Object **args) {
 
 extern Symtab *lex_symtab;
 
+void *array_type_ptr;
+
 int main() {
     molalog("Starting parser\n");
     initParser();
@@ -85,10 +87,18 @@ int main() {
     molalog("Starting vm ...\n");
 
     allocInit();
+    initTypes();
+    {
+        CFunctionValue *builtin_printer_func = cFunctionValueCreate(builtin_env, UNLIMITED_ARGS, printer);
+        Object         *builtin_printer      = objectCreate(C_FUNCTION_TYPE, raw64(builtin_printer_func));
+        identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "print"), builtin_printer);
+    }
 
-    CFunctionValue *builtin_printer_func = cFunctionValueCreate(builtin_env, UNLIMITED_ARGS, printer);
-    Object         *builtin_printer      = objectCreate(C_FUNCTION_TYPE, raw64(builtin_printer_func));
-    identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "print"), builtin_printer);
+    {
+        array_type_ptr             = typeValueCreate(0, NULL, 0, NULL);
+        Object *builtin_array_type = objectCreate(TYPE_TYPE, raw64(array_type_ptr));
+        identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "Array"), builtin_array_type);
+    }
 
     t_before = clock();
     vmExecute(to_execute);
