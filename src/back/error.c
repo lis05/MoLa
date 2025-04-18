@@ -6,18 +6,12 @@
 jmp_buf __mola_errorbuf;
 char    __mola_errstrfmtbuf[1024];
 
-void signalError(int64_t code, char *reason) {
-    // TODO: proper error handling
-    Instruction *cur = vmCurrentInstruction();
-
-    FILE *file = fopen(cur->filename, "r");
-    if (file == NULL) {
-        fprintf(stderr, "Failed to open %s: ", cur->filename);
-        perror("");
-        exit(1);
-    }
-
 #define RANGE 3
+extern cvector_vector_type(int64_t) error_checkpoints;
+
+void reportLine(FILE *file, int64_t instr_ip, char *reason, int64_t index) {
+    fseek(file, 0, SEEK_SET);
+    Instruction *cur = vmInstruction(instr_ip);
 
     int     line = 1, col = 1;
     int64_t L = cur->lineno - RANGE;
@@ -31,7 +25,7 @@ void signalError(int64_t code, char *reason) {
         line++;
     }
 
-    fprintf(stderr, "Runtime error in %s (line %d):\n", cur->filename, cur->lineno);
+    fprintf(stderr, "Traceback %ld, %s: %s (line %d):\n", index, reason, cur->filename, cur->lineno);
     for (int i = 0; i < cur->lineno - L; i++) {
         static char str[64] = {};
         sprintf(str, "  %d | ", L + i);
@@ -83,7 +77,27 @@ void signalError(int64_t code, char *reason) {
         fprintf(stderr, "\n");
     }
 END:;
+}
 
+void signalError(int64_t code, char *reason) {
+    // TODO: rename this to printError, signalError should handle try/catch 
+
+    // TODO: proper error handling
+    Instruction *cur = vmCurrentInstruction();
+
+    FILE *file = fopen(cur->filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Failed to open %s: ", cur->filename);
+        perror("");
+        exit(1);
+    }
+
+    int64_t index = 1;
+    for (int64_t i = 0; i + 1 < cvector_size(error_checkpoints); i++) {
+        reportLine(file, error_checkpoints[i], "the error below happened while executing the following", index++);
+    }
+
+    reportLine(file, *cvector_back(error_checkpoints), "Runtime error", 0);
 
     fprintf(stderr, "\n >>> ");
 

@@ -78,8 +78,12 @@ An error is an object which contains 4 public fields:
 
 However, when an error is uncaught, it prints all locations which are relevant to the error. 
 
-The error stack contains pairs (checkpoints): (module path, line number) which are currently executing. When an error is printed, the entire error stack gets printed (beginning with youngest checkpoint, ending with the oldest one) as well. Therefore, the programmer can see what code caused the error, as well as the entire executiong path to that code. 
-The error stack receives new checkpoints when any MoLa instruction is executed. Checkpoints are removed when the respective instructions finish execution. 
+The error stack contains checkpoints (instruction indexes) which are currently executing. When an error is printed, the entire error stack gets printed (beginning with youngest checkpoint, ending with the oldest one) as well. Therefore, the programmer can see what code caused the error, as well as the entire executiong path to that code. 
+
+Checkpoints are created when any instruction is executed.
+
+Checkpoints are removed when the respective instructions finish execution, except for the following ones:
+1. CALL - the checkpoint is removed by REMOVE
 
 Basic errors are registered in `std/errors` module and available as integer codes: ZeroDivisionError, NameError, etc. New errors can be registered using the `registerError(defaultReason)` function from the same module. This function returnes an integer code of the newly registered error. Note that the defaultReason must be provided when registering the error; it will be included in the error when the `signal` statement doesn't provide the `because` part.\
 An error can be unregistered using the `unregisterError(code)` function

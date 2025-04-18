@@ -78,6 +78,15 @@ static cvector_vector_type(Object *) objects_stack            = NULL;
 static cvector_vector_type(ErrorHandler) error_handlers_stack = NULL;
 Env   *current_env                                            = NULL;
 Scope *root_scope = NULL, *current_scope = NULL;
+cvector_vector_type(int64_t) error_checkpoints;
+
+void checkpoint() {
+    cvector_push_back(error_checkpoints, ipointer);
+}
+
+void destroyCheckpoint() {
+    cvector_pop_back(error_checkpoints);
+}
 
 void objectsStackPush(Object *obj) {
     ref(obj);
@@ -118,6 +127,10 @@ struct Instruction *vmCurrentInstruction() {
     return instructions_list + ipointer;
 }
 
+struct Instruction *vmInstruction(int64_t ip) {
+    return instructions_list + ip;
+}
+
 void vmExecute(ivec instructions) {
     instructions_list = instructions;
     while (ipointer < cvector_size(instructions)) {
@@ -135,6 +148,7 @@ void vmExecute(ivec instructions) {
             continue;
         }
 
+        checkpoint();
         switch (instr->code) {
         case POP_IC : {
             exec_POP(instr);
@@ -198,6 +212,7 @@ void vmExecute(ivec instructions) {
         }
         case RETURN_IC : {
             exec_RETURN(instr);
+            goto DOUBLE_DESTROY;
             break;
         }
         case REGISTER_CATCH_IC : {
@@ -314,6 +329,7 @@ void vmExecute(ivec instructions) {
         }
         case CALL_IC : {
             exec_CALL(instr);
+            goto NO_DESTROY;
             break;
         }
         case ACCESS_IC : {
@@ -365,6 +381,14 @@ void vmExecute(ivec instructions) {
             exit(-1);    // cleaning after yourself? nah
         }
         }
+        destroyCheckpoint();
+        goto NO_DESTROY;
+
+    DOUBLE_DESTROY:
+        destroyCheckpoint();
+        destroyCheckpoint();
+
+    NO_DESTROY:;
     }
 }
 
@@ -2011,6 +2035,8 @@ static void exec_CALL(Instruction *instr) {
 
         gcUnlock();
         ipointer++;
+        
+        destroyCheckpoint();    // since there is not going to be a RETURN statement for this call
     }
 }
 
@@ -2025,7 +2051,6 @@ static void exec_ACCESS(Instruction *instr) {
     objectsStackPop();
     Object *array = objectsStackTop();
     objectsStackPop();
-
 
     if (array->type != ARRAY_TYPE || index->type >= FLOAT_TYPE) {
         gcUnlock();
@@ -2175,8 +2200,15 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         ipointer++;
         return;
     }
+    else if (obj->type == STRING_TYPE) {
+        Object *method = stringValueLookupMethod(obj->value, instr->ident_arg1);
 
-    // handle strings and arrays?
+        objectsStackPush(method);
+        caller = obj;
+        ipointer++;
+        return;
+    }
+
     if (obj->type != INSTANCE_TYPE) {
         gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");

@@ -1,6 +1,9 @@
 var arr = new Array(5);
 
+function printer(arr, i) {
+    print(arr[i]);
+}
+
 for var i = 0; i < 10; i = i + 1 {
-    arr[i] = i;
-    print(i, arr[i])
+    printer(arr, i)
 }

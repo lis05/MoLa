@@ -6,6 +6,7 @@
 struct Instruction;
 
 struct Instruction *vmCurrentInstruction();
+struct Instruction *vmInstruction(int64_t ip);
 void                vmExecute(ivec instructions);
 
 #endif
