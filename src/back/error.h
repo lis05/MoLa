@@ -12,6 +12,9 @@
 #define NAME_ERROR_CODE                      5
 #define WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE 6
 #define OUT_OF_BOUNDS_ERROR_CODE             7
+#define ZERO_DIVISION_ERROR_CODE             8
+
+struct Scope;
 
 /*
 
@@ -23,19 +26,21 @@ Note that signalling an error may cause memory leaks. The caller is responsible 
 */
 
 extern jmp_buf __mola_errorbuf;
-#define setErrorReturnPoint() setjmp(__mola_errorbuf)
+
+#define setErrorReturnPoint()    setjmp(__mola_errorbuf)
+#define jumpToErrorReturnPoint() longjmp(__mola_errorbuf, 1)
 
 // error located in vmCurrentInstruction()
 // DOES NOT RETURN!
 void signalError(int64_t code, char *reason);
-
+void printError(int64_t code, char *reason);
 void errorInit();
 
 extern char __mola_errstrfmtbuf[1024];
-#define errstrfmt(...)                                                                                                                     \
-    ({                                                                                                                                     \
-        snprintf(__mola_errstrfmtbuf, 1024, __VA_ARGS__);                                                                                  \
-        __mola_errstrfmtbuf;                                                                                                               \
+#define errstrfmt(...)                                                                                                           \
+    ({                                                                                                                           \
+        snprintf(__mola_errstrfmtbuf, 1024, __VA_ARGS__);                                                                        \
+        __mola_errstrfmtbuf;                                                                                                     \
     })
 
 #endif

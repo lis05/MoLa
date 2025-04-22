@@ -25,7 +25,7 @@ void reportLine(FILE *file, int64_t instr_ip, char *reason, int64_t index) {
         line++;
     }
 
-    fprintf(stderr, "Traceback %ld, %s: %s (line %d):\n", index, reason, cur->filename, cur->lineno);
+    fprintf(stderr, "Traceback %ld (ip=%ld), %s: %s (line %d):\n", index, instr_ip, reason, cur->filename, cur->lineno);
     for (int i = 0; i < cur->lineno - L; i++) {
         static char str[64] = {};
         sprintf(str, "  %d | ", L + i);
@@ -79,10 +79,7 @@ void reportLine(FILE *file, int64_t instr_ip, char *reason, int64_t index) {
 END:;
 }
 
-void signalError(int64_t code, char *reason) {
-    // TODO: rename this to printError, signalError should handle try/catch 
-
-    // TODO: proper error handling
+void printError(int64_t code, char *reason) {
     Instruction *cur = vmCurrentInstruction();
 
     FILE *file = fopen(cur->filename, "r");
@@ -113,4 +110,18 @@ void signalError(int64_t code, char *reason) {
     }
     fprintf(stderr, " %s\n", reason);
     exit(1);
+}
+
+extern int64_t molaErrorCode;
+extern char   *molaErrorReason;    // NULL-terminated
+
+void signalError(int64_t code, char *reason) {
+    if (code == INTERNAL_ERROR_CODE) {
+        printError(code, reason);
+    }
+
+    molaErrorCode   = code;
+    molaErrorReason = reason;
+
+    jumpToErrorReturnPoint();
 }

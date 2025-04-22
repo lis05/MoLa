@@ -95,6 +95,7 @@ InstanceValue *instanceValueCopy(InstanceValue *val);
 void           instanceValueDestroy(InstanceValue *val);
 struct Object *instanceValueLookupField(InstanceValue *val, ident name);
 struct Object *instanceValueLookupMethod(InstanceValue *val, ident name);
+void           instanceValueSetField(InstanceValue *val, ident name, struct Object *obj);
 void           instanceValueRef(InstanceValue *unit);
 void           instanceValueUnref(InstanceValue *unit);
 
@@ -144,7 +145,6 @@ CFunctionValue *cFunctionValueCopy(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
 void            cFunctionValueUnref(CFunctionValue *unit);
-
 
 void initTypes();
 #endif

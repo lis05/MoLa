@@ -9,6 +9,8 @@
 #include "scope.h"
 #include "types.h"
 
+extern Symtab *lex_symtab;
+
 static void exec_POP(Instruction *instr);
 static void exec_SWAP(Instruction *instr);
 static void exec_CREATE_ENV(Instruction *instr);
@@ -66,12 +68,18 @@ static void exec_LOAD_FIELD(Instruction *instr);
 static void exec_LOAD_METHOD(Instruction *instr);
 static void exec_NEW(Instruction *instr);
 
+extern TypeValue *error_type;
+
 typedef struct ErrorHandler {
     int64_t error_code;
     int64_t absolute_offset;
     size_t  stack_frame_size;
+    size_t  error_checkpoints_size;
     Scope  *scope;
 } ErrorHandler;
+
+int64_t molaErrorCode;
+char   *molaErrorReason;    // NULL-terminated
 
 static int64_t ipointer                                       = 0;
 static cvector_vector_type(Object *) objects_stack            = NULL;
@@ -134,6 +142,7 @@ struct Instruction *vmInstruction(int64_t ip) {
 void vmExecute(ivec instructions) {
     instructions_list = instructions;
     while (ipointer < cvector_size(instructions)) {
+        //molalog("ip=%d\n", ipointer)
         Instruction *instr = instructions + ipointer;
 
         assert(instr != NULL);
@@ -145,9 +154,19 @@ void vmExecute(ivec instructions) {
             // if this code is reached, it means that the program
             // was able to recover from the error
             // and the normal execution should continue;
+
+            if (instr->code == RETURN_IC) {
+                destroyCheckpoint();
+                destroyCheckpoint();
+            }
+            else if (instr->code != CALL_IC) {
+                destroyCheckpoint();
+            }
+
             continue;
         }
 
+        int n_destroy = 1;
         checkpoint();
         switch (instr->code) {
         case POP_IC : {
@@ -212,7 +231,7 @@ void vmExecute(ivec instructions) {
         }
         case RETURN_IC : {
             exec_RETURN(instr);
-            goto DOUBLE_DESTROY;
+            n_destroy = 2;
             break;
         }
         case REGISTER_CATCH_IC : {
@@ -329,7 +348,7 @@ void vmExecute(ivec instructions) {
         }
         case CALL_IC : {
             exec_CALL(instr);
-            goto NO_DESTROY;
+            n_destroy = 0;
             break;
         }
         case ACCESS_IC : {
@@ -381,14 +400,9 @@ void vmExecute(ivec instructions) {
             exit(-1);    // cleaning after yourself? nah
         }
         }
-        destroyCheckpoint();
-        goto NO_DESTROY;
-
-    DOUBLE_DESTROY:
-        destroyCheckpoint();
-        destroyCheckpoint();
-
-    NO_DESTROY:;
+        while (n_destroy--) {
+            destroyCheckpoint();
+        }
     }
 }
 
@@ -624,11 +638,44 @@ static void exec_RETURN(Instruction *instr) {
 }
 
 static void exec_REGISTER_CATCH(Instruction *instr) {
+    gcLock();
+    if (objectsStackEmpty()) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "REGISTER_CATCH failed: empty objects_stack");
+    }
+
+    Object *obj = objectsStackTop();
+    if (obj->type != INT_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Not an integer");
+    }
+
+    ErrorHandler h;
+    h.error_code       = obj->int_value;
+    h.absolute_offset  = ipointer + 2;    // assuming that importing modules adds the instructions at the end of instructions_list
+    h.stack_frame_size = objectsStackSize();
+    h.error_checkpoints_size = cvector_size(error_checkpoints);
+    h.scope                  = current_scope;
+
+    cvector_push_back(error_handlers_stack, h);
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_DESTROY_CATCH(Instruction *instr) {
+    gcLock();
+    if (cvector_size(error_handlers_stack) < instr->int_arg1) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE, "DESTROY_CATCH failed: not enough elements on the stack");
+    }
+
+    for (int64_t i = 0; i < instr->int_arg1; i++) {
+        cvector_pop_back(error_handlers_stack);    // could be done faster, but who cares
+    }
+
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_SIGNAL_ERROR(Instruction *instr) {
@@ -1649,6 +1696,11 @@ static void exec_DIVISION(Instruction *instr) {
     if (type == INT_TYPE) {
         promoteToINT();
 
+        if (y_int == 0) {
+            gcUnlock();
+            signalError(ZERO_DIVISION_ERROR_CODE, "Division by zero");
+        }
+
         x_int = x_int / y_int;
         res   = objectCreate(INT_TYPE, raw64(x_int));
         goto OP_END;
@@ -2035,7 +2087,7 @@ static void exec_CALL(Instruction *instr) {
 
         gcUnlock();
         ipointer++;
-        
+
         destroyCheckpoint();    // since there is not going to be a RETURN statement for this call
     }
 }
@@ -2259,5 +2311,40 @@ static void exec_NEW(Instruction *instr) {
 }
 
 static void handleError() {
-    ipointer++;
+    Instruction  *instr = vmCurrentInstruction();
+    ErrorHandler *h     = NULL;
+    while (!cvector_empty(error_handlers_stack)) {
+        h = cvector_back(error_handlers_stack);
+
+        if (h->error_code == molaErrorCode || h->error_code == -1) {
+            break;
+        }
+
+        h = NULL;
+        cvector_pop_back(error_handlers_stack);
+    }
+
+    if (h == NULL) {
+        // failed to find an error handler
+        printError(molaErrorCode, molaErrorReason);
+    }
+
+    // found a respective handler
+
+    cvector_resize(objects_stack, h->stack_frame_size, NULL);
+    cvector_resize(error_checkpoints, h->error_checkpoints_size, 0);
+    current_scope = h->scope;
+    ipointer      = h->absolute_offset;
+
+    InstanceValue *error = instanceValueCreate(error_type);
+
+    instanceValueSetField(error, symtabInsert(lex_symtab, "code"), objectCreate(INT_TYPE, raw64(molaErrorCode)));
+    StringValue *reason = stringValueCreate(strlen(molaErrorReason), molaErrorReason);
+    instanceValueSetField(error, symtabInsert(lex_symtab, "reason"), objectCreate(STRING_TYPE, raw64(reason)));
+    StringValue *module = stringValueCreate(strlen(instr->filename), instr->filename);
+    instanceValueSetField(error, symtabInsert(lex_symtab, "module"), objectCreate(STRING_TYPE, raw64(module)));
+    instanceValueSetField(error, symtabInsert(lex_symtab, "line"), objectCreate(INT_TYPE, raw64(instr->lineno)));
+    Object *error_obj = objectCreate(INSTANCE_TYPE, raw64(error));
+
+    objectsStackPush(error_obj);
 }

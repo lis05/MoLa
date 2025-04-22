@@ -230,6 +230,11 @@ struct Object *instanceValueLookupMethod(InstanceValue *val, ident name) {
     return typeValueLookupMethod(val->type, name);
 }
 
+void instanceValueSetField(InstanceValue *val, ident name, Object *obj) {
+    instanceValueLookupField(val, name);    // to check if it could exist
+    identMapSet(&val->fields, name, obj);
+}
+
 void instanceValueRef(InstanceValue *unit) {
     unit->ref_count++;
 }

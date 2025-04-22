@@ -1,9 +1,14 @@
-var arr = new Array(5);
-
-function printer(arr, i) {
-    print(arr[i]);
+var x;
+try {
+    print("divide")
+    x = 1 / 0;
+} catch 8 as error {
+    print(error.code, error.reason, error.module, error.line)
+    var a = new Array(5);
+    a[10];
+}
+finally catch as error2 {
+    print("finally:", error2.code, error2.reason, error2.module, error2.line)
 }
 
-for var i = 0; i < 10; i = i + 1 {
-    printer(arr, i)
-}
+print("Normal execution flow")

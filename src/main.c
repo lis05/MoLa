@@ -44,6 +44,8 @@ extern Symtab *lex_symtab;
 
 void *array_type_ptr;
 
+TypeValue *error_type;
+
 int main() {
     molalog("Starting parser\n");
     initParser();
@@ -98,6 +100,17 @@ int main() {
         array_type_ptr             = typeValueCreate(0, NULL, 0, NULL);
         Object *builtin_array_type = objectCreate(TYPE_TYPE, raw64(array_type_ptr));
         identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "Array"), builtin_array_type);
+    }
+
+    {
+        ident fields[4];
+        fields[0]  = symtabInsert(lex_symtab, "code");
+        fields[1]  = symtabInsert(lex_symtab, "reason");
+        fields[2]  = symtabInsert(lex_symtab, "module");
+        fields[3]  = symtabInsert(lex_symtab, "line");
+        error_type = typeValueCreate(4, fields, 0, NULL);
+        // Object *builtin_error = objectCreate(TYPE_TYPE, raw64(error_type));
+        // identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "Error"), error_type);
     }
 
     t_before = clock();

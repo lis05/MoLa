@@ -9,6 +9,6 @@
 void     parserSetFilename(char *str);
 void     initParser();
 AstNode *runParser();
-void     printError(char *msg);
+void     printErr(char *msg);
 
 #endif

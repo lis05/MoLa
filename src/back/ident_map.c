@@ -15,6 +15,9 @@ void identMapSet(IdentMap *map, ident key, void *item) {
         cvector_resize(map->items, key + 1, NULL);
     }
 
+    if (map->items[key] != NULL) {
+        unref(map->items[key]);
+    }
     map->items[key] = item;
     ref(item);
 }

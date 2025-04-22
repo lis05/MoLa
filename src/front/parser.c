@@ -60,7 +60,7 @@ AstNode *runParser() {
     return node_result;
 }
 
-void printError(char *message) {
+void printErr(char *message) {
     FILE *file = openFilename();
 
     int line = 1, col = 1;
@@ -102,5 +102,5 @@ void printError(char *message) {
 }
 
 void yyerror(const char *str) {
-    printError((char *)str);
+    printErr((char *)str);
 }

@@ -2582,7 +2582,7 @@ static ilist gen_try_catch_stmt(AstNode *node) {
 
         ilistLink(&handler, &expr);
         ilistAppend(&handler, genInsREGISTER_CATCH(info(name_node)));
-        ilistAppend(&handler, genInsJUMP(info(block_node), 5 + block.size));
+        ilistAppend(&handler, genInsJUMP(info(block_node), 5 + block.size + 1));
         ilistAppend(&handler, genInsDESTROY_CATCH(info(block_node), 1));
         ilistAppend(&handler, genInsSWITCH_ENV_INS(info(block_node)));
         ilistAppend(&handler, genInsCREATE_VAR(info(name_node), name_node->ident_value));
@@ -2607,7 +2607,7 @@ static ilist gen_try_catch_stmt(AstNode *node) {
 
         ilistAppend(&handler, genInsLOAD_INT(info(universal_name), -1));
         ilistAppend(&handler, genInsREGISTER_CATCH(info(universal_name)));
-        ilistAppend(&handler, genInsJUMP(info(universal_block), 5 + block.size));
+        ilistAppend(&handler, genInsJUMP(info(universal_block), 5 + block.size + 1 ));
         ilistAppend(&handler, genInsDESTROY_CATCH(info(universal_block), 1));
         ilistAppend(&handler, genInsSWITCH_ENV_INS(info(universal_block)));
         ilistAppend(&handler, genInsCREATE_VAR(info(universal_name), universal_name->ident_value));
