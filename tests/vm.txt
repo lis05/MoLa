@@ -7,8 +7,8 @@ try {
     var a = new Array(5);
     a[10];
 }
-finally catch as error2 {
-    print("finally:", error2.code, error2.reason, error2.module, error2.line)
+finally catch as error {
+    print("finally:", error.code, error.reason, error.module, error.line)
 }
 
 print("Normal execution flow")

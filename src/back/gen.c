@@ -2526,8 +2526,10 @@ static ilist gen_try_catch_stmt(AstNode *node) {
     >   JUMP REL@1
     >   DESTROY_CATCH 1  // current one
     >   SWITCH_ENV_INS
+    >   CREATE_SCOPE    WITH_PARENT_ACCESS
     >   CREATE_VAR name
     >   gen(block_stmt)
+    >   DESTROY_SCOPE
     >   DESTROY_CATCH *total handlers - pos of this one*    // all others
     >   JUMP REL@*first instruction after the try-catch statement* = X
     1
@@ -2582,11 +2584,13 @@ static ilist gen_try_catch_stmt(AstNode *node) {
 
         ilistLink(&handler, &expr);
         ilistAppend(&handler, genInsREGISTER_CATCH(info(name_node)));
-        ilistAppend(&handler, genInsJUMP(info(block_node), 5 + block.size + 1));
+        ilistAppend(&handler, genInsJUMP(info(block_node), 7 + block.size + 1));
         ilistAppend(&handler, genInsDESTROY_CATCH(info(block_node), 1));
         ilistAppend(&handler, genInsSWITCH_ENV_INS(info(block_node)));
+        ilistAppend(&handler, genInsCREATE_SCOPE(info(block_node), 1));
         ilistAppend(&handler, genInsCREATE_VAR(info(name_node), name_node->ident_value));
         ilistLink(&handler, &block);
+        ilistAppend(&handler, genInsDESTROY_SCOPE(info(block_node)));
         ilistAppend(&handler, genInsDESTROY_CATCH(info(block_node), n_handlers - handler_index));
         ilistAppend(&handler, genInsJUMP(info(block_node), output.size + 1));
 
@@ -2607,11 +2611,13 @@ static ilist gen_try_catch_stmt(AstNode *node) {
 
         ilistAppend(&handler, genInsLOAD_INT(info(universal_name), -1));
         ilistAppend(&handler, genInsREGISTER_CATCH(info(universal_name)));
-        ilistAppend(&handler, genInsJUMP(info(universal_block), 5 + block.size + 1 ));
+        ilistAppend(&handler, genInsJUMP(info(universal_block), 7 + block.size + 1));
         ilistAppend(&handler, genInsDESTROY_CATCH(info(universal_block), 1));
         ilistAppend(&handler, genInsSWITCH_ENV_INS(info(universal_block)));
+        ilistAppend(&handler, genInsCREATE_SCOPE(info(universal_block), 1));
         ilistAppend(&handler, genInsCREATE_VAR(info(universal_name), universal_name->ident_value));
         ilistLink(&handler, &block);
+        ilistAppend(&handler, genInsDESTROY_SCOPE(info(universal_block)));
         ilistAppend(&handler, genInsJUMP(info(universal_block), output.size + 1));
 
         ilistLink(&handler, &output);

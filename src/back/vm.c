@@ -142,7 +142,7 @@ struct Instruction *vmInstruction(int64_t ip) {
 void vmExecute(ivec instructions) {
     instructions_list = instructions;
     while (ipointer < cvector_size(instructions)) {
-        //molalog("ip=%d\n", ipointer)
+        // molalog("ip=%d\n", ipointer)
         Instruction *instr = instructions + ipointer;
 
         assert(instr != NULL);
@@ -578,6 +578,16 @@ static void exec_CREATE_SCOPE(Instruction *instr) {
 
 static void exec_DESTROY_SCOPE(Instruction *instr) {
     assert(current_scope != NULL);
+
+    // we have to remove all of the error handlers created in this scope
+    while (!cvector_empty(error_handlers_stack)) {
+        if (cvector_back(error_handlers_stack)->scope == current_scope) {
+            cvector_pop_back(error_handlers_stack);
+        }
+        else {
+            break;
+        }
+    }
 
     Scope *parent = current_scope->parent;
     scopeDestroy(current_scope);
