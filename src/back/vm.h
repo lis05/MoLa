@@ -9,4 +9,7 @@ struct Instruction *vmCurrentInstruction();
 struct Instruction *vmInstruction(int64_t ip);
 void                vmExecute(ivec instructions);
 
+struct Env;
+ivec compileProgram(char *filename, int64_t *env_id);
+
 #endif

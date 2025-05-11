@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "../front/api.h"
 #include "alloc.h"
 #include "cmap.h"
 #include "env.h"
@@ -7,7 +8,10 @@
 #include "gen.h"
 #include "object.h"
 #include "scope.h"
+#include "sys/unistd.h"
 #include "types.h"
+#include <fcntl.h>
+#include <libgen.h>
 
 extern Symtab *lex_symtab;
 
@@ -67,6 +71,7 @@ static void exec_LOAD(Instruction *instr);
 static void exec_LOAD_FIELD(Instruction *instr);
 static void exec_LOAD_METHOD(Instruction *instr);
 static void exec_NEW(Instruction *instr);
+static void exec_HALT(Instruction *instr);
 
 extern TypeValue *error_type;
 
@@ -86,7 +91,11 @@ static cvector_vector_type(Object *) objects_stack            = NULL;
 static cvector_vector_type(ErrorHandler) error_handlers_stack = NULL;
 Env   *current_env                                            = NULL;
 Scope *root_scope = NULL, *current_scope = NULL;
+
 cvector_vector_type(int64_t) error_checkpoints;
+int64_t env_offset = 0;    // set when imported
+
+cvector_vector_type(Env *) imported_modules;
 
 void checkpoint() {
     cvector_push_back(error_checkpoints, ipointer);
@@ -140,10 +149,12 @@ struct Instruction *vmInstruction(int64_t ip) {
 }
 
 void vmExecute(ivec instructions) {
-    instructions_list = instructions;
-    while (ipointer < cvector_size(instructions)) {
+    for (int i = 0; i < cvector_size(instructions); i++) {
+        cvector_push_back(instructions_list, instructions[i]);
+    }
+    while ((0 <= ipointer && ipointer < cvector_size(instructions_list))) {
         // molalog("ip=%d\n", ipointer)
-        Instruction *instr = instructions + ipointer;
+        Instruction *instr = instructions_list + ipointer;
 
         assert(instr != NULL);
 
@@ -395,6 +406,13 @@ void vmExecute(ivec instructions) {
             exec_NEW(instr);
             break;
         }
+        case HALT_IC : {
+            while (n_destroy--) {
+                destroyCheckpoint();
+                molalog("HALT\n");
+            }
+            return;
+        }
         default : {
             signalError(INTERNAL_ERROR_CODE, "unknown instruction");
             exit(-1);    // cleaning after yourself? nah
@@ -431,7 +449,7 @@ static void exec_SWAP(Instruction *instr) {
 }
 
 static void exec_CREATE_ENV(Instruction *instr) {
-    current_env = envGetById(envCreate(instr->env_id));
+    current_env = envGetById(envCreate(env_offset, instr->filename));
 
     ipointer++;
 }
@@ -466,6 +484,186 @@ static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
 }
 
 static void exec_IMPORT_MODULE(Instruction *instr) {
+    /*
+    we replace each '^' symbol with '../'
+
+    compact:
+        a.b.c (with optional ^ at the beginning)
+        mola.a.b.c
+    string: "a/b/c.mola"
+    */
+
+    cvector_vector_type(char) constructed_path = NULL;    // we will construct it step by step
+
+    char *arg_path  = instr->string_arg1;
+    ident import_as = instr->n_args;                      // wrath
+
+    if (instr->flags == 1) {                              // compact
+        int can_be_builtin = 1;
+        int is_builtin     = 0;
+        while (*arg_path == '^') {
+            can_be_builtin = 0;
+            cvector_push_back(constructed_path, '.');
+            cvector_push_back(constructed_path, '.');
+            cvector_push_back(constructed_path, '/');
+            arg_path++;
+        }
+
+        if (can_be_builtin) {
+            // check for mola
+            if (*arg_path == 'm' && *(arg_path + 1) == 'o' && *(arg_path + 2) == 'l' && *(arg_path + 3) == 'a'
+                && *(arg_path + 4) == '.')
+            {
+                // builtin
+                is_builtin  = 1;
+                arg_path   += 5;
+
+                char *MOLA_MODULES_PATH = getenv("MOLA_MODULES_PATH");
+                if (MOLA_MODULES_PATH == NULL || strlen(MOLA_MODULES_PATH) == 0) {
+                    gcUnlock();
+                    signalError(
+                    IMPORT_ERROR_CODE,
+                    "Could not find the requested builtin module: MOLA_MODULES_PATH environment variable is missing or empty");
+                }
+
+                while (*MOLA_MODULES_PATH != '\0') {
+                    cvector_push_back(constructed_path, *MOLA_MODULES_PATH);
+                    MOLA_MODULES_PATH++;
+                }
+
+                if (*(MOLA_MODULES_PATH - 1) != '/') {
+                    cvector_push_back(constructed_path, '/');
+                }
+            }
+        }
+
+        if (!is_builtin) {
+            char *current_file = current_env->path;
+
+            while (*current_file != '\0') {
+                cvector_push_back(constructed_path, *current_file);
+                current_file++;
+            }
+
+            // remove the last part of the current path
+            while (!cvector_empty(constructed_path) && *cvector_back(constructed_path) != '/') {
+                cvector_pop_back(constructed_path);
+            }
+        }
+
+        while (*arg_path != '\0') {
+            if (*arg_path == '.') {
+                cvector_push_back(constructed_path, '/');
+            }
+            else {
+                cvector_push_back(constructed_path, *arg_path);
+            }
+            arg_path++;
+        }
+
+        cvector_push_back(constructed_path, '.');
+        cvector_push_back(constructed_path, 'm');
+        cvector_push_back(constructed_path, 'o');
+        cvector_push_back(constructed_path, 'l');
+        cvector_push_back(constructed_path, 'a');
+        cvector_push_back(constructed_path, '\0');
+    }
+    else {
+        char *current_file = current_env->path;
+
+        while (*current_file != '\0') {
+            cvector_push_back(constructed_path, *current_file);
+            current_file++;
+        }
+
+        // remove the last part of the current path
+        while (!cvector_empty(constructed_path) && *cvector_back(constructed_path) != '/') {
+            cvector_pop_back(constructed_path);
+        }
+
+        while (*arg_path != '\0') {
+            cvector_push_back(constructed_path, *arg_path);
+            arg_path++;
+        }
+        cvector_push_back(constructed_path, '\0');
+    }
+
+    static char real_path[4096];
+    realpath(constructed_path, real_path);
+    cvector_free(constructed_path);
+
+    molalog("Importing module: %s as %s\n", real_path, symtabIdentToString(import_as));
+
+    if (identMapQuery(&current_env->globals, import_as)) {
+        gcUnlock();
+        signalError(IMPORT_ERROR_CODE,
+                    errstrfmt("A global object with name '%s' already exists", symtabIdentToString(import_as)));
+    }
+
+    if (access(real_path, F_OK) != 0) {
+        gcUnlock();
+        signalError(IMPORT_ERROR_CODE, "invalid module");
+    }
+
+    for (int i = 0; i < cvector_size(imported_modules); i++) {
+        if (strcmp(imported_modules[i]->path, real_path) == 0) {
+            // already imported
+            Object *obj = objectCreate(MODULE_TYPE, raw64(imported_modules[i]));
+            identMapSet(&current_env->globals, import_as, obj);
+            goto END;
+        }
+    }
+
+    // first, we have to save the current C environment
+    // and create a new one
+
+    int64_t old_ipointer = ipointer;
+    ipointer             = cvector_size(instructions_list);
+
+    cvector_vector_type(Object *) old_objects_stack = objects_stack;
+    objects_stack                                   = NULL;
+
+    // error handlers should remain even when executing the imported program
+
+    Env *old_current_env = current_env;
+    current_env          = NULL;
+
+    Scope *old_root_scope = root_scope;
+    root_scope            = NULL;
+
+    Scope *old_current_scope = current_scope;
+    current_scope            = NULL;
+
+    // error checkpoints should remain as well
+
+    int64_t old_env_offset = env_offset;
+    env_offset             = env_offset + cvector_size(instructions_list);
+
+    // imported modules must remain as well
+
+    // instruction_list must remain or it will all segfault
+
+    int64_t env_id;
+    ivec    compiled_module = compileProgram(real_path, &env_id);
+    vmExecute(compiled_module);
+    cvector_free(compiled_module);
+
+    // nice!
+    // restore the old C environment
+    ipointer      = old_ipointer;
+    objects_stack = old_objects_stack;
+    current_env   = old_current_env;
+    root_scope    = old_root_scope;
+    current_scope = old_current_scope;
+    env_offset    = old_env_offset;
+
+    Env    *env = envGetById(env_id);
+    Object *obj = objectCreate(MODULE_TYPE, raw64(env));
+    identMapSet(&current_env->globals, import_as, obj);
+
+    cvector_push_back(imported_modules, env);
+
+END:;
     ipointer++;
 }
 
@@ -2357,4 +2555,46 @@ static void handleError() {
     Object *error_obj = objectCreate(INSTANCE_TYPE, raw64(error));
 
     objectsStackPush(error_obj);
+}
+
+ivec compileProgram(char *filename, int64_t *env_id) {
+    molalog("Compiling %s\n", filename);
+    parserSetFilename(filename);
+    AstNode *ast = runParser();
+    molalog("Parsing complete\n");
+
+    *env_id = envGenAvailableId();
+
+    molalog("Compiling (env=%lld)...\n", *env_id);
+    int64_t t_before     = clock();
+    ilist   instructions = genCompile(ast);
+    int64_t t_after      = clock();
+
+    molalog("Generated %d instructions in %.3f seconds\n", instructions.size, 1.0 * (t_after - t_before) / CLOCKS_PER_SEC);
+
+    molalog("Creating log\n");
+    int fd;
+    if (instructions.size > 50) {
+        fd = dup(1);
+        close(1);
+        static char buf[1024];
+        sprintf(buf, "/home/lis05/Projects/mola/logs/compiled_%s", basename(filename));
+        open(buf, O_RDWR | O_CREAT | O_TRUNC, "644");
+    }
+
+    ivec    to_execute = NULL;
+    inode  *node       = instructions.head;
+    int64_t pos        = env_offset;
+    while (node != NULL) {
+        genPrintInstrShort(pos, &node->ins);
+        cvector_push_back(to_execute, node->ins);
+        node = node->next;
+        pos++;
+    }
+    if (instructions.size > 50) {
+        close(1);
+        dup2(fd, 1);
+    }
+
+    return to_execute;
 }

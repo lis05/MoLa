@@ -16,11 +16,12 @@ struct Env *envGetById(int64_t id) {
     return envs[id];
 }
 
-int64_t envCreate(int64_t absolute_offset) {
+int64_t envCreate(int64_t absolute_offset, char *path) {
     Env *env              = memalloc(sizeof(Env));
     env->absolute_offset  = absolute_offset;
     env->exported_objects = identMapCreate();
     env->globals          = identMapCreate();
+    env->path             = strdup(path);
 
     int64_t id = envGenAvailableId();
     envs[id]   = env;
@@ -29,4 +30,6 @@ int64_t envCreate(int64_t absolute_offset) {
     return id;
 }
 
-void envInit() {}
+void envInit() {
+    memset(envs, 0, sizeof(envs));
+}

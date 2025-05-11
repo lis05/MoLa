@@ -1,14 +1,9 @@
-var x;
-try {
-    print("divide")
-    x = 1 / 0;
-} catch 8 as error {
-    print(error.code, error.reason, error.module, error.line)
-    var a = new Array(5);
-    a[10];
-}
-finally catch as error {
-    print("finally:", error.code, error.reason, error.module, error.line)
-}
+global global_1
+global_1 = 5;
 
-print("Normal execution flow")
+print("BEFORE IMPORTING")
+
+import mola.test as t
+import mola.test as tt
+
+print("AFTER IMPORTING");

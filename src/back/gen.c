@@ -615,6 +615,15 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
+    case HALT_IC: {
+        printf("%-20s    ", "HALT");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
+
+        printf("\n");
+        return;
+    }
     default : {
         printf("%-20s    ", "INVALID");
         printf("lineno=%-4lld ", instr->lineno);
@@ -1340,6 +1349,18 @@ Instruction genInsNEW(char *filename, size_t lineno, int64_t env_id) {
     return res;
 }
 
+Instruction genInsHALT(char *filename, size_t lineno, int64_t env_id) {
+    Instruction res;
+    res.id       = instr_id++;
+    res.filename = filename;
+    res.lineno   = lineno;
+    res.env_id   = env_id;
+    res.n_args   = 0;
+
+    res.code = HALT_IC;
+    return res;
+}
+
 ilist ilistCreate() {
     ilist res;
     res.head = res.tail = NULL;
@@ -1420,6 +1441,8 @@ ilist genCompile(AstNode *node) {
     ilist tail = gen(node);
     ilistLink(&result, &tail);
     ilistAppend(&result, genInsDESTROY_SCOPE(info(node)));
+
+    ilistAppend(&result, genInsHALT(info(node)));
 
     return result;
 }
@@ -1726,9 +1749,12 @@ static ilist gen_import_stmt(AstNode *node) {
 
     charvec module_path = NULL;
     constructModulePath(node->nodes[0], &module_path);
-    cvector_push_back(module_path, '\0');    // for copying
+    cvector_push_back(module_path, '\0');                                      // for copying
 
-    ilistAppend(&output, genInsIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->ident_value));
+    Instruction ins = genInsIMPORT_MODULE(info(node), strdup(module_path), node->nodes[1]->ident_value);
+    ins.flags       = node->nodes[0]->option == MODULE_PATH_COMPACT_OPTION;    // disgusting, but it works
+
+    ilistAppend(&output, ins);
 
     return output;
 }
