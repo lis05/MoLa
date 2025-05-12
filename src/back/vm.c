@@ -451,6 +451,11 @@ static void exec_SWAP(Instruction *instr) {
 static void exec_CREATE_ENV(Instruction *instr) {
     current_env = envGetById(envCreate(env_offset, instr->filename));
 
+    // if there haven't been any modules imported, we have to add this one
+    if (cvector_empty(imported_modules)) {
+        cvector_push_back(imported_modules, current_env);
+    }
+
     ipointer++;
 }
 
@@ -499,15 +504,8 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
     ident import_as = instr->n_args;                      // wrath
 
     if (instr->flags == 1) {                              // compact
-        int can_be_builtin = 1;
+        int can_be_builtin = *arg_path != '^';
         int is_builtin     = 0;
-        while (*arg_path == '^') {
-            can_be_builtin = 0;
-            cvector_push_back(constructed_path, '.');
-            cvector_push_back(constructed_path, '.');
-            cvector_push_back(constructed_path, '/');
-            arg_path++;
-        }
 
         if (can_be_builtin) {
             // check for mola
@@ -548,6 +546,14 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
             // remove the last part of the current path
             while (!cvector_empty(constructed_path) && *cvector_back(constructed_path) != '/') {
                 cvector_pop_back(constructed_path);
+            }
+
+            while (*arg_path == '^') {
+                can_be_builtin = 0;
+                cvector_push_back(constructed_path, '.');
+                cvector_push_back(constructed_path, '.');
+                cvector_push_back(constructed_path, '/');
+                arg_path++;
             }
         }
 
@@ -662,6 +668,8 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
     identMapSet(&current_env->globals, import_as, obj);
 
     cvector_push_back(imported_modules, env);
+
+    // TODO add . operator for modules
 
 END:;
     ipointer++;
@@ -2431,6 +2439,19 @@ static void exec_LOAD_FIELD(Instruction *instr) {
     objectsStackPop();
 
     // handle strings and arrays?
+
+    if (obj->type == MODULE_TYPE) {
+        Env    *env = (Env *)obj->value;
+        Object *res = identMapGet(&env->exported_objects, instr->ident_arg1);
+
+        if (res == NULL) {
+            gcUnlock();
+            signalError(NAME_ERROR_CODE, "Failed to locate an exported object with this name");
+        }
+        objectsStackPush(res);
+        ipointer++;
+        return;
+    }
     if (obj->type != INSTANCE_TYPE) {
         gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");

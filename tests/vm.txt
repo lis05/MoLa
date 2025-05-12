@@ -1,9 +1,0 @@
-global global_1
-global_1 = 5;
-
-print("BEFORE IMPORTING")
-
-import mola.test as t
-import mola.test as tt
-
-print("AFTER IMPORTING");

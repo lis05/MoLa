@@ -54,7 +54,7 @@ int main() {
     Env *builtin_env = envGetById(envCreate(0, "MOLA_BUILTIN"));
 
     int64_t env_id;
-    ivec    instructions = compileProgram("/home/lis05/Projects/mola/tests/vm.txt", &env_id);
+    ivec    instructions = compileProgram("/home/lis05/Projects/mola/tests/vm.mola", &env_id);
 
     assert(env_id == 1);
 

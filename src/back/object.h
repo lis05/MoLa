@@ -23,7 +23,8 @@ typedef struct Object {
     uint gc_mark   : 1;
 } Object;
 
-#define raw64(x) (*((uint64_t *)&(x)))
+#define raw64(x)          (*((uint64_t *)&(x)))
+#define cooked64(x, type) *((type *)&(x))
 
 Object *objectCreate(enum Type type, uint64_t value);    // for basic types the value has to be passed in value
 void    objectDestroy(Object *object);                   // used by gc

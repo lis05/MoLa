@@ -3,8 +3,6 @@
 #include "gc.h"
 #include "types.h"
 
-#define cooked64(x, type) *((type *)&(x))
-
 Object *objectCreate(enum Type type, uint64_t value) {
     Object *obj = memallocObject();
 
