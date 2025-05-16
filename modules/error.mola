@@ -1,0 +1,21 @@
+var 
+    InternalError = 0,
+    ImportError = 1,
+    NameCollisionError = 2,
+    DuplicateNameError = 3,
+    ValueError = 4,
+    NameError = 5,
+    WrongNumberOfArgumentsError = 6,
+    OutOfBoundsError = 7,
+    ZeroDivisionError = 8
+
+export 
+    InternalError as InternalError,
+    ImportError as ImportError,
+    NameCollisionError as NameCollisionError,
+    DuplicateNameError as DuplicateNameError,
+    ValueError as ValueError,
+    NameError as NameError,
+    WrongNumberOfArgumentsError as WrongNumberOfArgumentsError,
+    OutOfBoundsError as OutOfBoundsError,
+    ZeroDivisionError as ZeroDivisionError

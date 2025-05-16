@@ -425,17 +425,22 @@ void vmExecute(ivec instructions) {
 }
 
 static void exec_POP(Instruction *instr) {
+    gcLock();
     if (objectsStackEmpty()) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "POP failed: empty objects_stack");
     }
 
     objectsStackPop();
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_SWAP(Instruction *instr) {
+    gcLock();
     if (objectsStackSize() < 2) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWAP failed: less that 2 elements on objects_stack");
     }
 
@@ -446,33 +451,39 @@ static void exec_SWAP(Instruction *instr) {
     objects_stack[size - 2] = t;
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_ENV(Instruction *instr) {
+    gcLock();
     current_env = envGetById(envCreate(env_offset, instr->filename));
 
-    // if there haven't been any modules imported, we have to add this one
-    if (cvector_empty(imported_modules)) {
-        cvector_push_back(imported_modules, current_env);
-    }
+    // each time CREATE_ENV is executed, a new module is imported
+    cvector_push_back(imported_modules, current_env);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_SWITCH_ENV_INS(Instruction *instr) {
+    gcLock();
     current_env = envGetById(instr->env_id);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
+    gcLock();
     if (objectsStackEmpty()) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: empty objects_stack");
     }
 
     Object *obj = objectsStackTop();
 
     if (obj->type != C_FUNCTION_TYPE && obj->type != MOLA_FUNCTION_TYPE) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: object on the stack is not a function");
     }
 
@@ -484,11 +495,13 @@ static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
     }
 
     ipointer++;
+    gcUnlock();
 
     // note: we do not pop the object from the stack!
 }
 
 static void exec_IMPORT_MODULE(Instruction *instr) {
+    gcLock();
     /*
     we replace each '^' symbol with '../'
 
@@ -651,7 +664,9 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
 
     int64_t env_id;
     ivec    compiled_module = compileProgram(real_path, &env_id);
+    gcUnlock();
     vmExecute(compiled_module);
+    gcLock();
     cvector_free(compiled_module);
 
     // nice!
@@ -667,20 +682,22 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
     Object *obj = objectCreate(MODULE_TYPE, raw64(env));
     identMapSet(&current_env->globals, import_as, obj);
 
-    cvector_push_back(imported_modules, env);
-
     // TODO add . operator for modules
 
 END:;
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_EXPORT_OBJECT(Instruction *instr) {
+    gcLock();
     if (objectsStackEmpty()) {
+        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "EXPORT_OBJECT failed: empty objects_stack");
     }
 
     if (identMapQuery(&current_env->exported_objects, instr->ident_arg1)) {
+        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Exported object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -689,10 +706,13 @@ static void exec_EXPORT_OBJECT(Instruction *instr) {
     objectsStackPop();
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_GLOBAL(Instruction *instr) {
+    gcLock();
     if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
+        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -701,10 +721,13 @@ static void exec_CREATE_GLOBAL(Instruction *instr) {
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_FUNCTION(Instruction *instr) {
+    gcLock();
     if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
+        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -722,6 +745,7 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_TYPE(Instruction *instr) {
@@ -739,8 +763,8 @@ static void exec_CREATE_TYPE(Instruction *instr) {
 
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
-    gcUnlock();
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_METHOD(Instruction *instr) {
@@ -771,18 +795,21 @@ static void exec_CREATE_METHOD(Instruction *instr) {
 
     typeValueAddMethod(type->value, instr->ident_arg1, obj);
 
-    gcUnlock();
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_CREATE_SCOPE(Instruction *instr) {
+    gcLock();
     Scope *new_scope = scopeCreate((current_scope == NULL) ? 0 : instr->flags, current_scope);
     current_scope    = new_scope;
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_DESTROY_SCOPE(Instruction *instr) {
+    gcLock();
     assert(current_scope != NULL);
 
     // we have to remove all of the error handlers created in this scope
@@ -801,6 +828,7 @@ static void exec_DESTROY_SCOPE(Instruction *instr) {
     current_scope = parent;
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_JUMP_IF_FALSE(Instruction *instr) {
@@ -814,6 +842,7 @@ static void exec_JUMP_IF_FALSE(Instruction *instr) {
     objectsStackPop();
 
     if (obj->type != BOOL_TYPE) {
+        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Expected a boolean value");
     }
 
@@ -829,7 +858,9 @@ static void exec_JUMP_IF_FALSE(Instruction *instr) {
 }
 
 static void exec_JUMP(Instruction *instr) {
+    gcLock();
     ipointer += instr->int_arg1;
+    gcUnlock();
 }
 
 static void exec_RETURN(Instruction *instr) {
@@ -895,7 +926,30 @@ static void exec_DESTROY_CATCH(Instruction *instr) {
 }
 
 static void exec_SIGNAL_ERROR(Instruction *instr) {
-    ipointer++;
+    gcLock();
+    if (objectsStackSize() < 2) {
+        gcUnlock();
+        signalError(INTERNAL_ERROR_CODE,  "SIGNAL_ERROR failed: not enough elements on the stack");
+    }
+    
+    Object *code = objectsStackTop();
+    objectsStackPop();
+
+    Object *msg = objectsStackTop();
+    objectsStackPop();
+
+    if (code->type != INT_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Expected an integer error code");
+    }
+
+    if (msg->type != STRING_TYPE) {
+        gcUnlock();
+        signalError(VALUE_ERROR_CODE, "Expected a string error code");
+    }   
+
+    gcUnlock();
+    signalError(code->int_value, ((StringValue*)msg->value)->string);
 }
 
 static void exec_CREATE_VAR(Instruction *instr) {
@@ -2298,7 +2352,9 @@ static void exec_CALL(Instruction *instr) {
         ipointer = mola_function->relative_offset + current_env->absolute_offset;
     }
     else {
+        gcUnlock();
         Object *res = c_function->function(passed_args, args);
+        gcLock();
         objectsStackPush(res);
 
         gcUnlock();
@@ -2354,54 +2410,67 @@ static void exec_ACCESS(Instruction *instr) {
 }
 
 static void exec_LOAD_BOOL(Instruction *instr) {
+    gcLock();
     Object *obj    = objectCreate(BOOL_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_CHAR(Instruction *instr) {
+    gcLock();
     Object *obj    = objectCreate(CHAR_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_INT(Instruction *instr) {
+    gcLock();
     Object *obj    = objectCreate(INT_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
+    gcLock();
     Object *obj    = objectCreate(FLOAT_TYPE, raw64(instr->float_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_STRING(Instruction *instr) {
+    gcLock();
     StringValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
     Object      *obj   = objectCreate(STRING_TYPE, raw64(value));
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
+    gcLock();
     Object *obj    = objectCreate(NULL_TYPE, 0);
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD(Instruction *instr) {
+    gcLock();
     /*
     0. look for a global object in the builtin(0) environment
     1. look for a global object
@@ -2412,6 +2481,7 @@ static void exec_LOAD(Instruction *instr) {
     if (res != NULL) {
         objectsStackPush(res);
         ipointer++;
+        gcUnlock();
         return;
     }
 
@@ -2419,6 +2489,7 @@ static void exec_LOAD(Instruction *instr) {
     if (res != NULL) {
         objectsStackPush(res);
         ipointer++;
+        gcUnlock();
         return;
     }
 
@@ -2426,7 +2497,7 @@ static void exec_LOAD(Instruction *instr) {
 
     objectsStackPush(res);
     ipointer++;
-    return;
+    gcUnlock();
 }
 
 static void exec_LOAD_FIELD(Instruction *instr) {
@@ -2450,6 +2521,7 @@ static void exec_LOAD_FIELD(Instruction *instr) {
         }
         objectsStackPush(res);
         ipointer++;
+        gcUnlock();
         return;
     }
     if (obj->type != INSTANCE_TYPE) {
@@ -2461,6 +2533,7 @@ static void exec_LOAD_FIELD(Instruction *instr) {
     objectsStackPush(field);
 
     ipointer++;
+    gcUnlock();
 }
 
 static void exec_LOAD_METHOD(Instruction *instr) {
@@ -2479,6 +2552,7 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         objectsStackPush(method);
         caller = obj;
         ipointer++;
+        gcUnlock();
         return;
     }
     else if (obj->type == STRING_TYPE) {
@@ -2487,6 +2561,7 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         objectsStackPush(method);
         caller = obj;
         ipointer++;
+        gcUnlock();
         return;
     }
 
@@ -2501,6 +2576,7 @@ static void exec_LOAD_METHOD(Instruction *instr) {
     caller = obj;
 
     ipointer++;
+    gcUnlock();
 }
 
 extern void *array_type_ptr;    // used to create an array via NEW
@@ -2521,8 +2597,8 @@ static void exec_NEW(Instruction *instr) {
         Object     *obj   = objectCreate(ARRAY_TYPE, raw64(array));
         objectsStackPush(obj);
 
-        gcUnlock();
         ipointer++;
+        gcUnlock();
         return;
     }
 
@@ -2535,8 +2611,8 @@ static void exec_NEW(Instruction *instr) {
     Object        *obj      = objectCreate(INSTANCE_TYPE, raw64(instance));
     objectsStackPush(obj);
 
-    gcUnlock();
     ipointer++;
+    gcUnlock();
 }
 
 static void handleError() {
@@ -2599,7 +2675,7 @@ ivec compileProgram(char *filename, int64_t *env_id) {
         fd = dup(1);
         close(1);
         static char buf[1024];
-        sprintf(buf, "/home/lis05/Projects/mola/logs/compiled_%s", basename(filename));
+        sprintf(buf, "/home/lis05/Projects/mola/logs/compiled_%s.txt", basename(filename));
         open(buf, O_RDWR | O_CREAT | O_TRUNC, "644");
     }
 

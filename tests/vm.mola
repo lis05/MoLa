@@ -1,5 +1,7 @@
-import mola.test as test
+import mola.error as error
 
-for var i = 0; i <= 10; i = i + 1 {
-    print(test.fib(i))
+try {
+    signal error.NameError because "dumb"
+} catch error.NameError as e {
+    print("Caught error")
 }
