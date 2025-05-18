@@ -1,7 +1,3 @@
-import mola.error as error
-
-try {
-    signal error.NameError because "dumb"
-} catch error.NameError as e {
-    print("Caught error")
+for ; ; 1 {
+    
 }

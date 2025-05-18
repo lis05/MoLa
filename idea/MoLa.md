@@ -124,24 +124,13 @@ Scope holds variables which can be accessed inside that that scope.
 - Scope is destroyed when a respective code structure ends.
 
 ## Garbage collection
-The GC in MoLa does reference counting, assuming that the number of references to an object fits into a 32-bit unsigned integer. To handle cycles, simple mark-and-sweep cycle is run when there is too much memory allocated. 
+The GC in MoLa does reference counting, assuming that the number of references to an object fits into a 32-bit unsigned integer. To handle cycles, simple mark-and-sweep cycle is run when there is too much memory allocated.
 
-A checkphase is an event when the GC updates its information about memory usage. A checkphase happens when the Allocator allocates `CHECKPHASE_THRESHOLD` objects. `CHECKPHASE_RATIO` is the ratio between the number of bytes allocated (and not deallocated) since the last checkphase and the number of bytes allocated (and not deallocated) between the second last and last checkphases.  
+Objects, that have been determined to be garbage, are recycled after every instruction. The number of objects that get destroyed is given by the formula: 
+- `x = current_bytes_allocated / ALLOC_LIMIT`
+- `res = (x^4 + 0.001) * current_bytes_allocated`
 
-When an object's reference counter reaches 0, it becomes garbage, and therefore has to be destroyed. The GC pushes this object onto the garbage stack.
-
-Each reference update causes destruction of `DESTRUCTION_COUNT * CHECKPHASE_RATIO` objects from the garbage stack. 
-
-During the checkphase, the GC decides that it needs to run a collection cycle if:
-- new `CHECKPHASE_RATIO` is greater than `GC_CYCLE_THRESHOLD`.
-- or the collection cycle hasn't been run for `GC_CYCLE_CHECKSPHASES_LIMIT` checkphases. 
-
-If a decision to run a collection cycle is taken, the GC does the following:
-1. destroys all objects on the garbage stack.
-2. runs a simple mark & sweep cycle to break reference cycles.
-
-To implement this, the GC maintains a set of objects that have been created. When an object is destroyed, it is removed from this set. When a GC collection cycle is run:
-- The roots are globals and locals (objects reachable from any active scope, the objects stack, or any other similar source). Functions and types are always alive do not reference any objects other then themselves, and therefore they are not processed during garbage collection. The roots are taken from all loaded modules.
+To prevent persistent cycles, a full GC cycle will be performed after 1e7 instructions have been executed. 
 
 ## Environment
 An environment is a data structure assigned to each module. It holds all the variables created in that module, and implements lookup function.

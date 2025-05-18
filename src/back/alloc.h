@@ -3,23 +3,26 @@
 
 #include "../util.h"
 
+#define ALLOCATION_LIMIT 1000000000    // 100mb
+
 void allocInit();
 
-// if error happens, jumps to handler
-void *memalloc(size_t bytes);
-// if error happens, jumps to handler
-void  memfree(void *ptr);
+// allocates the number of bytes, returns NULL if fails
+// DOES NOT SIGNAL AN ERROR
+void *allocBytesOrNULL(size_t bytes);
 
-// if error happens, outputs 1 to error. 0 otherwise
-void *memallocsafe(size_t bytes, int *error);
-// if error happens, outputs 1 to error. 0 otherwise
-void  memfreesafe(void *ptr, int *error);
+// allocates the number of bytes, signals and error if fails
+void *allocBytesOrError(size_t bytes);
 
-struct Object;
+// allocated the number of bytes, signals an InternalError if fails
+// is not counted in the total number of bytes allocated by instructions
+// so use this one for internal purposes
+void *allocBytesOrExit(size_t bytes);
 
-void *memallocObject();
-void *memallocScope();
-void  memfreeObject(void *ptr);
-void  memfreeScope(void *ptr);
+void freeBytes(void *ptr);
+
+size_t getAllocatedBytes();
+
+size_t getRecycleAmount();
 
 #endif

@@ -615,7 +615,7 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
-    case HALT_IC: {
+    case HALT_IC : {
         printf("%-20s    ", "HALT");
         printf("lineno=%-4lld ", instr->lineno);
         printf("n_args=%-4lld ", instr->n_args);
@@ -770,14 +770,14 @@ Instruction genInsCREATE_TYPE(char   *filename,
     res.code       = CREATE_TYPE_IC;
     res.ident_arg1 = name;
     res.n_args     = n_fields + n_methods + 2;
-    res.args       = memalloc(res.n_args * sizeof(ident));
+    res.args       = allocBytesOrError(res.n_args * sizeof(ident));
     res.args[0]    = (int64_t)n_fields;
     res.args[1]    = (int64_t)n_methods;
     memcpy(res.args + 2, fields, n_fields * sizeof(ident));
     memcpy(res.args + 2 + n_fields, methods, n_methods * sizeof(ident));
 
-    memfree(fields);
-    memfree(methods);
+    freeBytes(fields);
+    freeBytes(methods);
     return res;
 }
 
@@ -1398,7 +1398,7 @@ void ilistSwap(ilist *first, ilist *second) {
 }
 
 void ilistAppend(ilist *list, Instruction ins) {
-    inode *node = malloc(sizeof(inode));
+    inode *node = allocBytesOrError(sizeof(inode));
     node->ins   = ins;
     node->next  = NULL;
 
@@ -1418,7 +1418,7 @@ void ilistDestroy(ilist *list) {
     while (node != NULL) {
         inode *prev = node;
         node        = node->next;
-        free(prev);
+        freeBytes(prev);
     }
 }
 
@@ -1856,7 +1856,7 @@ static ilist gen_function_stmt(AstNode *node) {
         }
     }
     size_t n_args = cvector_size(params);
-    ident *margs  = malloc(sizeof(ident) * n_args);
+    ident *margs  = allocBytesOrError(sizeof(ident) * n_args);
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
@@ -1925,9 +1925,9 @@ static ilist gen_type_stmt(AstNode *node) {
         }
     }
 
-    ident *fields_copy = malloc(cvector_size(fields) * sizeof(ident));
+    ident *fields_copy = allocBytesOrError(cvector_size(fields) * sizeof(ident));
     memcpy(fields_copy, fields, cvector_size(fields) * sizeof(ident));
-    ident *methods_copy = malloc(cvector_size(methods) * sizeof(ident));
+    ident *methods_copy = allocBytesOrError(cvector_size(methods) * sizeof(ident));
     memcpy(methods_copy, methods, cvector_size(methods) * sizeof(ident));
 
     ilistAppend(
@@ -1980,7 +1980,7 @@ static ilist gen_method_stmt(AstNode *node) {
         }
     }
     size_t n_args = cvector_size(params);
-    ident *margs  = malloc(sizeof(ident) * n_args);
+    ident *margs  = allocBytesOrError(sizeof(ident) * n_args);
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
@@ -2043,7 +2043,7 @@ static ilist gen_constructor_stmt(AstNode *node) {
         }
     }
     size_t n_args = cvector_size(params);
-    ident *margs  = malloc(sizeof(ident) * n_args);
+    ident *margs  = allocBytesOrError(sizeof(ident) * n_args);
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 
@@ -2092,7 +2092,7 @@ static ilist gen_destructor_stmt(AstNode *node) {
     cvector_push_back(params, symtabInsert(lex_symtab, "this"));
 
     size_t n_args = cvector_size(params);
-    ident *margs  = malloc(sizeof(ident) * n_args);
+    ident *margs  = allocBytesOrError(sizeof(ident) * n_args);
     memcpy(margs, params, sizeof(ident) * n_args);
     cvector_free(params);
 

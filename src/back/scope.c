@@ -6,7 +6,7 @@
 #include "object.h"
 
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
-    Scope *scope = memallocScope();
+    Scope *scope = allocBytesOrError(sizeof(Scope));
     assert(scope != NULL);
 
     scope->map               = identMapCreate();
@@ -19,7 +19,6 @@ Scope *scopeCreate(int can_access_parent, Scope *parent) {
 void scopeInsert(Scope *scope, ident name, struct Object *obj) {
     assert(scope != NULL);
     if (identMapQuery(&scope->map, name)) {
-        gcUnlock();
         signalError(NAME_ERROR_CODE, errstrfmt("Object with name '%s' already exists.", symtabIdentToString(name)));
     }
     identMapSet(&scope->map, name, obj);
@@ -53,5 +52,5 @@ void scopeDestroy(Scope *scope) {
 
     identMapDestroy(&scope->map);
 
-    memfreeScope(scope);
+    freeBytes(scope);
 }

@@ -4,7 +4,7 @@
 #include "types.h"
 
 Object *objectCreate(enum Type type, uint64_t value) {
-    Object *obj = memallocObject();
+    Object *obj = allocBytesOrError(sizeof(Object));
 
     obj->type  = type;
     obj->value = (void *)value;
@@ -51,7 +51,7 @@ void objectDestroy(Object *obj) {
     case RETURN_ADDRESS_TYPE : break;    // no need
     }
 
-    memfreeObject(obj);
+    freeBytes(obj);
 }
 
 void ref(Object *unit) {
@@ -60,7 +60,6 @@ void ref(Object *unit) {
 
 void unref(Object *unit) {
     if (--unit->ref_count == 0) {
-        // what if unit is not garbage?
         gcDeclareGarbageObject(unit);
     }
 }

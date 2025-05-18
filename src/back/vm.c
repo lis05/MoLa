@@ -421,26 +421,34 @@ void vmExecute(ivec instructions) {
         while (n_destroy--) {
             destroyCheckpoint();
         }
+        gcRecycle(getRecycleAmount());
+
+        static int log_counter = 0;
+        log_counter++;
+        if (log_counter == 1000) {
+            log_counter = 0;
+            molalog("Execution log: ip=%zu\n", ipointer);
+            molalog("Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
+                    cvector_size(objects_stack),
+                    cvector_size(error_handlers_stack),
+                    cvector_size(error_checkpoints));
+            molalog("Imported modules: %zu\n", cvector_size(imported_modules));
+        }
     }
 }
 
 static void exec_POP(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "POP failed: empty objects_stack");
     }
 
     objectsStackPop();
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_SWAP(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWAP failed: less that 2 elements on objects_stack");
     }
 
@@ -451,39 +459,31 @@ static void exec_SWAP(Instruction *instr) {
     objects_stack[size - 2] = t;
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_ENV(Instruction *instr) {
-    gcLock();
     current_env = envGetById(envCreate(env_offset, instr->filename));
 
     // each time CREATE_ENV is executed, a new module is imported
     cvector_push_back(imported_modules, current_env);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_SWITCH_ENV_INS(Instruction *instr) {
-    gcLock();
     current_env = envGetById(instr->env_id);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: empty objects_stack");
     }
 
     Object *obj = objectsStackTop();
 
     if (obj->type != C_FUNCTION_TYPE && obj->type != MOLA_FUNCTION_TYPE) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SWITCH_ENV_OBJ failed: object on the stack is not a function");
     }
 
@@ -495,13 +495,11 @@ static void exec_SWITCH_ENV_OBJ(Instruction *instr) {
     }
 
     ipointer++;
-    gcUnlock();
 
     // note: we do not pop the object from the stack!
 }
 
 static void exec_IMPORT_MODULE(Instruction *instr) {
-    gcLock();
     /*
     we replace each '^' symbol with '../'
 
@@ -531,7 +529,6 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
 
                 char *MOLA_MODULES_PATH = getenv("MOLA_MODULES_PATH");
                 if (MOLA_MODULES_PATH == NULL || strlen(MOLA_MODULES_PATH) == 0) {
-                    gcUnlock();
                     signalError(
                     IMPORT_ERROR_CODE,
                     "Could not find the requested builtin module: MOLA_MODULES_PATH environment variable is missing or empty");
@@ -614,13 +611,11 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
     molalog("Importing module: %s as %s\n", real_path, symtabIdentToString(import_as));
 
     if (identMapQuery(&current_env->globals, import_as)) {
-        gcUnlock();
         signalError(IMPORT_ERROR_CODE,
                     errstrfmt("A global object with name '%s' already exists", symtabIdentToString(import_as)));
     }
 
     if (access(real_path, F_OK) != 0) {
-        gcUnlock();
         signalError(IMPORT_ERROR_CODE, "invalid module");
     }
 
@@ -664,9 +659,9 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
 
     int64_t env_id;
     ivec    compiled_module = compileProgram(real_path, &env_id);
-    gcUnlock();
+
     vmExecute(compiled_module);
-    gcLock();
+
     cvector_free(compiled_module);
 
     // nice!
@@ -686,18 +681,14 @@ static void exec_IMPORT_MODULE(Instruction *instr) {
 
 END:;
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_EXPORT_OBJECT(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "EXPORT_OBJECT failed: empty objects_stack");
     }
 
     if (identMapQuery(&current_env->exported_objects, instr->ident_arg1)) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Exported object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -706,13 +697,10 @@ static void exec_EXPORT_OBJECT(Instruction *instr) {
     objectsStackPop();
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_GLOBAL(Instruction *instr) {
-    gcLock();
     if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -721,13 +709,10 @@ static void exec_CREATE_GLOBAL(Instruction *instr) {
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_FUNCTION(Instruction *instr) {
-    gcLock();
     if (identMapQuery(&current_env->globals, instr->ident_arg1)) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Global object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -735,7 +720,7 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
     int64_t offset = ipointer + 2 - current_env->absolute_offset;
 
     int64_t n_args = instr->n_args;
-    ident  *args   = memalloc(n_args * sizeof(ident));
+    ident  *args   = allocBytesOrError(n_args * sizeof(ident));
     memcpy(args, instr->args, n_args * sizeof(ident));
 
     MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
@@ -745,12 +730,9 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_TYPE(Instruction *instr) {
-    gcLock();
-
     size_t n_fields  = instr->args[0];
     size_t n_methods = instr->args[1];
 
@@ -764,13 +746,10 @@ static void exec_CREATE_TYPE(Instruction *instr) {
     identMapSet(&current_env->globals, instr->ident_arg1, obj);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_METHOD(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "CREATE_METHOD failed: empty objects stack");
     }
 
@@ -778,14 +757,13 @@ static void exec_CREATE_METHOD(Instruction *instr) {
     objectsStackPop();
 
     if (type->type != TYPE_TYPE) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "CREATE_METHOD failed: the object on the stack is not a type");
     }
 
     int64_t offset = ipointer + 2 - current_env->absolute_offset;
 
     int64_t n_args = instr->n_args;
-    ident  *args   = memalloc(n_args * sizeof(ident));
+    ident  *args   = allocBytesOrError(n_args * sizeof(ident));
     memcpy(args, instr->args, n_args * sizeof(ident));
 
     MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
@@ -796,20 +774,16 @@ static void exec_CREATE_METHOD(Instruction *instr) {
     typeValueAddMethod(type->value, instr->ident_arg1, obj);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_CREATE_SCOPE(Instruction *instr) {
-    gcLock();
     Scope *new_scope = scopeCreate((current_scope == NULL) ? 0 : instr->flags, current_scope);
     current_scope    = new_scope;
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_DESTROY_SCOPE(Instruction *instr) {
-    gcLock();
     assert(current_scope != NULL);
 
     // we have to remove all of the error handlers created in this scope
@@ -828,13 +802,10 @@ static void exec_DESTROY_SCOPE(Instruction *instr) {
     current_scope = parent;
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_JUMP_IF_FALSE(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "JUMP_IF_FALSE failed: empty objects stack");
     }
 
@@ -842,31 +813,23 @@ static void exec_JUMP_IF_FALSE(Instruction *instr) {
     objectsStackPop();
 
     if (obj->type != BOOL_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Expected a boolean value");
     }
 
     if (obj->bool_value) {
-        gcUnlock();
         ipointer++;
         return;
     }
 
-    gcMaybeGarbageObject(obj);
     ipointer += instr->int_arg1;
-    gcUnlock();
 }
 
 static void exec_JUMP(Instruction *instr) {
-    gcLock();
     ipointer += instr->int_arg1;
-    gcUnlock();
 }
 
 static void exec_RETURN(Instruction *instr) {
-    gcLock();
     if (cvector_empty(objects_stack)) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "RETURN failed: empty objects_stack");
     }
 
@@ -874,26 +837,21 @@ static void exec_RETURN(Instruction *instr) {
     objectsStackPop();
 
     if (top->type != RETURN_ADDRESS_TYPE) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "RETURN failed: object is not a return address");
     }
 
     int64_t return_address = (int64_t)top->value;
 
     ipointer = return_address;
-    gcUnlock();
 }
 
 static void exec_REGISTER_CATCH(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "REGISTER_CATCH failed: empty objects_stack");
     }
 
     Object *obj = objectsStackTop();
     if (obj->type != INT_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Not an integer");
     }
 
@@ -907,13 +865,10 @@ static void exec_REGISTER_CATCH(Instruction *instr) {
     cvector_push_back(error_handlers_stack, h);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_DESTROY_CATCH(Instruction *instr) {
-    gcLock();
     if (cvector_size(error_handlers_stack) < instr->int_arg1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "DESTROY_CATCH failed: not enough elements on the stack");
     }
 
@@ -922,16 +877,13 @@ static void exec_DESTROY_CATCH(Instruction *instr) {
     }
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_SIGNAL_ERROR(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
-        signalError(INTERNAL_ERROR_CODE,  "SIGNAL_ERROR failed: not enough elements on the stack");
+        signalError(INTERNAL_ERROR_CODE, "SIGNAL_ERROR failed: not enough elements on the stack");
     }
-    
+
     Object *code = objectsStackTop();
     objectsStackPop();
 
@@ -939,30 +891,24 @@ static void exec_SIGNAL_ERROR(Instruction *instr) {
     objectsStackPop();
 
     if (code->type != INT_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Expected an integer error code");
     }
 
     if (msg->type != STRING_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Expected a string error code");
-    }   
+    }
 
-    gcUnlock();
-    signalError(code->int_value, ((StringValue*)msg->value)->string);
+    signalError(code->int_value, ((StringValue *)msg->value)->string);
 }
 
 static void exec_CREATE_VAR(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "CREATE_VAR failed: empty objects_stack");
     }
 
     assert(current_scope != NULL);
 
     if (identMapQuery(&current_scope->map, instr->ident_arg1)) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE,
                     errstrfmt("Local object with name '%s' already exists", symtabIdentToString(instr->ident_arg1)));
     }
@@ -973,13 +919,10 @@ static void exec_CREATE_VAR(Instruction *instr) {
     scopeInsert(current_scope, instr->ident_arg1, top);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_COPY(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "COPY failed: empty objects_stack");
     }
 
@@ -987,7 +930,6 @@ static void exec_COPY(Instruction *instr) {
 
     // any copy of an rvalue can be the rvalue itself
     if (obj->is_rvalue) {
-        gcUnlock();
         ipointer++;
         return;
     }
@@ -1030,7 +972,6 @@ static void exec_COPY(Instruction *instr) {
     case MODULE_TYPE : value = raw64(obj->value); break;
     case NULL_TYPE : break;
     case RETURN_ADDRESS_TYPE : {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "COPY_BY_AUTO failed: RETURN_ADDRESS_TYPE on the stack");
     }
     }
@@ -1039,13 +980,10 @@ static void exec_COPY(Instruction *instr) {
     objectsStackPush(res);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_ASSIGNMENT(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "ASSIGNMENT failed: less than 2 elements on the stack");
     }
 
@@ -1062,10 +1000,7 @@ static void exec_ASSIGNMENT(Instruction *instr) {
 
     objectsStackPush(obj1);
 
-    gcMaybeGarbageObject(obj2);
-
     ipointer++;
-    gcUnlock();
 }
 
 /*
@@ -1179,9 +1114,7 @@ Promotions take place
     }
 
 static void exec_LOGICAL_OR(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LOGICAl_OR failed: less than 2 elements on the stack");
     }
 
@@ -1211,24 +1144,18 @@ static void exec_LOGICAL_OR(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOGICAL_AND(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LOGICAL_AND failed: less than 2 elements on the stack");
     }
 
@@ -1258,24 +1185,18 @@ static void exec_LOGICAL_AND(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_BITWISE_OR(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "BITWISE_OR failed: less than 2 elements on the stack");
     }
 
@@ -1305,24 +1226,18 @@ static void exec_BITWISE_OR(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_BITWISE_XOR(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "BITWISE_XOR failed: less than 2 elements on the stack");
     }
 
@@ -1352,24 +1267,18 @@ static void exec_BITWISE_XOR(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_BITWISE_AND(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "BITWISE_AND failed: less than 2 elements on the stack");
     }
 
@@ -1399,18 +1308,14 @@ static void exec_BITWISE_AND(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 // -1 x=y, 0 x>y, 1 x<y, 2 x!=y (uncomparable)
@@ -1501,9 +1406,7 @@ static int compare(Object *x, Object *y) {
 }
 
 static void exec_EQUAL(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "EQUAL failed: less than 2 elements on the stack");
     }
 
@@ -1518,17 +1421,12 @@ static void exec_EQUAL(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_NOT_EQUAL(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "NOT_EQUAL failed: less than 2 elements on the stack");
     }
 
@@ -1543,17 +1441,12 @@ static void exec_NOT_EQUAL(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LESS_THAN(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LESS_THAN failed: less than 2 elements on the stack");
     }
 
@@ -1568,17 +1461,12 @@ static void exec_LESS_THAN(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LESS_EQUAL(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
     }
 
@@ -1594,17 +1482,12 @@ static void exec_LESS_EQUAL(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_GREATER_THAN(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
     }
 
@@ -1619,17 +1502,12 @@ static void exec_GREATER_THAN(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_GREATER_EQUAL(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LESS_EQUAL failed: less than 2 elements on the stack");
     }
 
@@ -1645,17 +1523,12 @@ static void exec_GREATER_EQUAL(Instruction *instr) {
     res->is_rvalue = 1;
 
     objectsStackPush(res);
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_ADDITION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "ADDITION failed: less than 2 elements on the stack");
     }
 
@@ -1707,24 +1580,18 @@ static void exec_ADDITION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_SUBTRACTION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "SUBTRACTION failed: less than 2 elements on the stack");
     }
 
@@ -1765,24 +1632,18 @@ static void exec_SUBTRACTION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LSHIFT(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LSHIFT failed: less than 2 elements on the stack");
     }
 
@@ -1814,24 +1675,18 @@ static void exec_LSHIFT(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_RSHIFT(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "RSHIFT failed: less than 2 elements on the stack");
     }
 
@@ -1863,24 +1718,18 @@ static void exec_RSHIFT(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_MULTIPLICATION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "MULTIPLICATION failed: less than 2 elements on the stack");
     }
 
@@ -1921,24 +1770,18 @@ static void exec_MULTIPLICATION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_DIVISION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "DIVISION failed: less than 2 elements on the stack");
     }
 
@@ -1967,7 +1810,6 @@ static void exec_DIVISION(Instruction *instr) {
         promoteToINT();
 
         if (y_int == 0) {
-            gcUnlock();
             signalError(ZERO_DIVISION_ERROR_CODE, "Division by zero");
         }
 
@@ -1984,24 +1826,18 @@ static void exec_DIVISION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_REMAINDER(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "REMAINDER failed: less than 2 elements on the stack");
     }
 
@@ -2033,24 +1869,18 @@ static void exec_REMAINDER(Instruction *instr) {
     goto OP_END;
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-    gcMaybeGarbageObject(y);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_POSITIVE(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "POSITIVE failed: less than 1 element on the stack");
     }
 
@@ -2091,23 +1921,18 @@ static void exec_POSITIVE(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_NEGATION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "NEGATIVE failed: less than 1 element on the stack");
     }
 
@@ -2148,23 +1973,18 @@ static void exec_NEGATION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_INVERTION(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "INVERTION failed: less than 1 element on the stack");
     }
 
@@ -2200,23 +2020,18 @@ static void exec_INVERTION(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOGICAL_NOT(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LOGICAL_NOT failed: less than 1 element on the stack");
     }
 
@@ -2262,17 +2077,14 @@ static void exec_LOGICAL_NOT(Instruction *instr) {
     }
 
 OP_ERROR:
-    gcUnlock();
+
     signalError(VALUE_ERROR_CODE, "Unsupported operation");
 
 OP_END:
     res->is_rvalue = 1;
     objectsStackPush(res);
 
-    gcMaybeGarbageObject(x);
-
     ipointer++;
-    gcUnlock();
 }
 
 /* when executiong A:B, caller is set to A
@@ -2280,8 +2092,6 @@ so that it is possible to pass it as the owner in case we want to call the retri
 static Object *caller = NULL;
 
 static void exec_CALL(Instruction *instr) {
-    gcLock();
-
     static int64_t n = 0;
     n                = instr->int_arg1;
 
@@ -2289,7 +2099,6 @@ static void exec_CALL(Instruction *instr) {
     static CFunctionValue    *c_function    = NULL;
 
     if (objectsStackSize() < n + 1) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "CALL failed: too few objects on the stack");
     }
 
@@ -2299,16 +2108,13 @@ static void exec_CALL(Instruction *instr) {
     c_function       = (CFunctionValue *)f->value;
 
     if (f->type != C_FUNCTION_TYPE && f->type != MOLA_FUNCTION_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Not callable");
     }
 
     if (f->type == C_FUNCTION_TYPE && c_function->n_args != UNLIMITED_ARGS && c_function->n_args != n + c_function->is_method) {
-        gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", c_function->n_args, n));
     }
     else if (f->type == MOLA_FUNCTION_TYPE && mola_function->n_args != n + mola_function->is_method) {
-        gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected %d arguments, got %d", mola_function->n_args, n));
     }
 
@@ -2318,6 +2124,8 @@ static void exec_CALL(Instruction *instr) {
         int offset = 0;
         if (mola_function->is_method) {
             scopeInsert(current_scope, mola_function->args[0], caller);
+            unref(caller);
+            caller = NULL;
             offset = 1;
         }
         for (int64_t i = 0; i < n; i++) {
@@ -2328,11 +2136,13 @@ static void exec_CALL(Instruction *instr) {
     }
     else {
         passed_args = n + c_function->is_method;
-        args        = memalloc(sizeof(Object *) * passed_args);
+        args        = allocBytesOrError(sizeof(Object *) * passed_args);
         int offset  = 0;
         if (c_function->is_method) {
             args[0] = caller;
-            offset  = 1;
+            unref(caller);
+            caller = NULL;
+            offset = 1;
         }
         for (int64_t i = 0; i < n; i++) {
             args[i + offset] = objects_stack[objectsStackSize() - 2 - (n - i - 1)];
@@ -2348,16 +2158,13 @@ static void exec_CALL(Instruction *instr) {
         Object *ret = objectCreate(RETURN_ADDRESS_TYPE, raw64(r));
         objectsStackPush(ret);
 
-        gcUnlock();
         ipointer = mola_function->relative_offset + current_env->absolute_offset;
     }
     else {
-        gcUnlock();
         Object *res = c_function->function(passed_args, args);
-        gcLock();
+
         objectsStackPush(res);
 
-        gcUnlock();
         ipointer++;
 
         destroyCheckpoint();    // since there is not going to be a RETURN statement for this call
@@ -2365,9 +2172,7 @@ static void exec_CALL(Instruction *instr) {
 }
 
 static void exec_ACCESS(Instruction *instr) {
-    gcLock();
     if (objectsStackSize() < 2) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "ACCESS failed: not enough objects on the stack");
     }
 
@@ -2377,7 +2182,6 @@ static void exec_ACCESS(Instruction *instr) {
     objectsStackPop();
 
     if (array->type != ARRAY_TYPE || index->type >= FLOAT_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
@@ -2406,71 +2210,57 @@ static void exec_ACCESS(Instruction *instr) {
     objectsStackPush(res);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_BOOL(Instruction *instr) {
-    gcLock();
     Object *obj    = objectCreate(BOOL_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_CHAR(Instruction *instr) {
-    gcLock();
     Object *obj    = objectCreate(CHAR_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_INT(Instruction *instr) {
-    gcLock();
     Object *obj    = objectCreate(INT_TYPE, raw64(instr->int_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_FLOAT(Instruction *instr) {
-    gcLock();
     Object *obj    = objectCreate(FLOAT_TYPE, raw64(instr->float_arg1));
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_STRING(Instruction *instr) {
-    gcLock();
     StringValue *value = stringValueCreate(strlen(instr->string_arg1), instr->string_arg1);
     Object      *obj   = objectCreate(STRING_TYPE, raw64(value));
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_NULL(Instruction *instr) {
-    gcLock();
     Object *obj    = objectCreate(NULL_TYPE, 0);
     obj->is_rvalue = 1;
 
     objectsStackPush(obj);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD(Instruction *instr) {
-    gcLock();
     /*
     0. look for a global object in the builtin(0) environment
     1. look for a global object
@@ -2481,7 +2271,7 @@ static void exec_LOAD(Instruction *instr) {
     if (res != NULL) {
         objectsStackPush(res);
         ipointer++;
-        gcUnlock();
+
         return;
     }
 
@@ -2489,7 +2279,7 @@ static void exec_LOAD(Instruction *instr) {
     if (res != NULL) {
         objectsStackPush(res);
         ipointer++;
-        gcUnlock();
+
         return;
     }
 
@@ -2497,13 +2287,10 @@ static void exec_LOAD(Instruction *instr) {
 
     objectsStackPush(res);
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_FIELD(Instruction *instr) {
-    gcLock();
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LOAD_FIELD failed: empty objects stack");
     }
     Object *obj = objectsStackTop();
@@ -2516,16 +2303,14 @@ static void exec_LOAD_FIELD(Instruction *instr) {
         Object *res = identMapGet(&env->exported_objects, instr->ident_arg1);
 
         if (res == NULL) {
-            gcUnlock();
             signalError(NAME_ERROR_CODE, "Failed to locate an exported object with this name");
         }
         objectsStackPush(res);
         ipointer++;
-        gcUnlock();
+
         return;
     }
     if (obj->type != INSTANCE_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
@@ -2533,14 +2318,12 @@ static void exec_LOAD_FIELD(Instruction *instr) {
     objectsStackPush(field);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void exec_LOAD_METHOD(Instruction *instr) {
     // TODO: handle string and array
-    gcLock();
+
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "LOAD_METHOD failed: empty objects stack");
     }
     Object *obj = objectsStackTop();
@@ -2550,42 +2333,49 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         Object *method = arrayValueLookupMethod(obj->value, instr->ident_arg1);
 
         objectsStackPush(method);
+        if (caller != NULL) {
+            unref(caller);
+        }
         caller = obj;
+        ref(caller);
         ipointer++;
-        gcUnlock();
+
         return;
     }
     else if (obj->type == STRING_TYPE) {
         Object *method = stringValueLookupMethod(obj->value, instr->ident_arg1);
 
         objectsStackPush(method);
+        if (caller != NULL) {
+            unref(caller);
+        }
         caller = obj;
+        ref(caller);
         ipointer++;
-        gcUnlock();
+
         return;
     }
 
     if (obj->type != INSTANCE_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
     Object *method = instanceValueLookupMethod(obj->value, instr->ident_arg1);
     objectsStackPush(method);
 
+    if (caller != NULL) {
+        unref(caller);
+    }
     caller = obj;
+    ref(caller);
 
     ipointer++;
-    gcUnlock();
 }
 
 extern void *array_type_ptr;    // used to create an array via NEW
 
 static void exec_NEW(Instruction *instr) {
-    gcLock();
-
     if (objectsStackEmpty()) {
-        gcUnlock();
         signalError(INTERNAL_ERROR_CODE, "NEW failed: objects stack empty");
     }
 
@@ -2598,12 +2388,11 @@ static void exec_NEW(Instruction *instr) {
         objectsStackPush(obj);
 
         ipointer++;
-        gcUnlock();
+
         return;
     }
 
     if (type->type != TYPE_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Not a type");
     }
 
@@ -2612,7 +2401,6 @@ static void exec_NEW(Instruction *instr) {
     objectsStackPush(obj);
 
     ipointer++;
-    gcUnlock();
 }
 
 static void handleError() {

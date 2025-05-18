@@ -13,6 +13,7 @@
 #define WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE 6
 #define OUT_OF_BOUNDS_ERROR_CODE             7
 #define ZERO_DIVISION_ERROR_CODE             8
+#define OUT_OF_MEMORY_ERROR_CODE             9
 
 struct Scope;
 

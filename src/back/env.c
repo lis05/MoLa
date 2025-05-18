@@ -17,7 +17,7 @@ struct Env *envGetById(int64_t id) {
 }
 
 int64_t envCreate(int64_t absolute_offset, char *path) {
-    Env *env              = memalloc(sizeof(Env));
+    Env *env              = allocBytesOrError(sizeof(Env));
     env->absolute_offset  = absolute_offset;
     env->exported_objects = identMapCreate();
     env->globals          = identMapCreate();

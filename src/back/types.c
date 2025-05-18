@@ -7,13 +7,17 @@
 #include "object.h"
 
 StringValue *stringValueCreate(size_t length, char *string) {
-    StringValue *res = memalloc(sizeof(StringValue));
+    StringValue *res = allocBytesOrError(sizeof(StringValue));
     res->length      = length;
-    res->string      = memalloc(sizeof(char) * length + 1);
+    res->string      = allocBytesOrError(sizeof(char) * length + 1);
     strcpy(res->string, string);
 
     res->gc_mark   = 0;
     res->ref_count = 0;
+
+    gcTrackStringValue(res);
+
+    return res;
 }
 
 StringValue *stringValueCopy(StringValue *val) {
@@ -21,13 +25,13 @@ StringValue *stringValueCopy(StringValue *val) {
 }
 
 void stringValueDestroy(StringValue *val) {
-    memfree(val->string);
-    memfree(val);
+    freeBytes(val->string);
+    freeBytes(val);
 }
 
 char stringValueIndexAccess(StringValue *val, int64_t index) {
     if (!(0 <= index && index < val->length)) {
-        gcUnlock();    // what if I was called without a gc lock?
+        // what if I was called without a gc lock?
         signalError(OUT_OF_BOUNDS_ERROR_CODE, "Index out of bounds");
     }
     return val->string[index];
@@ -57,13 +61,13 @@ int stringCompare(StringValue *first, StringValue *second) {
 }
 
 StringValue *stringConcat(StringValue *first, StringValue *second) {
-    char *str = memalloc(first->length + second->length + 1);
+    char *str = allocBytesOrError(first->length + second->length + 1);
     memcpy(str, first->string, first->length);
     memcpy(str + first->length, second->string, second->length);
     str[first->length + second->length] = '\0';
 
     StringValue *res = stringValueCreate(first->length + second->length, str);
-    memfree(str);
+    freeBytes(str);
     return res;
 }
 
@@ -72,26 +76,37 @@ void stringValueRef(StringValue *unit) {
 }
 
 void stringValueUnref(StringValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageStringValue(unit);
+    }
 }
 
 ArrayValue *arrayValueCreate() {
-    ArrayValue *arr = memalloc(sizeof(ArrayValue));
-    arr->data       = NULL;
+    ArrayValue *arr = allocBytesOrError(sizeof(ArrayValue));
+    arr->data       = NULL;    // todo, make this allocate using allocBytesOrError
 
     arr->gc_mark   = 0;
     arr->ref_count = 0;
+
+    gcTrackArrayValue(arr);
+
+    return arr;
 }
 
 ArrayValue *arrayValueCopy(ArrayValue *val) {
     return val;
 }
 
-void arrayValueDestroy(ArrayValue *val) {}
+void arrayValueDestroy(ArrayValue *val) {
+    for (size_t i = 0; i < cvector_size(val->data); i++) {
+        unref(val->data[i]);
+    }
+    cvector_free(val->data);
+    freeBytes(val);
+}
 
 struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index) {
     if (!(0 <= index && index < cvector_size(val->data))) {
-        gcUnlock();
         signalError(OUT_OF_BOUNDS_ERROR_CODE, "Index out of bounds");
     }
 
@@ -111,7 +126,6 @@ struct Object *arrayValueLookupMethod(ArrayValue *val, ident name) {
         return ARRAY_METHOD_RESIZE_OBJECT;    // it can be overwritten, fix later
     }
 
-    gcUnlock();
     signalError(NAME_COLLISION_ERROR_CODE, errstrfmt("Failed to locate method '%s'", symtabIdentToString(name)));
 }
 
@@ -120,24 +134,28 @@ void arrayValueRef(ArrayValue *unit) {
 }
 
 void arrayValueUnref(ArrayValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageArrayValue(unit);
+    }
 }
 
 TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods) {
-    TypeValue *res = memalloc(sizeof(TypeValue));
+    TypeValue *res = allocBytesOrError(sizeof(TypeValue));
 
     res->n_fields = n_fields;
-    res->fields   = memalloc(sizeof(ident) * n_fields);
+    res->fields   = allocBytesOrError(sizeof(ident) * n_fields);
     memcpy(res->fields, fields, sizeof(ident) * n_fields);
 
     res->n_methods    = n_methods;
-    res->method_names = memalloc(sizeof(ident) * n_methods);
+    res->method_names = allocBytesOrError(sizeof(ident) * n_methods);
     memcpy(res->method_names, methods, sizeof(ident) * n_methods);
 
     res->methods = identMapCreate();
 
     res->gc_mark   = 0;
     res->ref_count = 0;
+
+    gcTrackTypeValue(res);
 
     return res;
 }
@@ -147,15 +165,14 @@ TypeValue *typeValueCopy(TypeValue *val) {
 }
 
 void typeValueDestroy(TypeValue *val) {
-    memfree(val->fields);
-    memfree(val->method_names);
+    freeBytes(val->fields);
+    freeBytes(val->method_names);
     identMapDestroy(&val->methods);
-    memfree(val);
+    freeBytes(val);
 }
 
 void typeValueAddMethod(TypeValue *val, ident name, struct Object *method) {
     if (identMapQuery(&val->methods, name)) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE, "Method with this name has already been defined");
     }
 
@@ -168,7 +185,6 @@ void typeValueAddMethod(TypeValue *val, ident name, struct Object *method) {
         }
     }
     if (!flag) {
-        gcUnlock();
         signalError(NAME_ERROR_CODE, "Invalid method name");
     }
 
@@ -178,7 +194,6 @@ void typeValueAddMethod(TypeValue *val, ident name, struct Object *method) {
 struct Object *typeValueLookupMethod(TypeValue *val, ident name) {
     void *res = identMapGet(&val->methods, name);
     if (res == NULL) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE, errstrfmt("Failed to locate method '%s'", symtabIdentToString(name)));
     }
 
@@ -190,11 +205,13 @@ void typeValueRef(TypeValue *unit) {
 }
 
 void typeValueUnref(TypeValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageTypeValue(unit);
+    }
 }
 
 InstanceValue *instanceValueCreate(struct TypeValue *type) {
-    InstanceValue *res = memalloc(sizeof(InstanceValue));
+    InstanceValue *res = allocBytesOrError(sizeof(InstanceValue));
 
     res->type   = type;
     res->fields = identMapCreate();
@@ -205,6 +222,8 @@ InstanceValue *instanceValueCreate(struct TypeValue *type) {
     res->ref_count = 0;
     res->gc_mark   = 0;
 
+    gcTrackInstanceValue(res);
+
     return res;
 }
 
@@ -213,13 +232,13 @@ InstanceValue *instanceValueCopy(InstanceValue *val) {
 }
 
 void instanceValueDestroy(InstanceValue *val) {
-    memfree(val);
+    identMapDestroy(&val->fields);
+    freeBytes(val);
 }
 
 struct Object *instanceValueLookupField(InstanceValue *val, ident name) {
     void *res = identMapGet(&val->fields, name);
     if (res == NULL) {
-        gcUnlock();
         signalError(NAME_COLLISION_ERROR_CODE, "Failed to locate a field with this name");
     }
 
@@ -240,11 +259,13 @@ void instanceValueRef(InstanceValue *unit) {
 }
 
 void instanceValueUnref(InstanceValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageInstanceValue(unit);
+    }
 }
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {
-    MolaFunctionValue *res = memalloc(sizeof(MolaFunctionValue));
+    MolaFunctionValue *res = allocBytesOrError(sizeof(MolaFunctionValue));
     res->env               = env;
     res->relative_offset   = rel_offset;
     res->n_args            = n_args;
@@ -253,6 +274,10 @@ MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, 
     res->ref_count = 0;
     res->gc_mark   = 0;
     res->is_method = 0;
+
+    gcTrackMolaFunctionValue(res);
+
+    return res;
 }
 
 MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {
@@ -260,8 +285,8 @@ MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {
 }
 
 void molaFunctionValueDestroy(MolaFunctionValue *val) {
-    memfree(val->args);
-    memfree(val);
+    freeBytes(val->args);
+    freeBytes(val);
 }
 
 void molaFunctionValueRef(MolaFunctionValue *unit) {
@@ -269,11 +294,13 @@ void molaFunctionValueRef(MolaFunctionValue *unit) {
 }
 
 void molaFunctionValueUnref(MolaFunctionValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageMolaFunctionValue(unit);
+    }
 }
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {
-    CFunctionValue *res = memalloc(sizeof(CFunctionValue));
+    CFunctionValue *res = allocBytesOrError(sizeof(CFunctionValue));
     res->env            = env;
     res->n_args         = n_args;
     res->function       = function;
@@ -281,6 +308,10 @@ CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction f
     res->ref_count = 0;
     res->gc_mark   = 0;
     res->is_method = 0;
+
+    gcTrackCFunctionValue(res);
+
+    return res;
 }
 
 CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {
@@ -288,7 +319,7 @@ CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {
 }
 
 void cFunctionValueDestroy(CFunctionValue *val) {
-    memfree(val);
+    freeBytes(val);
 }
 
 void cFunctionValueRef(CFunctionValue *unit) {
@@ -296,7 +327,9 @@ void cFunctionValueRef(CFunctionValue *unit) {
 }
 
 void cFunctionValueUnref(CFunctionValue *unit) {
-    unit->ref_count--;
+    if (--unit->ref_count == 0) {
+        gcDeclareGarbageCFunctionValue(unit);
+    }
 }
 
 // ============================================
@@ -305,7 +338,6 @@ void cFunctionValueUnref(CFunctionValue *unit) {
 Object *arrayResizeMethod(size_t n_args, struct Object **args) {
     // TODO: add unreferencing when resizing to smaller size
     if (n_args != 2) {
-        gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected one argument, got %d", n_args - 1));
     }
 
@@ -316,7 +348,6 @@ Object *arrayResizeMethod(size_t n_args, struct Object **args) {
     Object *size = args[1];
 
     if (size->type >= FLOAT_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
@@ -341,7 +372,6 @@ Object *arrayResizeMethod(size_t n_args, struct Object **args) {
     }
 
     if (size < 0) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Cannot resize to negative size");
     }
 
@@ -361,7 +391,6 @@ Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
         return args[0];
     }
     if (n_args != 2) {
-        gcUnlock();
         signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, errstrfmt("Expected zero or one arguments, got %d", n_args - 1));
     }
 
@@ -372,7 +401,6 @@ Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
     Object *size = args[1];
 
     if (size->type >= FLOAT_TYPE) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
@@ -397,7 +425,6 @@ Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
     }
 
     if (size < 0) {
-        gcUnlock();
         signalError(VALUE_ERROR_CODE, "Cannot resize to negative size");
     }
 
@@ -419,6 +446,7 @@ void initTypes() {
         method                     = cFunctionValueCreate(0, 2, arrayResizeMethod);
         method->is_method          = 1;
         ARRAY_METHOD_RESIZE_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        cFunctionValueRef(method);
         ref(ARRAY_METHOD_RESIZE_OBJECT);
     }
 
@@ -427,6 +455,7 @@ void initTypes() {
         method                          = cFunctionValueCreate(0, UNLIMITED_ARGS, arrayConstructorMethod);
         method->is_method               = 1;
         ARRAY_METHOD_CONSTRUCTOR_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
-        ref(ARRAY_METHOD_RESIZE_OBJECT);
+        cFunctionValueRef(method);
+        ref(ARRAY_METHOD_CONSTRUCTOR_OBJECT);
     }
 }

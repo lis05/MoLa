@@ -7,7 +7,8 @@ var
     NameError = 5,
     WrongNumberOfArgumentsError = 6,
     OutOfBoundsError = 7,
-    ZeroDivisionError = 8
+    ZeroDivisionError = 8,
+    OutOfMemoryError = 9
 
 export 
     InternalError as InternalError,
@@ -18,4 +19,5 @@ export
     NameError as NameError,
     WrongNumberOfArgumentsError as WrongNumberOfArgumentsError,
     OutOfBoundsError as OutOfBoundsError,
-    ZeroDivisionError as ZeroDivisionError
+    ZeroDivisionError as ZeroDivisionError,
+    OutOfMemoryError as OutOfMemoryError 
