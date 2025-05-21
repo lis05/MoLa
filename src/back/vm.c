@@ -12,6 +12,9 @@
 #include "types.h"
 #include <fcntl.h>
 #include <libgen.h>
+#include <time.h>
+
+#define RECYCLING_DELAY 20
 
 extern Symtab *lex_symtab;
 
@@ -421,13 +424,19 @@ void vmExecute(ivec instructions) {
         while (n_destroy--) {
             destroyCheckpoint();
         }
-        gcRecycle(getRecycleAmount());
+        static int recycling_counter = 0;
+        recycling_counter++;
+        if (recycling_counter == RECYCLING_DELAY) {
+            recycling_counter = 0;
+            gcRecycle(getRecycleAmount());
+        }
 
-        static int log_counter = 0;
-        log_counter++;
-        if (log_counter == 1000) {
-            log_counter = 0;
-            molalog("Execution log: ip=%zu\n", ipointer);
+        static clock_t clocks = 0;
+        if (0 && clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
+            clocks = clock();
+            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb\n",
+                    ipointer,
+                    getAllocatedBytes() / 1e6);
             molalog("Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
                     cvector_size(objects_stack),
                     cvector_size(error_handlers_stack),
@@ -1320,6 +1329,7 @@ OP_END:
 
 // -1 x=y, 0 x>y, 1 x<y, 2 x!=y (uncomparable)
 static int compare(Object *x, Object *y) {
+    // fix this shit
     Object *res;
     if (x->type != y->type) {
         return 2;

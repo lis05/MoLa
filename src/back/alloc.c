@@ -13,7 +13,7 @@ void *allocBytesOrNULL(size_t bytes) {
     static uint16_t cnt = 0;
     cnt++;
     if (cnt == 0) {
-        molalog("Allocated %zumb (%d%%)\n", bytes_allocated / 1000000, (int)(bytes_allocated * 100 / ALLOCATION_LIMIT));
+        //molalog("Allocated %zumb (%d%%)\n", bytes_allocated / 1000000, (int)(bytes_allocated * 100 / ALLOCATION_LIMIT));
     }
 
     bytes += sizeof(size_t);

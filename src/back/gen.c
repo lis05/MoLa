@@ -2275,6 +2275,7 @@ static ilist gen_for_stmt(AstNode *node) {
         <   JUMP_IF_FALSE REL@2
         <   gen(stmt)
         <   gen(step)
+        <   POP             // because step is an expression that does not get consumed later
         <   JUMP REL@1
         2   DESTROY_SCOPE
 
@@ -2286,7 +2287,7 @@ static ilist gen_for_stmt(AstNode *node) {
 
         ilist ini = init != NULL ? gen(init) : ilistCreate();
         ilist con = cond != NULL ? gen(cond) : ilistCreate();
-        ilist ste = step != NULL ? gen(step) : ilistCreate();
+        ilist ste = step != NULL ? gen_expr(step) : ilistCreate();
         ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
 
         int64_t stmsize = stm.size;
@@ -2296,10 +2297,11 @@ static ilist gen_for_stmt(AstNode *node) {
         ilistAppend(&output, genInsCREATE_SCOPE(info(node), 1));
         ilistLink(&output, &ini);
         ilistLink(&output, &con);
-        ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), stmsize + stesize + 2));
+        ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), stmsize + stesize + 3));
         ilistLink(&output, &stm);
         ilistLink(&output, &ste);
-        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 1 + consize)));
+        if (step != NULL) ilistAppend(&output, genInsPOP(info(node)));
+        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 2 + consize)));
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
         ctx_open_scopes_since_function--;
@@ -2316,7 +2318,7 @@ static ilist gen_for_stmt(AstNode *node) {
                 ins->int_arg1 = -offset + 1 + ini.size;
             }
             else if (ins->flags == LOOP_BREAK_FLAG) {
-                ins->int_arg1 = (int64_t)output.size - offset - 1;
+                ins->int_arg1 = (int64_t)output.size - offset;
             }
             else {
                 molalog("Strange instruction (JUMP, offset = 0) in %s, line %d\n", ins->filename, ins->lineno);
@@ -2333,6 +2335,7 @@ static ilist gen_for_stmt(AstNode *node) {
     <   gen(init)
     1   gen(stmt)
     <   gen(step)
+    <   POP             // because step is an expression that does not get consumed later
     <   JUMP REL@1
     <   DESTROY_SCOPE
 
@@ -2343,7 +2346,7 @@ static ilist gen_for_stmt(AstNode *node) {
     ctx_open_scopes_since_function++;
 
     ilist ini = init != NULL ? gen(init) : ilistCreate();
-    ilist ste = step != NULL ? gen(step) : ilistCreate();
+    ilist ste = step != NULL ? gen_expr(step) : ilistCreate();
     ilist stm = stmt != NULL ? gen(stmt) : ilistCreate();
 
     int64_t stmsize = stm.size;
@@ -2354,7 +2357,8 @@ static ilist gen_for_stmt(AstNode *node) {
     ilistLink(&output, &ini);
     ilistLink(&output, &stm);
     ilistLink(&output, &ste);
-    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize)));
+    if (step != NULL) ilistAppend(&output, genInsPOP(info(node)));
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + 1 + stmsize)));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
     ctx_open_scopes_since_function--;
@@ -2371,7 +2375,7 @@ static ilist gen_for_stmt(AstNode *node) {
             ins->int_arg1 = -offset + 1 + inisize;
         }
         else if (ins->flags == LOOP_BREAK_FLAG) {
-            ins->int_arg1 = (int64_t)output.size - offset - 1;
+            ins->int_arg1 = (int64_t)output.size - offset;
         }
         else {
             molalog("Strange instruction (JUMP, offset = 0) in %s, line %d\n", ins->filename, ins->lineno);

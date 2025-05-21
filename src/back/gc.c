@@ -58,31 +58,31 @@ cvector_vector_type(MolaFunctionValue *) mola_functions_tracked;
 cvector_vector_type(CFunctionValue *) c_functions_tracked;
 
 void gcTrackObject(struct Object *unit) {
-    cvector_push_back(objects_tracked, unit);
+    //cvector_push_back(objects_tracked, unit);
 }
 
 void gcTrackStringValue(struct StringValue *unit) {
-    cvector_push_back(strings_tracked, unit);
+    //cvector_push_back(strings_tracked, unit);
 }
 
 void gcTrackArrayValue(struct ArrayValue *unit) {
-    cvector_push_back(arrays_tracked, unit);
+    //cvector_push_back(arrays_tracked, unit);
 }
 
 void gcTrackTypeValue(struct TypeValue *unit) {
-    cvector_push_back(types_tracked, unit);
+    //cvector_push_back(types_tracked, unit);
 }
 
 void gcTrackInstanceValue(struct InstanceValue *unit) {
-    cvector_push_back(instances_tracked, unit);
+    //cvector_push_back(instances_tracked, unit);
 }
 
 void gcTrackMolaFunctionValue(struct MolaFunctionValue *unit) {
-    cvector_push_back(mola_functions_tracked, unit);
+    //cvector_push_back(mola_functions_tracked, unit);
 }
 
 void gcTrackCFunctionValue(struct CFunctionValue *unit) {
-    cvector_push_back(c_functions_tracked, unit);
+    //cvector_push_back(c_functions_tracked, unit);
 }
 
 void gcInit(struct VM *vm) {}
