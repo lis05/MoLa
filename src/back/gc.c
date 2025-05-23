@@ -134,11 +134,11 @@ void gcRecycle(size_t bytes) {
     cvector_clear(c_functions_maybe_trash);
 
     size_t recycled = 0;
-    /*printf("===================\n");
+    printf("===================\n");
      for (int i = 0; i < cvector_size(objects_trash); i++) {
          printf("%p\n", objects_trash[i]);
          fflush(stdout);
-     }*/
+     }
     while (recycled < bytes + 1000) {
         if (!cvector_empty(objects_trash)) {
             size_t before = getAllocatedBytes();         // !

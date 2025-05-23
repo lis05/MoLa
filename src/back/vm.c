@@ -14,7 +14,7 @@
 #include <libgen.h>
 #include <time.h>
 
-#define RECYCLING_DELAY 20
+#define RECYCLING_DELAY 1
 
 extern Symtab *lex_symtab;
 
@@ -75,6 +75,7 @@ static void exec_LOAD_FIELD(Instruction *instr);
 static void exec_LOAD_METHOD(Instruction *instr);
 static void exec_NEW(Instruction *instr);
 static void exec_HALT(Instruction *instr);
+static void exec_UNREF(Instruction *instr);
 
 extern TypeValue *error_type;
 
@@ -99,6 +100,13 @@ cvector_vector_type(int64_t) error_checkpoints;
 int64_t env_offset = 0;    // set when imported
 
 cvector_vector_type(Env *) imported_modules;
+
+typedef struct ReferencedObject {
+    Object *obj;
+    int64_t ip;
+} ReferencedObject;
+
+cvector_vector_type(ReferencedObject) referenced_stack;
 
 void checkpoint() {
     cvector_push_back(error_checkpoints, ipointer);
@@ -416,6 +424,11 @@ void vmExecute(ivec instructions) {
             }
             return;
         }
+        case UNREF_IC : {
+            exec_UNREF(instr);
+            break;
+        }
+
         default : {
             signalError(INTERNAL_ERROR_CODE, "unknown instruction");
             exit(-1);    // cleaning after yourself? nah
@@ -434,9 +447,7 @@ void vmExecute(ivec instructions) {
         static clock_t clocks = 0;
         if (0 && clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
             clocks = clock();
-            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb\n",
-                    ipointer,
-                    getAllocatedBytes() / 1e6);
+            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb\n", ipointer, getAllocatedBytes() / 1e6);
             molalog("Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
                     cvector_size(objects_stack),
                     cvector_size(error_handlers_stack),
@@ -2134,8 +2145,14 @@ static void exec_CALL(Instruction *instr) {
         int offset = 0;
         if (mola_function->is_method) {
             scopeInsert(current_scope, mola_function->args[0], caller);
-            unref(caller);
+            
+            ReferencedObject r;
+            r.obj = caller;
+            r.ip = ipointer + 1;
+            ref(caller);
+            cvector_push_back(referenced_stack, r);
             caller = NULL;
+
             offset = 1;
         }
         for (int64_t i = 0; i < n; i++) {
@@ -2150,8 +2167,14 @@ static void exec_CALL(Instruction *instr) {
         int offset  = 0;
         if (c_function->is_method) {
             args[0] = caller;
-            unref(caller);
+            
+            ReferencedObject r;
+            r.obj = caller;
+            r.ip = ipointer + 1;
+            ref(caller);
+            cvector_push_back(referenced_stack, r);
             caller = NULL;
+
             offset = 1;
         }
         for (int64_t i = 0; i < n; i++) {
@@ -2366,6 +2389,8 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         return;
     }
 
+    
+
     if (obj->type != INSTANCE_TYPE) {
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
@@ -2409,6 +2434,20 @@ static void exec_NEW(Instruction *instr) {
     InstanceValue *instance = instanceValueCreate(type->value);
     Object        *obj      = objectCreate(INSTANCE_TYPE, raw64(instance));
     objectsStackPush(obj);
+
+    ipointer++;
+}
+
+static void exec_UNREF(Instruction *instr) {
+    if (!cvector_empty(referenced_stack)) {
+        ReferencedObject top = *cvector_back(referenced_stack);
+
+        if (top.ip == ipointer) {
+            unref(top.obj);
+            cvector_pop_back(referenced_stack);
+        }
+    }
+
 
     ipointer++;
 }
@@ -2469,7 +2508,7 @@ ivec compileProgram(char *filename, int64_t *env_id) {
 
     molalog("Creating log\n");
     int fd;
-    if (instructions.size > 50) {
+    if (instructions.size > 1000) {
         fd = dup(1);
         close(1);
         static char buf[1024];
@@ -2486,7 +2525,7 @@ ivec compileProgram(char *filename, int64_t *env_id) {
         node = node->next;
         pos++;
     }
-    if (instructions.size > 50) {
+    if (instructions.size > 1000) {
         close(1);
         dup2(fd, 1);
     }

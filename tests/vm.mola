@@ -1,3 +1,16 @@
-for var i = 0; i < 1e6; i = i + 1 {
-    
+type X {
+    f()
+}
+
+constructor () of X {
+    return this
+}
+
+method f() of X {
+}
+
+while true {
+    var x = new X
+    x:f()
+    x = (new Array(100)):resize(500)
 }

@@ -624,6 +624,15 @@ void genPrintInstrShort(int64_t pos, Instruction *instr) {
         printf("\n");
         return;
     }
+    case UNREF_IC : {
+        printf("%-20s    ", "UNREF_IC");
+        printf("lineno=%-4lld ", instr->lineno);
+        printf("n_args=%-4lld ", instr->n_args);
+        printf("env=%-4lld ", instr->env_id);
+
+        printf("\n");
+        return;
+    }
     default : {
         printf("%-20s    ", "INVALID");
         printf("lineno=%-4lld ", instr->lineno);
@@ -1358,6 +1367,18 @@ Instruction genInsHALT(char *filename, size_t lineno, int64_t env_id) {
     res.n_args   = 0;
 
     res.code = HALT_IC;
+    return res;
+}
+
+Instruction genInsUNREF(char *filename, size_t lineno, int64_t env_id) {
+    Instruction res;
+    res.id       = instr_id++;
+    res.filename = filename;
+    res.lineno   = lineno;
+    res.env_id   = env_id;
+    res.n_args   = 0;
+
+    res.code = UNREF_IC;
     return res;
 }
 
@@ -2300,7 +2321,9 @@ static ilist gen_for_stmt(AstNode *node) {
         ilistAppend(&output, genInsJUMP_IF_FALSE(info(cond), stmsize + stesize + 3));
         ilistLink(&output, &stm);
         ilistLink(&output, &ste);
-        if (step != NULL) ilistAppend(&output, genInsPOP(info(node)));
+        if (step != NULL) {
+            ilistAppend(&output, genInsPOP(info(node)));
+        }
         ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 2 + consize)));
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
@@ -2357,7 +2380,9 @@ static ilist gen_for_stmt(AstNode *node) {
     ilistLink(&output, &ini);
     ilistLink(&output, &stm);
     ilistLink(&output, &ste);
-    if (step != NULL) ilistAppend(&output, genInsPOP(info(node)));
+    if (step != NULL) {
+        ilistAppend(&output, genInsPOP(info(node)));
+    }
     ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + 1 + stmsize)));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
@@ -2819,6 +2844,7 @@ static ilist gen_new(AstNode *node) {
     <   SWITCH_ENV *env of the function A*
     <   CREATE_SCOPE WITHOUT_PARENT_ACCESS
     <   CALL n
+    <   UNREF
     <   DESTROY_SCOPE
     <   SWITCH_ENV
     */
@@ -2851,6 +2877,7 @@ static ilist gen_new(AstNode *node) {
     ilistAppend(&output, genInsSWITCH_ENV_OBJ(info(node)));
     ilistAppend(&output, genInsCREATE_SCOPE(info(node), 0));
     ilistAppend(&output, genInsCALL(info(node), n));
+    ilistAppend(&output, genInsUNREF(info(node)));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
     ilistAppend(&output, genInsSWITCH_ENV_INS(info(node)));
 
@@ -3246,8 +3273,11 @@ static ilist gen_primary(AstNode *node) {
         > SWITCH_ENV_OBJ
         > CREATE_SCOPE WITHOUT_PARENT_ACCESS
         > CALL n
+        > UNREF
         > DESTROY_SCOPE
         > SWITCH_ENV_INS
+
+        CALL
         */
 
         int64_t n = 0;
@@ -3276,6 +3306,7 @@ static ilist gen_primary(AstNode *node) {
         ilistAppend(&output, genInsSWITCH_ENV_OBJ(info(node)));
         ilistAppend(&output, genInsCREATE_SCOPE(info(node), 0));
         ilistAppend(&output, genInsCALL(info(node), n));
+        ilistAppend(&output, genInsUNREF(info(node)));
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
         ilistAppend(&output, genInsSWITCH_ENV_INS(info(node)));
 

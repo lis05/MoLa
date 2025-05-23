@@ -535,6 +535,12 @@ Creates an empty instance of the given type t, pushing it onto the stack.
 
 Raises ValueError if t is not a type object.
 
+#### `HALT`
+Stops the program
+
+#### `UNREF`
+Unreferences one object from the referenced_stack. It is needed because the CALL instruction might need to preserve the caller objects, which would be impossible since the program might need that object valid during multiple instructions.
+
 ## MoLa code -> MoLaVM instructions
 
 Some notations:
@@ -905,6 +911,7 @@ where INS is the instruction that executed operation op
 #   SWITCH_ENV *env of the function A*
 #   CREATE_SCOPE WITHOUT_PARENT_ACCESS
 #   CALL n
+#   UNREF
 #   DESTROY_SCOPE   
 #   SWITCH_ENV
 ```

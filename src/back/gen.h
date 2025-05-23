@@ -62,7 +62,8 @@ enum InstructionCode {
     LOAD_FIELD_IC,
     LOAD_METHOD_IC,
     NEW_IC,
-    HALT_IC
+    HALT_IC,
+    UNREF_IC
 };
 
 // instructions where the continue/break statements have to jump
