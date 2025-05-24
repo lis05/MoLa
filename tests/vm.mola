@@ -1,3 +1,7 @@
 while true {
     var x = new Array(100)
+    var y = new Array(100)
+
+    x[0] = y
+    y[0] = x
 }

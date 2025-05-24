@@ -968,11 +968,8 @@ static void exec_COPY(Instruction *instr) {
     Object *obj = objectsStackTop();
 
     // any copy of an rvalue can be the rvalue itself
-    // see this? there wasn't "objectsStackPush" before
-    // that's why it was buggy
     if (obj->is_rvalue) {
         ipointer++;
-        objectsStackPush(obj);
         return;
     }
 
@@ -1019,6 +1016,7 @@ static void exec_COPY(Instruction *instr) {
     }
 
     Object *res = objectCreate(obj->type, value);
+    res->is_rvalue = 1;
     objectsStackPush(res);
 
     ipointer++;
@@ -1050,6 +1048,24 @@ static void exec_ASSIGNMENT(Instruction *instr) {
     else if (obj1->type == FLOAT_TYPE) {
         stat_created_floats--;
     }
+    else if (obj1->type == STRING_TYPE) {
+        stringValueUnref(obj1->value);
+    }
+    else if (obj1->type == ARRAY_TYPE) {
+        arrayValueUnref(obj1->value);
+    }
+    else if (obj1->type == TYPE_TYPE) {
+        typeValueUnref(obj1->value);
+    }
+    else if (obj1->type == INSTANCE_TYPE) {
+        instanceValueUnref(obj1->value);
+    }
+    else if (obj1->type == MOLA_FUNCTION_TYPE) {
+        molaFunctionValueUnref(obj1->value);
+    }
+    else if (obj1->type == C_FUNCTION_TYPE) {
+        cFunctionValueUnref(obj1->value);
+    }
 
     obj1->type = obj2->type;
 
@@ -1071,6 +1087,24 @@ static void exec_ASSIGNMENT(Instruction *instr) {
     }
     else if (obj1->type == FLOAT_TYPE) {
         stat_created_floats++;
+    }
+    else if (obj1->type == STRING_TYPE) {
+        stringValueRef(obj1->value);
+    }
+    else if (obj1->type == ARRAY_TYPE) {
+        arrayValueRef(obj1->value);
+    }
+    else if (obj1->type == TYPE_TYPE) {
+        typeValueRef(obj1->value);
+    }
+    else if (obj1->type == INSTANCE_TYPE) {
+        instanceValueRef(obj1->value);
+    }
+    else if (obj1->type == MOLA_FUNCTION_TYPE) {
+        molaFunctionValueRef(obj1->value);
+    }
+    else if (obj1->type == C_FUNCTION_TYPE) {
+        cFunctionValueRef(obj1->value);
     }
 
     objectsStackPush(obj1);
@@ -2293,7 +2327,6 @@ static void exec_ACCESS(Instruction *instr) {
     }
 
     Object *res    = arrayValueIndexAccess(array->value, x_int);
-    res->is_rvalue = 1;
     objectsStackPush(res);
 
     ipointer++;
