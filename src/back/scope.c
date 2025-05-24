@@ -4,8 +4,10 @@
 #include "error.h"
 #include "gc.h"
 #include "object.h"
+#include "stat.h"
 
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
+    stat_created_scopes++;
     Scope *scope = allocBytesOrError(sizeof(Scope));
     assert(scope != NULL);
 
@@ -48,6 +50,7 @@ END_SCOPE:
 }
 
 void scopeDestroy(Scope *scope) {
+    stat_created_scopes--;
     assert(scope != NULL);
 
     identMapDestroy(&scope->map);

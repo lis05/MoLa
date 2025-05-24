@@ -19,6 +19,8 @@ back/object.c
 back/object.h
 back/scope.c
 back/scope.h
+back/stat.c
+back/stat.h
 back/types.c
 back/types.h
 back/vm.c

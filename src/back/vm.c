@@ -8,6 +8,7 @@
 #include "gen.h"
 #include "object.h"
 #include "scope.h"
+#include "stat.h"
 #include "sys/unistd.h"
 #include "types.h"
 #include <fcntl.h>
@@ -445,14 +446,32 @@ void vmExecute(ivec instructions) {
         }
 
         static clock_t clocks = 0;
-        if (0 && clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
+        if (clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
             clocks = clock();
             molalog("Execution log: ip=%zu | allocated memory: %.2lfmb\n", ipointer, getAllocatedBytes() / 1e6);
-            molalog("Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
+            molalog("  Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
                     cvector_size(objects_stack),
                     cvector_size(error_handlers_stack),
                     cvector_size(error_checkpoints));
-            molalog("Imported modules: %zu\n", cvector_size(imported_modules));
+            molalog("  Imported modules: %zu | referenced_stack: %zu\n",
+                    cvector_size(imported_modules),
+                    cvector_size(referenced_stack));
+            molalog("  O:%lld N:%lld B:%lld C:%lld I:%lld F:%lld S:%lld A:%lld T:%lld IN:%lld MF:%lld CF:%lld\n", 
+                stat_created_objects,
+                stat_created_nulls,
+                stat_created_bools,
+                stat_created_chars,
+                stat_created_ints,
+                stat_created_floats,
+                stat_created_strings,
+                stat_created_arrays,
+                stat_created_types,
+                stat_created_instances,
+                stat_created_mola_functions,
+                stat_created_c_functions
+            );
+            molalog("  SC:%lld IM:%lld\n", stat_created_scopes, stat_created_ident_maps)
+            molalog("\n");
         }
     }
 }
@@ -949,8 +968,11 @@ static void exec_COPY(Instruction *instr) {
     Object *obj = objectsStackTop();
 
     // any copy of an rvalue can be the rvalue itself
+    // see this? there wasn't "objectsStackPush" before
+    // that's why it was buggy
     if (obj->is_rvalue) {
         ipointer++;
+        objectsStackPush(obj);
         return;
     }
 
@@ -1013,10 +1035,43 @@ static void exec_ASSIGNMENT(Instruction *instr) {
     Object *obj2 = objectsStackTop();
     objectsStackPop();
 
+    if (obj1->type == NULL_TYPE) {
+        stat_created_nulls--;
+    }
+    else if (obj1->type == BOOL_TYPE) {
+        stat_created_bools--;
+    }
+    else if (obj1->type == CHAR_TYPE) {
+        stat_created_chars--;
+    }
+    else if (obj1->type == INT_TYPE) {
+        stat_created_ints--;
+    }
+    else if (obj1->type == FLOAT_TYPE) {
+        stat_created_floats--;
+    }
+
     obj1->type = obj2->type;
 
     // this works because we basically copy the entire union of obj2 into obj1
     obj1->value = obj2->value;
+
+
+    if (obj1->type == NULL_TYPE) {
+        stat_created_nulls++;
+    }
+    else if (obj1->type == BOOL_TYPE) {
+        stat_created_bools++;
+    }
+    else if (obj1->type == CHAR_TYPE) {
+        stat_created_chars++;
+    }
+    else if (obj1->type == INT_TYPE) {
+        stat_created_ints++;
+    }
+    else if (obj1->type == FLOAT_TYPE) {
+        stat_created_floats++;
+    }
 
     objectsStackPush(obj1);
 
@@ -2145,11 +2200,10 @@ static void exec_CALL(Instruction *instr) {
         int offset = 0;
         if (mola_function->is_method) {
             scopeInsert(current_scope, mola_function->args[0], caller);
-            
+
             ReferencedObject r;
             r.obj = caller;
-            r.ip = ipointer + 1;
-            ref(caller);
+            r.ip  = ipointer + 1;
             cvector_push_back(referenced_stack, r);
             caller = NULL;
 
@@ -2167,11 +2221,10 @@ static void exec_CALL(Instruction *instr) {
         int offset  = 0;
         if (c_function->is_method) {
             args[0] = caller;
-            
+
             ReferencedObject r;
             r.obj = caller;
-            r.ip = ipointer + 1;
-            ref(caller);
+            r.ip  = ipointer + 1;
             cvector_push_back(referenced_stack, r);
             caller = NULL;
 
@@ -2195,6 +2248,7 @@ static void exec_CALL(Instruction *instr) {
     }
     else {
         Object *res = c_function->function(passed_args, args);
+        freeBytes(args);
 
         objectsStackPush(res);
 
@@ -2389,8 +2443,6 @@ static void exec_LOAD_METHOD(Instruction *instr) {
         return;
     }
 
-    
-
     if (obj->type != INSTANCE_TYPE) {
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
@@ -2447,7 +2499,6 @@ static void exec_UNREF(Instruction *instr) {
             cvector_pop_back(referenced_stack);
         }
     }
-
 
     ipointer++;
 }

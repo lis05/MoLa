@@ -5,8 +5,10 @@
 #include "error.h"
 #include "gc.h"
 #include "object.h"
+#include "stat.h"
 
 StringValue *stringValueCreate(size_t length, char *string) {
+    stat_created_strings++;
     StringValue *res = allocBytesOrError(sizeof(StringValue));
     res->length      = length;
     res->string      = allocBytesOrError(sizeof(char) * length + 1);
@@ -25,6 +27,7 @@ StringValue *stringValueCopy(StringValue *val) {
 }
 
 void stringValueDestroy(StringValue *val) {
+    stat_created_strings--;
     freeBytes(val->string);
     freeBytes(val);
 }
@@ -81,7 +84,9 @@ void stringValueUnref(StringValue *unit) {
     }
 }
 
+static int64_t cnt = 0;
 ArrayValue *arrayValueCreate() {
+    stat_created_arrays++;
     ArrayValue *arr = allocBytesOrError(sizeof(ArrayValue));
     arr->data       = NULL;    // todo, make this allocate using allocBytesOrError
 
@@ -98,6 +103,7 @@ ArrayValue *arrayValueCopy(ArrayValue *val) {
 }
 
 void arrayValueDestroy(ArrayValue *val) {
+    stat_created_arrays--;
     for (size_t i = 0; i < cvector_size(val->data); i++) {
         unref(val->data[i]);
     }
@@ -140,6 +146,7 @@ void arrayValueUnref(ArrayValue *unit) {
 }
 
 TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods) {
+    stat_created_types++;
     TypeValue *res = allocBytesOrError(sizeof(TypeValue));
 
     res->n_fields = n_fields;
@@ -165,6 +172,7 @@ TypeValue *typeValueCopy(TypeValue *val) {
 }
 
 void typeValueDestroy(TypeValue *val) {
+    stat_created_types--;
     freeBytes(val->fields);
     freeBytes(val->method_names);
     identMapDestroy(&val->methods);
@@ -211,6 +219,7 @@ void typeValueUnref(TypeValue *unit) {
 }
 
 InstanceValue *instanceValueCreate(struct TypeValue *type) {
+    stat_created_instances++;
     InstanceValue *res = allocBytesOrError(sizeof(InstanceValue));
 
     res->type   = type;
@@ -232,6 +241,7 @@ InstanceValue *instanceValueCopy(InstanceValue *val) {
 }
 
 void instanceValueDestroy(InstanceValue *val) {
+    stat_created_instances--;
     identMapDestroy(&val->fields);
     freeBytes(val);
 }
@@ -265,6 +275,7 @@ void instanceValueUnref(InstanceValue *unit) {
 }
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {
+    stat_created_mola_functions++;
     MolaFunctionValue *res = allocBytesOrError(sizeof(MolaFunctionValue));
     res->env               = env;
     res->relative_offset   = rel_offset;
@@ -285,6 +296,7 @@ MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val) {
 }
 
 void molaFunctionValueDestroy(MolaFunctionValue *val) {
+    stat_created_mola_functions--;
     freeBytes(val->args);
     freeBytes(val);
 }
@@ -300,6 +312,7 @@ void molaFunctionValueUnref(MolaFunctionValue *unit) {
 }
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {
+    stat_created_c_functions++;
     CFunctionValue *res = allocBytesOrError(sizeof(CFunctionValue));
     res->env            = env;
     res->n_args         = n_args;
@@ -319,6 +332,7 @@ CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {
 }
 
 void cFunctionValueDestroy(CFunctionValue *val) {
+    stat_created_c_functions--;
     freeBytes(val);
 }
 

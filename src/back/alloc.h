@@ -3,7 +3,7 @@
 
 #include "../util.h"
 
-#define ALLOCATION_LIMIT 1000000000    // 100mb
+#define ALLOCATION_LIMIT 100000000    // 100mb
 
 void allocInit();
 

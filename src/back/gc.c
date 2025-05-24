@@ -23,7 +23,6 @@ cvector_vector_type(CFunctionValue *) c_functions_maybe_trash;
 void gcDeclareGarbageObject(struct Object *unit) {
     cvector_push_back(objects_maybe_trash, unit);
 }
-
 void gcDeclareGarbageStringValue(struct StringValue *unit) {
     cvector_push_back(strings_maybe_trash, unit);
 }
@@ -58,31 +57,31 @@ cvector_vector_type(MolaFunctionValue *) mola_functions_tracked;
 cvector_vector_type(CFunctionValue *) c_functions_tracked;
 
 void gcTrackObject(struct Object *unit) {
-    //cvector_push_back(objects_tracked, unit);
+    // cvector_push_back(objects_tracked, unit);
 }
 
 void gcTrackStringValue(struct StringValue *unit) {
-    //cvector_push_back(strings_tracked, unit);
+    // cvector_push_back(strings_tracked, unit);
 }
 
 void gcTrackArrayValue(struct ArrayValue *unit) {
-    //cvector_push_back(arrays_tracked, unit);
+    // cvector_push_back(arrays_tracked, unit);
 }
 
 void gcTrackTypeValue(struct TypeValue *unit) {
-    //cvector_push_back(types_tracked, unit);
+    // cvector_push_back(types_tracked, unit);
 }
 
 void gcTrackInstanceValue(struct InstanceValue *unit) {
-    //cvector_push_back(instances_tracked, unit);
+    // cvector_push_back(instances_tracked, unit);
 }
 
 void gcTrackMolaFunctionValue(struct MolaFunctionValue *unit) {
-    //cvector_push_back(mola_functions_tracked, unit);
+    // cvector_push_back(mola_functions_tracked, unit);
 }
 
 void gcTrackCFunctionValue(struct CFunctionValue *unit) {
-    //cvector_push_back(c_functions_tracked, unit);
+    // cvector_push_back(c_functions_tracked, unit);
 }
 
 void gcInit(struct VM *vm) {}
@@ -134,11 +133,11 @@ void gcRecycle(size_t bytes) {
     cvector_clear(c_functions_maybe_trash);
 
     size_t recycled = 0;
-    printf("===================\n");
-     for (int i = 0; i < cvector_size(objects_trash); i++) {
-         printf("%p\n", objects_trash[i]);
-         fflush(stdout);
-     }
+    /*printf("=================== %zu\n", cvector_size(arrays_trash));
+    for (int i = 0; i < cvector_size(objects_trash); i++) {
+        printf("%p\n", objects_trash[i]);
+        fflush(stdout);
+    }*/
     while (recycled < bytes + 1000) {
         if (!cvector_empty(objects_trash)) {
             size_t before = getAllocatedBytes();         // !
@@ -206,8 +205,8 @@ void gcRecycle(size_t bytes) {
         fflush(stdout);
     }
     printf("end:\n");*/
-    if (recycled != 0) {
-        //molalog("Recycled %zu / %zu bytes (%d%%)\n", recycled, bytes, (recycled * 100 / bytes));
+    if (0 && recycled != 0) {
+         molalog("Recycled %zu / %zu bytes (%d%%)\n", recycled, bytes, (recycled * 100 / bytes));
     }
 }
 

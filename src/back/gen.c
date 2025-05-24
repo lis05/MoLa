@@ -2324,7 +2324,7 @@ static ilist gen_for_stmt(AstNode *node) {
         if (step != NULL) {
             ilistAppend(&output, genInsPOP(info(node)));
         }
-        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 2 + consize)));
+        ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + 1 + consize + (step != NULL))));
         ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
         ctx_open_scopes_since_function--;
@@ -2383,7 +2383,7 @@ static ilist gen_for_stmt(AstNode *node) {
     if (step != NULL) {
         ilistAppend(&output, genInsPOP(info(node)));
     }
-    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + 1 + stmsize)));
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize  + stmsize + (step != NULL))));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
     ctx_open_scopes_since_function--;

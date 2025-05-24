@@ -1,16 +1,3 @@
-type X {
-    f()
-}
-
-constructor () of X {
-    return this
-}
-
-method f() of X {
-}
-
 while true {
-    var x = new X
-    x:f()
-    x = (new Array(100)):resize(500)
+    var x = new Array(100)
 }

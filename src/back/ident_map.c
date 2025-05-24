@@ -1,7 +1,9 @@
 #include "ident_map.h"
 #include "object.h"
+#include "stat.h"
 
 IdentMap identMapCreate() {
+    stat_created_ident_maps++;
     IdentMap res;
     res.items = NULL;
     cvector_reserve(res.items, 10);
@@ -43,6 +45,7 @@ void *identMapGet(IdentMap *map, ident key) {
 }
 
 void identMapDestroy(IdentMap *map) {
+    stat_created_ident_maps--;
     for (int i = 0; i < cvector_size(map->items); i++) {
         if (map->items[i] != NULL) {
             unref(map->items[i]);
