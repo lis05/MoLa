@@ -19,8 +19,9 @@ typedef struct Object {
 
     uint32_t ref_count;
 
-    uint is_rvalue : 1;
-    uint gc_mark   : 1;
+    uint is_rvalue       : 1;
+    uint gc_mark         : 1;
+    uint is_gc_protected : 1;
 } Object;
 
 #define raw64(x)          (*((uint64_t *)&(x)))
@@ -28,6 +29,8 @@ typedef struct Object {
 
 Object *objectCreate(enum Type type, uint64_t value);    // for basic types the value has to be passed in value
 void    objectDestroy(Object *object);                   // used by gc
+void    objectGCOnlyUnref(Object *object);               
+void    objectGCDestroy(Object *object);
 void    ref(Object *unit);
 void    unref(Object *unit);
 

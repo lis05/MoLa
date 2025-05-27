@@ -9,7 +9,7 @@
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
     stat_created_scopes++;
     Scope *scope = allocBytesOrError(sizeof(Scope));
-    assert(scope != NULL);
+    eassert(scope != NULL);
 
     scope->map               = identMapCreate();
     scope->can_access_parent = can_access_parent;
@@ -19,7 +19,7 @@ Scope *scopeCreate(int can_access_parent, Scope *parent) {
 }
 
 void scopeInsert(Scope *scope, ident name, struct Object *obj) {
-    assert(scope != NULL);
+    eassert(scope != NULL);
     if (identMapQuery(&scope->map, name)) {
         signalError(NAME_ERROR_CODE, errstrfmt("Object with name '%s' already exists.", symtabIdentToString(name)));
     }
@@ -51,7 +51,7 @@ END_SCOPE:
 
 void scopeDestroy(Scope *scope) {
     stat_created_scopes--;
-    assert(scope != NULL);
+    eassert(scope != NULL);
 
     identMapDestroy(&scope->map);
 

@@ -1,6 +1,7 @@
 #include "ident_map.h"
 #include "object.h"
 #include "stat.h"
+#include "error.h"
 
 IdentMap identMapCreate() {
     stat_created_ident_maps++;
@@ -11,8 +12,8 @@ IdentMap identMapCreate() {
     return res;
 }
 
-void identMapSet(IdentMap *map, ident key, void *item) {
-    assert(map != NULL);
+void identMapSet(IdentMap *map, ident key, Object *item) {
+    eassert(map != NULL);
     if (cvector_size(map->items) < key + 1) {
         cvector_resize(map->items, key + 1, NULL);
     }
@@ -25,7 +26,7 @@ void identMapSet(IdentMap *map, ident key, void *item) {
 }
 
 int identMapQuery(IdentMap *map, ident key) {
-    assert(map != NULL);
+    eassert(map != NULL);
 
     if (cvector_size(map->items) <= key) {
         return 0;
@@ -35,7 +36,7 @@ int identMapQuery(IdentMap *map, ident key) {
 }
 
 void *identMapGet(IdentMap *map, ident key) {
-    assert(map != NULL);
+    eassert(map != NULL);
 
     if (cvector_size(map->items) <= key) {
         return NULL;
@@ -54,4 +55,26 @@ void identMapDestroy(IdentMap *map) {
 
     cvector_free(map->items);
     map->items = NULL;
+}
+
+void identMapGCOnlyUnref(IdentMap *map) {
+    for (int i = 0; i < cvector_size(map->items); i++) {
+        if (map->items[i] != NULL) {
+            unref(map->items[i]);
+        }
+    }
+}
+
+void identMapGCDestroy(IdentMap *map) {
+    stat_created_ident_maps--;
+    cvector_free(map->items);
+    map->items = NULL;
+}
+
+void identMapApply(IdentMap *map, void (*f)(Object *)) {
+    for (int i = 0; i < cvector_size(map->items); i++) {
+        if (map->items[i] != NULL) {
+            f(map->items[i]);
+        }
+    }
 }

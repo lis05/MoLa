@@ -42,9 +42,10 @@ Object *objectCreate(enum Type type, uint64_t value) {
     case RETURN_ADDRESS_TYPE : obj->return_address = cooked64(value, int64_t); break;    // no need
     }
 
-    obj->ref_count = 0;
-    obj->gc_mark   = 0;
-    obj->is_rvalue = 0;
+    obj->ref_count       = 0;
+    obj->gc_mark         = gc_mark;
+    obj->is_rvalue       = 0;
+    obj->is_gc_protected = 0;
 
     gcTrackObject(obj);
 
@@ -70,6 +71,31 @@ void objectDestroy(Object *obj) {
     }
 
     freeBytes(obj);
+    gcUntrackObject(obj);
+}
+
+void objectGCOnlyUnref(Object *obj) {
+    switch (obj->type) {
+    case NULL_TYPE : stat_created_nulls--; break;
+    case BOOL_TYPE : stat_created_bools--; break;
+    case INT_TYPE : stat_created_ints--; break;
+    case CHAR_TYPE : stat_created_chars--; break;
+    case FLOAT_TYPE : stat_created_floats--; break;
+    case STRING_TYPE : stringValueUnref(obj->value); break;
+    case ARRAY_TYPE : arrayValueUnref(obj->value); break;
+    case TYPE_TYPE : typeValueUnref(obj->value); break;
+    case INSTANCE_TYPE : instanceValueUnref(obj->value); break;
+    case MOLA_FUNCTION_TYPE : molaFunctionValueUnref(obj->value); break;
+    case C_FUNCTION_TYPE : cFunctionValueUnref(obj->value); break;
+    case MODULE_TYPE : break;
+    case RETURN_ADDRESS_TYPE : break;    // no need
+    }
+}
+
+void objectGCDestroy(Object *obj) {
+    stat_created_objects--;
+    freeBytes(obj);
+    gcUntrackObject(obj);
 }
 
 void ref(Object *unit) {

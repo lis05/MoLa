@@ -2,6 +2,7 @@
 #include "../front/parser.h"
 #include "alloc.h"
 #include "env.h"
+#include "error.h"
 
 static void printIdent(ident id) {
     printf("%lld[%s]", id, symtabIdentToString(id));
@@ -1449,7 +1450,7 @@ static size_t curEnvId;
 #define info(node) (node)->filename, (node)->lineno, curEnvId
 
 ilist genCompile(AstNode *node) {
-    assert(node != NULL);
+    eassert(node != NULL);
 
     // we assume that node is the root node of the entire program
     curEnvId     = envGenAvailableId();
@@ -1515,7 +1516,7 @@ static ilist gen_module_path_compact(AstNode *node);
 static ilist gen_expr_list(AstNode *node);
 
 static ilist gen(AstNode *node) {
-    assert(node != NULL);
+    eassert(node != NULL);
     ilist output = ilistCreate();
     ilist temp   = ilistCreate();
 
@@ -1703,8 +1704,8 @@ static ilist gen_program(AstNode *node) {
 }
 
 static void constructModulePath(AstNode *node, charvec *res) {
-    assert(node != NULL);
-    assert(node->type == MODULE_PATH_NODE);
+    eassert(node != NULL);
+    eassert(node->type == MODULE_PATH_NODE);
 
     if (node->option == MODULE_PATH_COMPACT_OPTION) {
         AstNode *arrows = NULL;
@@ -2383,7 +2384,7 @@ static ilist gen_for_stmt(AstNode *node) {
     if (step != NULL) {
         ilistAppend(&output, genInsPOP(info(node)));
     }
-    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize  + stmsize + (step != NULL))));
+    ilistAppend(&output, genInsJUMP(info(node), -((int64_t)stesize + stmsize + (step != NULL))));
     ilistAppend(&output, genInsDESTROY_SCOPE(info(node)));
 
     ctx_open_scopes_since_function--;

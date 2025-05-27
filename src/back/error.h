@@ -37,6 +37,9 @@ void signalError(int64_t code, char *reason);
 void printError(int64_t code, char *reason);
 void errorInit();
 
+
+#define eassert(value) if (!(value)) signalError(INTERNAL_ERROR_CODE, errstrfmt("Assertion failed: %s", #value));
+
 extern char __mola_errstrfmtbuf[1024];
 #define errstrfmt(...)                                                                                                           \
     ({                                                                                                                           \

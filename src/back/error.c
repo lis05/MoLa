@@ -9,6 +9,8 @@ char    __mola_errstrfmtbuf[1024];
 #define RANGE 3
 extern cvector_vector_type(int64_t) error_checkpoints;
 
+extern size_t instructions_since_gc_cycle;
+
 void reportLine(FILE *file, Instruction *cur, char *reason, int64_t index) {
     fseek(file, 0, SEEK_SET);
 
@@ -24,7 +26,14 @@ void reportLine(FILE *file, Instruction *cur, char *reason, int64_t index) {
         line++;
     }
 
-    fprintf(stderr, "Traceback %ld (id=%ld), %s: %s (line %d):\n", index, cur->id, reason, cur->filename, cur->lineno);
+    fprintf(stderr,
+            "Traceback %ld (id=%ld, isgc=%zu), %s: %s (line %d):\n",
+            index,
+            cur->id,
+            instructions_since_gc_cycle,
+            reason,
+            cur->filename,
+            cur->lineno);
     for (int i = 0; i < cur->lineno - L; i++) {
         static char str[64] = {};
         sprintf(str, "  %d | ", L + i);
@@ -99,7 +108,7 @@ void printError(int64_t code, char *reason) {
         perror("");
         exit(1);
     }
-    reportLine(file, vmInstruction(*cvector_back(error_checkpoints)), "Runtime error", 0);
+    reportLine(file, vmInstruction(cvector_empty(error_checkpoints) ? 0 : *cvector_back(error_checkpoints)), "Runtime error", 0);
 
     fprintf(stderr, "\n >>> ");
 
@@ -121,6 +130,7 @@ extern int64_t molaErrorCode;
 extern char   *molaErrorReason;    // NULL-terminated
 
 void signalError(int64_t code, char *reason) {
+    // exit(1); // !
     if (code == INTERNAL_ERROR_CODE) {
         printError(code, reason);
     }
@@ -130,3 +140,5 @@ void signalError(int64_t code, char *reason) {
 
     jumpToErrorReturnPoint();
 }
+
+

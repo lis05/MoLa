@@ -42,7 +42,7 @@ Object *printer(size_t n_args, struct Object **args) {
 
 extern Symtab *lex_symtab;
 
-void *array_type_ptr;
+TypeValue *array_type_ptr;
 
 TypeValue *error_type;
 
@@ -56,31 +56,37 @@ int main() {
     int64_t env_id;
     ivec    instructions = compileProgram("/home/lis05/Projects/mola/tests/vm.mola", &env_id);
 
-    assert(env_id == 1);
+    eassert(env_id == 1);
 
     molalog("Starting vm ...\n");
 
+    gcInit();
     allocInit();
     initTypes();
     {
-        CFunctionValue *builtin_printer_func = cFunctionValueCreate(builtin_env, UNLIMITED_ARGS, printer);
-        Object         *builtin_printer      = objectCreate(C_FUNCTION_TYPE, raw64(builtin_printer_func));
+        CFunctionValue *builtin_printer_func  = cFunctionValueCreate(builtin_env, UNLIMITED_ARGS, printer);
+        builtin_printer_func->is_gc_protected = 1;
+        Object *builtin_printer               = objectCreate(C_FUNCTION_TYPE, raw64(builtin_printer_func));
+        builtin_printer->is_gc_protected      = 1;
         identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "print"), builtin_printer);
     }
 
     {
-        array_type_ptr             = typeValueCreate(0, NULL, 0, NULL);
-        Object *builtin_array_type = objectCreate(TYPE_TYPE, raw64(array_type_ptr));
+        array_type_ptr                      = typeValueCreate(0, NULL, 0, NULL);
+        array_type_ptr->is_gc_protected     = 1;
+        Object *builtin_array_type          = objectCreate(TYPE_TYPE, raw64(array_type_ptr));
+        builtin_array_type->is_gc_protected = 1;
         identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "Array"), builtin_array_type);
     }
 
     {
         ident fields[4];
-        fields[0]  = symtabInsert(lex_symtab, "code");
-        fields[1]  = symtabInsert(lex_symtab, "reason");
-        fields[2]  = symtabInsert(lex_symtab, "module");
-        fields[3]  = symtabInsert(lex_symtab, "line");
-        error_type = typeValueCreate(4, fields, 0, NULL);
+        fields[0]                   = symtabInsert(lex_symtab, "code");
+        fields[1]                   = symtabInsert(lex_symtab, "reason");
+        fields[2]                   = symtabInsert(lex_symtab, "module");
+        fields[3]                   = symtabInsert(lex_symtab, "line");
+        error_type                  = typeValueCreate(4, fields, 0, NULL);
+        error_type->is_gc_protected = 1;
         // Object *builtin_error = objectCreate(TYPE_TYPE, raw64(error_type));
         // identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "Error"), error_type);
     }

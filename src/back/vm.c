@@ -92,7 +92,7 @@ int64_t molaErrorCode;
 char   *molaErrorReason;    // NULL-terminated
 
 static int64_t ipointer                                       = 0;
-static cvector_vector_type(Object *) objects_stack            = NULL;
+cvector_vector_type(Object *) objects_stack                   = NULL;
 static cvector_vector_type(ErrorHandler) error_handlers_stack = NULL;
 Env   *current_env                                            = NULL;
 Scope *root_scope = NULL, *current_scope = NULL;
@@ -101,11 +101,6 @@ cvector_vector_type(int64_t) error_checkpoints;
 int64_t env_offset = 0;    // set when imported
 
 cvector_vector_type(Env *) imported_modules;
-
-typedef struct ReferencedObject {
-    Object *obj;
-    int64_t ip;
-} ReferencedObject;
 
 cvector_vector_type(ReferencedObject) referenced_stack;
 
@@ -160,6 +155,39 @@ struct Instruction *vmInstruction(int64_t ip) {
     return instructions_list + ip;
 }
 
+extern cvector_vector_type(Object *) objects_trash;
+extern cvector_vector_type(StringValue *) strings_trash;
+extern cvector_vector_type(ArrayValue *) arrays_trash;
+extern cvector_vector_type(TypeValue *) types_trash;
+extern cvector_vector_type(InstanceValue *) instances_trash;
+extern cvector_vector_type(MolaFunctionValue *) mola_functions_trash;
+extern cvector_vector_type(CFunctionValue *) c_functions_trash;
+extern cvector_vector_type(Object *) objects_maybe_trash;
+extern cvector_vector_type(StringValue *) strings_maybe_trash;
+extern cvector_vector_type(ArrayValue *) arrays_maybe_trash;
+extern cvector_vector_type(TypeValue *) types_maybe_trash;
+extern cvector_vector_type(InstanceValue *) instances_maybe_trash;
+extern cvector_vector_type(MolaFunctionValue *) mola_functions_maybe_trash;
+extern cvector_vector_type(CFunctionValue *) c_functions_maybe_trash;
+extern map_t(Object *, int8_t) objects_tracked;
+extern map_t(StringValue *, int8_t) strings_tracked;
+extern map_t(ArrayValue *, int8_t) arrays_tracked;
+extern map_t(TypeValue *, int8_t) types_tracked;
+extern map_t(InstanceValue *, int8_t) instances_tracked;
+extern map_t(MolaFunctionValue *, int8_t) mola_functions_tracked;
+extern map_t(CFunctionValue *, int8_t) c_functions_tracked;
+
+#define map_size(map)                                                                                                            \
+    ({                                                                                                                           \
+        size_t     res = 0;                                                                                                      \
+        void      *key;                                                                                                          \
+        map_iter_t iter = map_iter(map);                                                                                         \
+        while (map_next(map, &iter, &key)) {                                                                                     \
+            res++;                                                                                                               \
+        }                                                                                                                        \
+        res;                                                                                                                     \
+    })
+
 void vmExecute(ivec instructions) {
     for (int i = 0; i < cvector_size(instructions); i++) {
         cvector_push_back(instructions_list, instructions[i]);
@@ -168,7 +196,7 @@ void vmExecute(ivec instructions) {
         // molalog("ip=%d\n", ipointer)
         Instruction *instr = instructions_list + ipointer;
 
-        assert(instr != NULL);
+        eassert(instr != NULL);
 
         if (setErrorReturnPoint()) {
             // error handler
@@ -445,10 +473,22 @@ void vmExecute(ivec instructions) {
             gcRecycle(getRecycleAmount());
         }
 
+        instructions_since_gc_cycle++;
+        if (instructions_since_gc_cycle >= getGCCycleThreshold()) {
+            instructions_since_gc_cycle = 0;
+            molalog("Performing gc cycle.... Before = %lfmb\n", getAllocatedBytes() / 1e6);
+            gcRunCycle();
+            molalog("Performed gc cycle....  After = %lfmb\n", getAllocatedBytes() / 1e6);
+        }
+
         static clock_t clocks = 0;
-        if (clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
+        if (instructions_since_gc_cycle == 0 || clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
             clocks = clock();
-            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb\n", ipointer, getAllocatedBytes() / 1e6);
+            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb | isgc=%zu | gcthresh=%zu\n",
+                    ipointer,
+                    getAllocatedBytes() / 1e6,
+                    instructions_since_gc_cycle,
+                    getGCCycleThreshold());
             molalog("  Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
                     cvector_size(objects_stack),
                     cvector_size(error_handlers_stack),
@@ -456,21 +496,44 @@ void vmExecute(ivec instructions) {
             molalog("  Imported modules: %zu | referenced_stack: %zu\n",
                     cvector_size(imported_modules),
                     cvector_size(referenced_stack));
-            molalog("  O:%lld N:%lld B:%lld C:%lld I:%lld F:%lld S:%lld A:%lld T:%lld IN:%lld MF:%lld CF:%lld\n", 
-                stat_created_objects,
-                stat_created_nulls,
-                stat_created_bools,
-                stat_created_chars,
-                stat_created_ints,
-                stat_created_floats,
-                stat_created_strings,
-                stat_created_arrays,
-                stat_created_types,
-                stat_created_instances,
-                stat_created_mola_functions,
-                stat_created_c_functions
-            );
-            molalog("  SC:%lld IM:%lld\n", stat_created_scopes, stat_created_ident_maps)
+            molalog("  O:%lld N:%lld B:%lld C:%lld I:%lld F:%lld S:%lld A:%lld T:%lld IN:%lld MF:%lld CF:%lld\n",
+                    stat_created_objects,
+                    stat_created_nulls,
+                    stat_created_bools,
+                    stat_created_chars,
+                    stat_created_ints,
+                    stat_created_floats,
+                    stat_created_strings,
+                    stat_created_arrays,
+                    stat_created_types,
+                    stat_created_instances,
+                    stat_created_mola_functions,
+                    stat_created_c_functions);
+            molalog("  SC:%lld IM:%lld\n", stat_created_scopes, stat_created_ident_maps);
+            molalog("  TRASH: O:%zu S:%zu A:%zu T:%zu IN:%zu MF:%zu CF:%zu\n",
+                    cvector_size(objects_trash),
+                    cvector_size(strings_trash),
+                    cvector_size(arrays_trash),
+                    cvector_size(types_trash),
+                    cvector_size(instances_trash),
+                    cvector_size(mola_functions_trash),
+                    cvector_size(c_functions_trash));
+            molalog("  MAYBE: O:%zu S:%zu A:%zu T:%zu IN:%zu MF:%zu CF:%zu\n",
+                    cvector_size(objects_maybe_trash),
+                    cvector_size(strings_maybe_trash),
+                    cvector_size(arrays_maybe_trash),
+                    cvector_size(types_maybe_trash),
+                    cvector_size(instances_maybe_trash),
+                    cvector_size(mola_functions_maybe_trash),
+                    cvector_size(c_functions_maybe_trash));
+            molalog("  TRACKED: O:%zu S:%zu A:%zu T:%zu IN:%zu MF:%zu CF:%zu\n",
+                    map_size(&objects_tracked),
+                    map_size(&strings_tracked),
+                    map_size(&arrays_tracked),
+                    map_size(&types_tracked),
+                    map_size(&instances_tracked),
+                    map_size(&mola_functions_tracked),
+                    map_size(&c_functions_tracked));
             molalog("\n");
         }
     }
@@ -823,7 +886,7 @@ static void exec_CREATE_SCOPE(Instruction *instr) {
 }
 
 static void exec_DESTROY_SCOPE(Instruction *instr) {
-    assert(current_scope != NULL);
+    eassert(current_scope != NULL);
 
     // we have to remove all of the error handlers created in this scope
     while (!cvector_empty(error_handlers_stack)) {
@@ -945,7 +1008,7 @@ static void exec_CREATE_VAR(Instruction *instr) {
         signalError(INTERNAL_ERROR_CODE, "CREATE_VAR failed: empty objects_stack");
     }
 
-    assert(current_scope != NULL);
+    eassert(current_scope != NULL);
 
     if (identMapQuery(&current_scope->map, instr->ident_arg1)) {
         signalError(NAME_COLLISION_ERROR_CODE,
@@ -1015,7 +1078,7 @@ static void exec_COPY(Instruction *instr) {
     }
     }
 
-    Object *res = objectCreate(obj->type, value);
+    Object *res    = objectCreate(obj->type, value);
     res->is_rvalue = 1;
     objectsStackPush(res);
 
@@ -1071,7 +1134,6 @@ static void exec_ASSIGNMENT(Instruction *instr) {
 
     // this works because we basically copy the entire union of obj2 into obj1
     obj1->value = obj2->value;
-
 
     if (obj1->type == NULL_TYPE) {
         stat_created_nulls++;
@@ -2199,7 +2261,7 @@ OP_END:
 
 /* when executiong A:B, caller is set to A
 so that it is possible to pass it as the owner in case we want to call the retrieved method*/
-static Object *caller = NULL;
+Object *caller = NULL;
 
 static void exec_CALL(Instruction *instr) {
     static int64_t n = 0;
@@ -2326,7 +2388,7 @@ static void exec_ACCESS(Instruction *instr) {
     }
     }
 
-    Object *res    = arrayValueIndexAccess(array->value, x_int);
+    Object *res = arrayValueIndexAccess(array->value, x_int);
     objectsStackPush(res);
 
     ipointer++;
@@ -2492,7 +2554,7 @@ static void exec_LOAD_METHOD(Instruction *instr) {
     ipointer++;
 }
 
-extern void *array_type_ptr;    // used to create an array via NEW
+extern TypeValue *array_type_ptr;    // used to create an array via NEW
 
 static void exec_NEW(Instruction *instr) {
     if (objectsStackEmpty()) {

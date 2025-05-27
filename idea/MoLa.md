@@ -130,7 +130,10 @@ Objects, that have been determined to be garbage, are recycled after every instr
 - `x = current_bytes_allocated / ALLOC_LIMIT`
 - `res = (x^4 + 0.001) * current_bytes_allocated`
 
-To prevent persistent cycles, a full GC cycle will be performed after 1e7 instructions have been executed. 
+To prevent persistent cycles, a full GC cycle will be performed after a certain number of instructions. 
+The number of instructions is determined as:
+- `x = current_bytes_allocated / ALLOC_LIMIT`
+- `res = (-x^2 + 1) * GC_FULL_CYCLE_THRESHOLD`
 
 ## Environment
 An environment is a data structure assigned to each module. It holds all the variables created in that module, and implements lookup function.

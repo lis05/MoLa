@@ -13,7 +13,7 @@ void *allocBytesOrNULL(size_t bytes) {
     static uint16_t cnt = 0;
     cnt++;
     if (cnt == 0) {
-        //molalog("Allocated %zumb (%d%%)\n", bytes_allocated / 1000000, (int)(bytes_allocated * 100 / ALLOCATION_LIMIT));
+        // molalog("Allocated %zumb (%d%%)\n", bytes_allocated / 1000000, (int)(bytes_allocated * 100 / ALLOCATION_LIMIT));
     }
 
     bytes += sizeof(size_t);
@@ -60,8 +60,15 @@ size_t getAllocatedBytes() {
 }
 
 size_t getRecycleAmount() {
-    double x  = bytes_allocated / ALLOCATION_LIMIT;
+    double x  = 1.0 * bytes_allocated / ALLOCATION_LIMIT;
     x        *= x;
     x        *= x;
     return (x + 0.001) * bytes_allocated;
+}
+
+size_t getGCCycleThreshold() {
+    double x = 1.0 * bytes_allocated / ALLOCATION_LIMIT;
+    x *= -x;
+    x += 1;
+    return x * GC_CYCLE_THRESHOLD;
 }

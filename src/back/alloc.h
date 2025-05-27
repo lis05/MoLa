@@ -4,6 +4,7 @@
 #include "../util.h"
 
 #define ALLOCATION_LIMIT 100000000    // 100mb
+#define GC_CYCLE_THRESHOLD 1000 // 1e6
 
 void allocInit();
 
@@ -24,5 +25,7 @@ void freeBytes(void *ptr);
 size_t getAllocatedBytes();
 
 size_t getRecycleAmount();
+
+size_t getGCCycleThreshold();
 
 #endif

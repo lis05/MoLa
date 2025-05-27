@@ -34,12 +34,15 @@ typedef struct StringValue {
     char  *string;    // NULL terminated, length doesnt count the NULL character
 
     uint32_t ref_count;
-    uint32_t gc_mark : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_gc_protected : 1;
 } StringValue;
 
 StringValue   *stringValueCreate(size_t length, char *string);
 StringValue   *stringValueCopy(StringValue *val);
 void           stringValueDestroy(StringValue *val);
+void           stringValueGCOnlyUnref(StringValue *val);
+void           stringValueGCDestroy(StringValue *val);
 char           stringValueIndexAccess(StringValue *val, int64_t index);
 struct Object *stringValueLookupField(StringValue *val, ident name);
 struct Object *stringValueLookupMethod(StringValue *val, ident name);
@@ -52,12 +55,15 @@ typedef struct ArrayValue {
     cvector_vector_type(struct Object *) data;
 
     uint32_t ref_count;
-    uint32_t gc_mark : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_gc_protected : 1;
 } ArrayValue;
 
 ArrayValue    *arrayValueCreate();
 ArrayValue    *arrayValueCopy(ArrayValue *val);
 void           arrayValueDestroy(ArrayValue *val);
+void           arrayValueGCOnlyUnref(ArrayValue *val);
+void           arrayValueGCDestroy(ArrayValue *val);
 struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index);
 struct Object *arrayValueLookupMethod(ArrayValue *val, ident name);
 void           arrayValueRef(ArrayValue *unit);
@@ -68,15 +74,18 @@ typedef struct TypeValue {
     ident   *fields;
     size_t   n_methods;
     ident   *method_names;
-    IdentMap methods;    // stores MolaFunctionValue*
+    IdentMap methods;    // stores Object*
 
     uint32_t ref_count;
-    uint32_t gc_mark : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_gc_protected : 1;
 } TypeValue;
 
 TypeValue     *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods);    // TODO
 TypeValue     *typeValueCopy(TypeValue *val);
 void           typeValueDestroy(TypeValue *val);
+void           typeValueGCOnlyUnref(TypeValue *val);
+void           typeValueGCDestroy(TypeValue *val);
 void           typeValueAddMethod(TypeValue *val, ident name, struct Object *method);
 struct Object *typeValueLookupMethod(TypeValue *val, ident name);
 void           typeValueRef(TypeValue *unit);
@@ -87,12 +96,15 @@ typedef struct InstanceValue {
     IdentMap          fields;    // stores Object*
 
     uint32_t ref_count;
-    uint32_t gc_mark : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_gc_protected : 1;
 } InstanceValue;
 
 InstanceValue *instanceValueCreate(struct TypeValue *type);
 InstanceValue *instanceValueCopy(InstanceValue *val);
 void           instanceValueDestroy(InstanceValue *val);
+void           instanceValueGCOnlyUnref(InstanceValue *val);
+void           instanceValueGCDestroy(InstanceValue *val);
 struct Object *instanceValueLookupField(InstanceValue *val, ident name);
 struct Object *instanceValueLookupMethod(InstanceValue *val, ident name);
 void           instanceValueSetField(InstanceValue *val, ident name, struct Object *obj);
@@ -112,13 +124,16 @@ typedef struct MolaFunctionValue {
     ident *args;
 
     uint32_t ref_count;
-    uint32_t gc_mark   : 1;
-    uint32_t is_method : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_method       : 1;
+    uint32_t is_gc_protected : 1;
 } MolaFunctionValue;
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args);
 MolaFunctionValue *molaFunctionValueCopy(MolaFunctionValue *val);
 void               molaFunctionValueDestroy(MolaFunctionValue *val);
+void               molaFunctionValueGCOnlyUnref(MolaFunctionValue *val);
+void               molaFunctionValueGCDestroy(MolaFunctionValue *val);
 void               molaFunctionValueRef(MolaFunctionValue *unit);
 void               molaFunctionValueUnref(MolaFunctionValue *unit);
 
@@ -135,14 +150,17 @@ typedef struct CFunctionValue {
     CFunction function;
 
     uint32_t ref_count;
-    uint32_t gc_mark   : 1;
-    uint32_t is_method : 1;
+    uint32_t gc_mark         : 1;
+    uint32_t is_method       : 1;
+    uint32_t is_gc_protected : 1;
 
 } CFunctionValue;
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function);
 CFunctionValue *cFunctionValueCopy(CFunctionValue *val);
 void            cFunctionValueDestroy(CFunctionValue *val);
+void            cFunctionValueGCOnlyUnref(CFunctionValue *val);
+void            cFunctionValueGCDestroy(CFunctionValue *val);
 void            cFunctionValueRef(CFunctionValue *unit);
 void            cFunctionValueUnref(CFunctionValue *unit);
 

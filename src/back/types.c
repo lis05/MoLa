@@ -14,8 +14,9 @@ StringValue *stringValueCreate(size_t length, char *string) {
     res->string      = allocBytesOrError(sizeof(char) * length + 1);
     strcpy(res->string, string);
 
-    res->gc_mark   = 0;
-    res->ref_count = 0;
+    res->gc_mark         = gc_mark;
+    res->ref_count       = 0;
+    res->is_gc_protected = 0;
 
     gcTrackStringValue(res);
 
@@ -30,6 +31,16 @@ void stringValueDestroy(StringValue *val) {
     stat_created_strings--;
     freeBytes(val->string);
     freeBytes(val);
+    gcUntrackStringValue(val);
+}
+
+void stringValueGCOnlyUnref(StringValue *val) {}
+
+void stringValueGCDestroy(StringValue *val) {
+    stat_created_strings--;
+    freeBytes(val->string);
+    freeBytes(val);
+    gcUntrackStringValue(val);
 }
 
 char stringValueIndexAccess(StringValue *val, int64_t index) {
@@ -85,13 +96,15 @@ void stringValueUnref(StringValue *unit) {
 }
 
 static int64_t cnt = 0;
+
 ArrayValue *arrayValueCreate() {
     stat_created_arrays++;
     ArrayValue *arr = allocBytesOrError(sizeof(ArrayValue));
     arr->data       = NULL;    // todo, make this allocate using allocBytesOrError
 
-    arr->gc_mark   = 0;
-    arr->ref_count = 0;
+    arr->gc_mark         = gc_mark;
+    arr->ref_count       = 0;
+    arr->is_gc_protected = 0;
 
     gcTrackArrayValue(arr);
 
@@ -109,6 +122,20 @@ void arrayValueDestroy(ArrayValue *val) {
     }
     cvector_free(val->data);
     freeBytes(val);
+    gcUntrackArrayValue(val);
+}
+
+void arrayValueGCOnlyUnref(ArrayValue *val) {
+    for (size_t i = 0; i < cvector_size(val->data); i++) {
+        unref(val->data[i]);
+    }
+}
+
+void arrayValueGCDestroy(ArrayValue *val) {
+    stat_created_arrays--;
+    cvector_free(val->data);
+    freeBytes(val);
+    gcUntrackArrayValue(val);
 }
 
 struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index) {
@@ -159,8 +186,9 @@ TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ide
 
     res->methods = identMapCreate();
 
-    res->gc_mark   = 0;
-    res->ref_count = 0;
+    res->gc_mark         = gc_mark;
+    res->ref_count       = 0;
+    res->is_gc_protected = 0;
 
     gcTrackTypeValue(res);
 
@@ -177,6 +205,20 @@ void typeValueDestroy(TypeValue *val) {
     freeBytes(val->method_names);
     identMapDestroy(&val->methods);
     freeBytes(val);
+    gcUntrackTypeValue(val);
+}
+
+void typeValueGCOnlyUnref(TypeValue *val) {
+    identMapGCOnlyUnref(&val->methods);
+}
+
+void typeValueGCDestroy(TypeValue *val) {
+    stat_created_types--;
+    freeBytes(val->fields);
+    freeBytes(val->method_names);
+    identMapGCDestroy(&val->methods);
+    freeBytes(val);
+    gcUntrackTypeValue(val);
 }
 
 void typeValueAddMethod(TypeValue *val, ident name, struct Object *method) {
@@ -228,8 +270,9 @@ InstanceValue *instanceValueCreate(struct TypeValue *type) {
         identMapSet(&res->fields, type->fields[i], objectCreate(NULL_TYPE, 0));
     }
 
-    res->ref_count = 0;
-    res->gc_mark   = 0;
+    res->ref_count       = 0;
+    res->gc_mark         = gc_mark;
+    res->is_gc_protected = 0;
 
     gcTrackInstanceValue(res);
 
@@ -244,6 +287,18 @@ void instanceValueDestroy(InstanceValue *val) {
     stat_created_instances--;
     identMapDestroy(&val->fields);
     freeBytes(val);
+    gcUntrackInstanceValue(val);
+}
+
+void instanceValueGCOnlyUnref(InstanceValue *val) {
+    identMapGCOnlyUnref(&val->fields);
+}
+
+void instanceValueGCDestroy(InstanceValue *val) {
+    stat_created_instances--;
+    identMapGCDestroy(&val->fields);
+    freeBytes(val);
+    gcUntrackInstanceValue(val);
 }
 
 struct Object *instanceValueLookupField(InstanceValue *val, ident name) {
@@ -282,9 +337,10 @@ MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, 
     res->n_args            = n_args;
     res->args              = args;
 
-    res->ref_count = 0;
-    res->gc_mark   = 0;
-    res->is_method = 0;
+    res->ref_count       = 0;
+    res->gc_mark         = gc_mark;
+    res->is_method       = 0;
+    res->is_gc_protected = 0;
 
     gcTrackMolaFunctionValue(res);
 
@@ -299,6 +355,16 @@ void molaFunctionValueDestroy(MolaFunctionValue *val) {
     stat_created_mola_functions--;
     freeBytes(val->args);
     freeBytes(val);
+    gcUntrackMolaFunctionValue(val);
+}
+
+void molaFunctionValueGCOnlyUnref(MolaFunctionValue *val) {}
+
+void molaFunctionValueGCDestroy(MolaFunctionValue *val) {
+    stat_created_mola_functions--;
+    freeBytes(val->args);
+    freeBytes(val);
+    gcUntrackMolaFunctionValue(val);
 }
 
 void molaFunctionValueRef(MolaFunctionValue *unit) {
@@ -318,9 +384,10 @@ CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction f
     res->n_args         = n_args;
     res->function       = function;
 
-    res->ref_count = 0;
-    res->gc_mark   = 0;
-    res->is_method = 0;
+    res->ref_count       = 0;
+    res->gc_mark         = gc_mark;
+    res->is_method       = 0;
+    res->is_gc_protected = 0;
 
     gcTrackCFunctionValue(res);
 
@@ -334,6 +401,15 @@ CFunctionValue *cFunctionValueCopy(CFunctionValue *val) {
 void cFunctionValueDestroy(CFunctionValue *val) {
     stat_created_c_functions--;
     freeBytes(val);
+    gcUntrackCFunctionValue(val);
+}
+
+void cFunctionValueGCOnlyUnref(CFunctionValue *val) {}
+
+void cFunctionValueGCDestroy(CFunctionValue *val) {
+    stat_created_c_functions--;
+    freeBytes(val);
+    gcUntrackCFunctionValue(val);
 }
 
 void cFunctionValueRef(CFunctionValue *unit) {
@@ -356,7 +432,7 @@ Object *arrayResizeMethod(size_t n_args, struct Object **args) {
     }
 
     Object *obj = args[0];
-    assert(obj->type == ARRAY_TYPE);
+    eassert(obj->type == ARRAY_TYPE);
     ArrayValue *array = obj->value;
 
     Object *size = args[1];
@@ -409,7 +485,7 @@ Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
     }
 
     Object *obj = args[0];
-    assert(obj->type == ARRAY_TYPE);
+    eassert(obj->type == ARRAY_TYPE);
     ArrayValue *array = obj->value;
 
     Object *size = args[1];
@@ -456,19 +532,23 @@ Object *arrayConstructorMethod(size_t n_args, struct Object **args) {
 void initTypes() {
     CFunctionValue *method;
     {
-        ARRAY_METHOD_RESIZE_IDENT  = symtabInsert(lex_symtab, "resize");
-        method                     = cFunctionValueCreate(0, 2, arrayResizeMethod);
-        method->is_method          = 1;
-        ARRAY_METHOD_RESIZE_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ARRAY_METHOD_RESIZE_IDENT                   = symtabInsert(lex_symtab, "resize");
+        method                                      = cFunctionValueCreate(0, 2, arrayResizeMethod);
+        method->is_method                           = 1;
+        method->is_gc_protected                     = 1;
+        ARRAY_METHOD_RESIZE_OBJECT                  = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ARRAY_METHOD_RESIZE_OBJECT->is_gc_protected = 1;
         cFunctionValueRef(method);
         ref(ARRAY_METHOD_RESIZE_OBJECT);
     }
 
     {
-        ARRAY_METHOD_CONSTRUCTOR_IDENT  = symtabInsert(lex_symtab, "constructor");
-        method                          = cFunctionValueCreate(0, UNLIMITED_ARGS, arrayConstructorMethod);
-        method->is_method               = 1;
-        ARRAY_METHOD_CONSTRUCTOR_OBJECT = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ARRAY_METHOD_CONSTRUCTOR_IDENT                   = symtabInsert(lex_symtab, "constructor");
+        method                                           = cFunctionValueCreate(0, UNLIMITED_ARGS, arrayConstructorMethod);
+        method->is_gc_protected                          = 1;
+        method->is_method                                = 1;
+        ARRAY_METHOD_CONSTRUCTOR_OBJECT                  = objectCreate(C_FUNCTION_TYPE, raw64(method));
+        ARRAY_METHOD_CONSTRUCTOR_OBJECT->is_gc_protected = 1;
         cFunctionValueRef(method);
         ref(ARRAY_METHOD_CONSTRUCTOR_OBJECT);
     }
