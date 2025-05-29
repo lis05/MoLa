@@ -4,7 +4,7 @@
 #include "../util.h"
 
 #define ALLOCATION_LIMIT 100000000    // 100mb
-#define GC_CYCLE_THRESHOLD 1000 // 1e6
+#define GC_CYCLE_THRESHOLD 100000 // 1e6
 
 void allocInit();
 

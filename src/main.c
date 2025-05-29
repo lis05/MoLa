@@ -16,6 +16,10 @@ Object *printer(size_t n_args, struct Object **args) {
             printf("NULL");
             break;
         }
+        case BOOL_TYPE : {
+            printf("%s", obj->bool_value ? "true" : "false");
+            break;
+        }
         case INT_TYPE : {
             printf("%lld", obj->int_value);
             break;

@@ -2,10 +2,10 @@
 #include "alloc.h"
 #include "cmap.h"
 #include "env.h"
+#include "error.h"
 #include "object.h"
 #include "scope.h"
 #include "types.h"
-#include "error.h"
 #include "vm.h"
 
 // TODO: make cmap and cvector use alloc.h
@@ -184,6 +184,11 @@ void gcRecycle(size_t bytes) {
     }*/
     while (recycled < bytes) {
         if (!cvector_empty(objects_trash)) {
+            Object *obj = *cvector_back(objects_trash);
+            if (map_get(&objects_tracked, *cvector_back(objects_trash)) == NULL) {
+                cvector_pop_back(objects_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             objectDestroy(*cvector_back(objects_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -192,6 +197,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(instances_trash)) {
+            if (map_get(&instances_tracked, *cvector_back(instances_trash)) == NULL) {
+                cvector_pop_back(instances_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             instanceValueDestroy(*cvector_back(instances_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -200,6 +209,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(strings_trash)) {
+            if (map_get(&strings_tracked, *cvector_back(strings_trash)) == NULL) {
+                cvector_pop_back(strings_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             stringValueDestroy(*cvector_back(strings_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -208,6 +221,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(arrays_trash)) {
+            if (map_get(&arrays_tracked, *cvector_back(arrays_trash)) == NULL) {
+                cvector_pop_back(arrays_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             arrayValueDestroy(*cvector_back(arrays_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -216,6 +233,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(types_trash)) {
+            if (map_get(&types_tracked, *cvector_back(types_trash)) == NULL) {
+                cvector_pop_back(types_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             typeValueDestroy(*cvector_back(types_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -224,6 +245,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(mola_functions_trash)) {
+            if (map_get(&mola_functions_tracked, *cvector_back(mola_functions_trash)) == NULL) {
+                cvector_pop_back(mola_functions_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             molaFunctionValueDestroy(*cvector_back(mola_functions_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -232,6 +257,10 @@ void gcRecycle(size_t bytes) {
             continue;
         }
         else if (!cvector_empty(c_functions_trash)) {
+            if (map_get(&c_functions_tracked, *cvector_back(c_functions_trash)) == NULL) {
+                cvector_pop_back(c_functions_trash);
+                continue;
+            }
             size_t before = getAllocatedBytes();         // !
             cFunctionValueDestroy(*cvector_back(c_functions_trash));
             recycled += before - getAllocatedBytes();    // !
@@ -391,6 +420,13 @@ extern cvector_vector_type(Env *) imported_modules;
 extern Object *caller;
 
 void gcRunCycle() {
+    /*
+    after object A is destroyed, object B might get the same address as A
+    so after B gets out of scope entirely, it will become trash
+    -- now there are 2 similar addresses in trash, error
+    */
+    gcRecycle(ALLOCATION_LIMIT);
+
     cvector_vector_type(Object *) objects_to_be_destroyed                   = NULL;
     cvector_vector_type(StringValue *) strings_to_be_destroyed              = NULL;
     cvector_vector_type(ArrayValue *) arrays_to_be_destroyed                = NULL;
@@ -422,7 +458,9 @@ void gcRunCycle() {
         identMapApply(&imported_modules[i]->exported_objects, dfsObject);
     }
 
-    if (caller != NULL) dfsObject(caller);
+    if (caller != NULL) {
+        dfsObject(caller);
+    }
 
     // now we can destroy unvisited objects
 

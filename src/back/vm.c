@@ -15,7 +15,7 @@
 #include <libgen.h>
 #include <time.h>
 
-#define RECYCLING_DELAY 1
+#define RECYCLING_DELAY 20
 
 extern Symtab *lex_symtab;
 
@@ -187,13 +187,15 @@ extern map_t(CFunctionValue *, int8_t) c_functions_tracked;
         }                                                                                                                        \
         res;                                                                                                                     \
     })
+int64_t vmloops = 0;
 
 void vmExecute(ivec instructions) {
     for (int i = 0; i < cvector_size(instructions); i++) {
         cvector_push_back(instructions_list, instructions[i]);
     }
     while ((0 <= ipointer && ipointer < cvector_size(instructions_list))) {
-        // molalog("ip=%d\n", ipointer)
+        vmloops++;
+
         Instruction *instr = instructions_list + ipointer;
 
         eassert(instr != NULL);
@@ -482,13 +484,14 @@ void vmExecute(ivec instructions) {
         }
 
         static clock_t clocks = 0;
-        if (instructions_since_gc_cycle == 0 || clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
+        if (clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
             clocks = clock();
-            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb | isgc=%zu | gcthresh=%zu\n",
+            molalog("Execution log: ip=%zu | allocated memory: %.2lfmb | isgc=%zu | gcthresh=%zu | vmloops = %lld\n",
                     ipointer,
                     getAllocatedBytes() / 1e6,
                     instructions_since_gc_cycle,
-                    getGCCycleThreshold());
+                    getGCCycleThreshold(),
+                    vmloops);
             molalog("  Objects on stack: %zu | error handlers: %zu | error checkpoints: %zu \n",
                     cvector_size(objects_stack),
                     cvector_size(error_handlers_stack),
