@@ -15,7 +15,7 @@
 #include <libgen.h>
 #include <time.h>
 
-#define RECYCLING_DELAY 1
+#define RECYCLING_DELAY 20
 
 extern Symtab *lex_symtab;
 
@@ -482,7 +482,7 @@ void vmExecute(ivec instructions) {
         }
 
         static clock_t clocks = 0;
-        if (instructions_since_gc_cycle == 0 || clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
+        if (clock() - clocks >= 0.5 * CLOCKS_PER_SEC) {
             clocks = clock();
             molalog("Execution log: ip=%zu | allocated memory: %.2lfmb | isgc=%zu | gcthresh=%zu\n",
                     ipointer,

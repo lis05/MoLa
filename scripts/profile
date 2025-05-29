@@ -1,0 +1,13 @@
+#!/bin/bash
+# Configure with CMake
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+# Build
+cmake --build build
+
+# Run with Valgrind
+cd build/src
+valgrind --tool=callgrind ./molalang
+
+# View results
+kcachegrind callgrind.out.*
