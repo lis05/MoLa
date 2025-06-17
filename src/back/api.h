@@ -1,5 +1,6 @@
 #include "alloc.h"
 #include "cmap.h"
+#include "cmod.h"
 #include "env.h"
 #include "error.h"
 #include "gc.h"

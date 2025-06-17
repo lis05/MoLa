@@ -6,13 +6,13 @@
 #include <unistd.h>
 
 AstNode *make(int type, int option, size_t lineno, size_t n_nodes, ...) {
-    AstNode *node = (AstNode *)allocBytesOrError(sizeof(AstNode));
+    AstNode *node = (AstNode *)allocOrError(sizeof(AstNode));
     node->type    = type;
     node->option  = option;
     node->lineno  = lineno;
     node->n_nodes = n_nodes;
 
-    AstNode **list = (AstNode **)allocBytesOrError(n_nodes * sizeof(AstNode *));
+    AstNode **list = (AstNode **)allocOrError(n_nodes * sizeof(AstNode *));
 
     va_list ap;
     va_start(ap, n_nodes);

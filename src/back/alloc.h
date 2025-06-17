@@ -3,17 +3,17 @@
 
 #include "../util.h"
 
-#define ALLOCATION_LIMIT 100000000    // 100mb
-#define GC_CYCLE_THRESHOLD 100000 // 1e6
+#define ALLOCATION_LIMIT   100000000    // 100mb
+#define GC_CYCLE_THRESHOLD 100000       // 1e6
 
 void allocInit();
 
 // allocates the number of bytes, returns NULL if fails
 // DOES NOT SIGNAL AN ERROR
-void *allocBytesOrNULL(size_t bytes);
+void *allocOrNULL(size_t bytes);
 
 // allocates the number of bytes, signals and error if fails
-void *allocBytesOrError(size_t bytes);
+void *allocOrError(size_t bytes);
 
 // allocated the number of bytes, signals an InternalError if fails
 // is not counted in the total number of bytes allocated by instructions
@@ -27,5 +27,7 @@ size_t getAllocatedBytes();
 size_t getRecycleAmount();
 
 size_t getGCCycleThreshold();
+
+// ----
 
 #endif

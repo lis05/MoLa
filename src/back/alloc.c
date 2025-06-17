@@ -9,7 +9,7 @@ static size_t bytes_allocated = 0;
 
 void allocInit() {}
 
-void *allocBytesOrNULL(size_t bytes) {
+void *allocOrNULL(size_t bytes) {
     static uint16_t cnt = 0;
     cnt++;
     if (cnt == 0) {
@@ -28,8 +28,8 @@ void *allocBytesOrNULL(size_t bytes) {
     return (uint8_t *)res + sizeof(size_t);
 }
 
-void *allocBytesOrError(size_t bytes) {
-    void *res = allocBytesOrNULL(bytes);
+void *allocOrError(size_t bytes) {
+    void *res = allocOrNULL(bytes);
 
     if (res == NULL) {
         signalError(OUT_OF_MEMORY_ERROR_CODE, "Failed to allocate bytes");
@@ -39,7 +39,7 @@ void *allocBytesOrError(size_t bytes) {
 }
 
 void *allocBytesOrExit(size_t bytes) {
-    void *res = allocBytesOrNULL(bytes);
+    void *res = allocOrNULL(bytes);
 
     if (res == NULL) {
         signalError(INTERNAL_ERROR_CODE, "Failed to allocate internal bytes");
@@ -67,8 +67,8 @@ size_t getRecycleAmount() {
 }
 
 size_t getGCCycleThreshold() {
-    double x = 1.0 * bytes_allocated / ALLOCATION_LIMIT;
-    x *= -x;
-    x += 1;
+    double x  = 1.0 * bytes_allocated / ALLOCATION_LIMIT;
+    x        *= -x;
+    x        += 1;
     return x * GC_CYCLE_THRESHOLD;
 }

@@ -6,7 +6,7 @@
 
 Object *objectCreate(enum Type type, uint64_t value) {
     stat_created_objects++;
-    Object *obj = allocBytesOrError(sizeof(Object));
+    Object *obj = allocOrError(sizeof(Object));
 
     obj->type  = type;
     obj->value = (void *)value;

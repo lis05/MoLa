@@ -5,6 +5,8 @@ back/alloc.h
 back/api.h
 back/cmap.c
 back/cmap.h
+back/cmod.c
+back/cmod.h
 back/env.c
 back/env.h
 back/error.c

@@ -825,7 +825,7 @@ static void exec_CREATE_FUNCTION(Instruction *instr) {
     int64_t offset = ipointer + 2 - current_env->absolute_offset;
 
     int64_t n_args = instr->n_args;
-    ident  *args   = allocBytesOrError(n_args * sizeof(ident));
+    ident  *args   = allocOrError(n_args * sizeof(ident));
     memcpy(args, instr->args, n_args * sizeof(ident));
 
     MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
@@ -868,7 +868,7 @@ static void exec_CREATE_METHOD(Instruction *instr) {
     int64_t offset = ipointer + 2 - current_env->absolute_offset;
 
     int64_t n_args = instr->n_args;
-    ident  *args   = allocBytesOrError(n_args * sizeof(ident));
+    ident  *args   = allocOrError(n_args * sizeof(ident));
     memcpy(args, instr->args, n_args * sizeof(ident));
 
     MolaFunctionValue *func_value = molaFunctionValueCreate(current_env, offset, n_args, args);
@@ -2316,7 +2316,7 @@ static void exec_CALL(Instruction *instr) {
     }
     else {
         passed_args = n + c_function->is_method;
-        args        = allocBytesOrError(sizeof(Object *) * passed_args);
+        args        = allocOrError(sizeof(Object *) * passed_args);
         int offset  = 0;
         if (c_function->is_method) {
             args[0] = caller;

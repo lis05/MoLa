@@ -8,7 +8,7 @@
 
 Scope *scopeCreate(int can_access_parent, Scope *parent) {
     stat_created_scopes++;
-    Scope *scope = allocBytesOrError(sizeof(Scope));
+    Scope *scope = allocOrError(sizeof(Scope));
     eassert(scope != NULL);
 
     scope->map               = identMapCreate();

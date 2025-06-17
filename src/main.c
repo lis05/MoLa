@@ -44,6 +44,24 @@ Object *printer(size_t n_args, struct Object **args) {
     return objectCreate(NULL_TYPE, 0);
 }
 
+Object *cmodule_global(size_t n_args, struct Object **args) {
+    if (n_args != 1) {
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, "Expected 1 argument");
+    }
+
+    Object *obj = args[0];
+    if (obj->type != STRING_TYPE) {
+        signalError(VALUE_ERROR_CODE, "Expected a string");
+    }
+
+    char *path = ((StringValue *)obj->value)->string;
+
+    int64_t mid = openCModule(path);
+
+    Object *res = objectCreate(INT_TYPE, raw64(mid));
+    return res;
+}
+
 extern Symtab *lex_symtab;
 
 TypeValue *array_type_ptr;
@@ -73,6 +91,13 @@ int main() {
         Object *builtin_printer               = objectCreate(C_FUNCTION_TYPE, raw64(builtin_printer_func));
         builtin_printer->is_gc_protected      = 1;
         identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "print"), builtin_printer);
+    }
+    {
+        CFunctionValue *cmodule_global_func     = cFunctionValueCreate(builtin_env, UNLIMITED_ARGS, cmodule_global);
+        cmodule_global_func->is_gc_protected    = 1;
+        Object *builtin_cmodule_global          = objectCreate(C_FUNCTION_TYPE, raw64(cmodule_global_func));
+        builtin_cmodule_global->is_gc_protected = 1;
+        identMapSet(&builtin_env->globals, symtabInsert(lex_symtab, "cmodule_global"), builtin_cmodule_global);
     }
 
     {

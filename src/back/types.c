@@ -9,9 +9,9 @@
 
 StringValue *stringValueCreate(size_t length, char *string) {
     stat_created_strings++;
-    StringValue *res = allocBytesOrError(sizeof(StringValue));
+    StringValue *res = allocOrError(sizeof(StringValue));
     res->length      = length;
-    res->string      = allocBytesOrError(sizeof(char) * length + 1);
+    res->string      = allocOrError(sizeof(char) * length + 1);
     strcpy(res->string, string);
 
     res->gc_mark         = gc_mark;
@@ -75,7 +75,7 @@ int stringCompare(StringValue *first, StringValue *second) {
 }
 
 StringValue *stringConcat(StringValue *first, StringValue *second) {
-    char *str = allocBytesOrError(first->length + second->length + 1);
+    char *str = allocOrError(first->length + second->length + 1);
     memcpy(str, first->string, first->length);
     memcpy(str + first->length, second->string, second->length);
     str[first->length + second->length] = '\0';
@@ -99,8 +99,8 @@ static int64_t cnt = 0;
 
 ArrayValue *arrayValueCreate() {
     stat_created_arrays++;
-    ArrayValue *arr = allocBytesOrError(sizeof(ArrayValue));
-    arr->data       = NULL;    // todo, make this allocate using allocBytesOrError
+    ArrayValue *arr = allocOrError(sizeof(ArrayValue));
+    arr->data       = NULL;    // todo, make this allocate using allocOrError
 
     arr->gc_mark         = gc_mark;
     arr->ref_count       = 0;
@@ -174,14 +174,14 @@ void arrayValueUnref(ArrayValue *unit) {
 
 TypeValue *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods) {
     stat_created_types++;
-    TypeValue *res = allocBytesOrError(sizeof(TypeValue));
+    TypeValue *res = allocOrError(sizeof(TypeValue));
 
     res->n_fields = n_fields;
-    res->fields   = allocBytesOrError(sizeof(ident) * n_fields);
+    res->fields   = allocOrError(sizeof(ident) * n_fields);
     memcpy(res->fields, fields, sizeof(ident) * n_fields);
 
     res->n_methods    = n_methods;
-    res->method_names = allocBytesOrError(sizeof(ident) * n_methods);
+    res->method_names = allocOrError(sizeof(ident) * n_methods);
     memcpy(res->method_names, methods, sizeof(ident) * n_methods);
 
     res->methods = identMapCreate();
@@ -262,7 +262,7 @@ void typeValueUnref(TypeValue *unit) {
 
 InstanceValue *instanceValueCreate(struct TypeValue *type) {
     stat_created_instances++;
-    InstanceValue *res = allocBytesOrError(sizeof(InstanceValue));
+    InstanceValue *res = allocOrError(sizeof(InstanceValue));
 
     res->type   = type;
     res->fields = identMapCreate();
@@ -331,7 +331,7 @@ void instanceValueUnref(InstanceValue *unit) {
 
 MolaFunctionValue *molaFunctionValueCreate(struct Env *env, int64_t rel_offset, size_t n_args, ident *args) {
     stat_created_mola_functions++;
-    MolaFunctionValue *res = allocBytesOrError(sizeof(MolaFunctionValue));
+    MolaFunctionValue *res = allocOrError(sizeof(MolaFunctionValue));
     res->env               = env;
     res->relative_offset   = rel_offset;
     res->n_args            = n_args;
@@ -379,7 +379,7 @@ void molaFunctionValueUnref(MolaFunctionValue *unit) {
 
 CFunctionValue *cFunctionValueCreate(struct Env *env, size_t n_args, CFunction function) {
     stat_created_c_functions++;
-    CFunctionValue *res = allocBytesOrError(sizeof(CFunctionValue));
+    CFunctionValue *res = allocOrError(sizeof(CFunctionValue));
     res->env            = env;
     res->n_args         = n_args;
     res->function       = function;
