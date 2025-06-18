@@ -81,9 +81,39 @@ Object *builtin__cmodule_global(size_t n_args, struct Object **args) {
         signalError(VALUE_ERROR_CODE, "Expected a string");
     }
 
-    char *path = ((StringValue *)obj->value)->string;
+    char *path = get_string(obj)->string;
 
     int64_t mid = openCModule(path);
+
+    Object *res = objectCreate(INT_TYPE, raw64(mid));
+    return res;
+}
+
+Object *builtin__cmodule(size_t n_args, struct Object **args) {
+    if (n_args != 1) {
+        signalError(WRONG_NUMBER_OF_ARGUMENTS_ERROR_CODE, "Expected 1 argument");
+    }
+
+    Object *obj = args[0];
+    if (obj->type != STRING_TYPE) {
+        signalError(VALUE_ERROR_CODE, "Expected a string");
+    }
+
+    char *modules_path = getenv("MOLA_MODULES_PATH");
+    if (modules_path == NULL) {
+        signalError(VALUE_ERROR_CODE, "Environmental variable 'MOLA_MODULES_PATH' is unset");
+    }
+
+    /*
+    apparently, in linux multiple slashes are considered as one
+    */
+
+    char buf[1024];
+    strcpy(buf, modules_path);
+    buf[strlen(modules_path)] = '/';
+    strcpy(buf + strlen(modules_path) + 1, get_string(obj)->string);
+
+    int64_t mid = openCModule(buf);
 
     Object *res = objectCreate(INT_TYPE, raw64(mid));
     return res;
@@ -135,5 +165,6 @@ void init_builtin(Env *env) {
     builtin_env = env;
     addFunctionIntoBuiltinEnv(builtin__printer, "print");
     addFunctionIntoBuiltinEnv(builtin__cmodule_global, "cmodule_global");
+    addFunctionIntoBuiltinEnv(builtin__cmodule, "cmodule");
     addFunctionIntoBuiltinEnv(builtin__cloadf, "cloadf");
 }

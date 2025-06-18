@@ -56,6 +56,7 @@ int main() {
 
     printf("Execution finished after %.3f seconds\n", 1.0 * (t_after - t_before) / CLOCKS_PER_SEC);
 
+    closeAllCModules();
     return 0;
 }
 

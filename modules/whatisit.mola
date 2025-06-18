@@ -1,5 +1,5 @@
 // replace
-var id = cmodule_global("/home/lis05/Projects/mola/modules/whatisit/libwhatisit.so")
+var id = cmodule("whatisit/libwhatisit.so")
 
 var whatisit = cloadf(id, "whatisit")
 
