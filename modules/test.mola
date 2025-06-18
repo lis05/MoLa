@@ -1,3 +1,0 @@
-import ^tests.vm as vm
-
-vm.exported_A()

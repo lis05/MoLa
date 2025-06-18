@@ -4,13 +4,16 @@
 #include <string.h>
 #include <time.h>
 
-static char buf[32];
+static char __molalog_protected_buf_dont_touch_dont_you_dare[32];
 
-#define molalog(...)                                                                                                   \
-    {                                                                                                                  \
-        sprintf(buf, "%.3f", 1.0 * clock() / CLOCKS_PER_SEC);                                                          \
-        printf("[%8s]  %-10s: ", buf, 1.0 * clock() / CLOCKS_PER_SEC, strrchr(__FILE__, '/') + 1);                      \
-        printf(__VA_ARGS__);                                                                                           \
+#define molalog(...)                                                                                                             \
+    {                                                                                                                            \
+        sprintf(__molalog_protected_buf_dont_touch_dont_you_dare, "%.3f", 1.0 * clock() / CLOCKS_PER_SEC);                       \
+        printf("[%8s]  %-10s: ",                                                                                                 \
+               __molalog_protected_buf_dont_touch_dont_you_dare,                                                                 \
+               1.0 * clock() / CLOCKS_PER_SEC,                                                                                   \
+               strrchr(__FILE__, '/') + 1);                                                                                      \
+        printf(__VA_ARGS__);                                                                                                     \
     }
 
 #endif

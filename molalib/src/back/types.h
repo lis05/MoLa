@@ -38,6 +38,8 @@ typedef struct StringValue {
     uint32_t is_gc_protected : 1;
 } StringValue;
 
+#define get_string(obj) ((StringValue *)((obj)->value))
+
 StringValue   *stringValueCreate(size_t length, char *string);
 StringValue   *stringValueCopy(StringValue *val);
 void           stringValueDestroy(StringValue *val);
@@ -58,6 +60,8 @@ typedef struct ArrayValue {
     uint32_t gc_mark         : 1;
     uint32_t is_gc_protected : 1;
 } ArrayValue;
+
+#define get_array(obj) ((ArrayValue *)((obj)->value))
 
 ArrayValue    *arrayValueCreate();
 ArrayValue    *arrayValueCopy(ArrayValue *val);
@@ -81,6 +85,8 @@ typedef struct TypeValue {
     uint32_t is_gc_protected : 1;
 } TypeValue;
 
+#define get_type(obj) ((TypeValue *)((obj)->value))
+
 TypeValue     *typeValueCreate(size_t n_fields, ident *fields, size_t n_methods, ident *methods);    // TODO
 TypeValue     *typeValueCopy(TypeValue *val);
 void           typeValueDestroy(TypeValue *val);
@@ -99,6 +105,8 @@ typedef struct InstanceValue {
     uint32_t gc_mark         : 1;
     uint32_t is_gc_protected : 1;
 } InstanceValue;
+
+#define get_instance(obj) ((InstanceValue *)((obj)->value))
 
 InstanceValue *instanceValueCreate(struct TypeValue *type);
 InstanceValue *instanceValueCopy(InstanceValue *val);

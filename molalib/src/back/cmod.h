@@ -19,8 +19,8 @@ for types, the interaction is similar
 
 for a C module to provide a function "NAME" at a request, it has to do the following:
 1. implement the function "cmodule_init" which will be called during cmodule("module.so")
-2. implement a function "cmodule_provide_function_NAME" which will return a CFunction object
-    for type, the name is "cmodule_provide_type_NAME"
+2. implement a function "cmodprFUNC__NAME" which will return a CFunction object
+    for type, the name is "cmodprTYPE__NAME"
 
 
 cmodule(file) - filepath from MOLA_MODULES_PATH

@@ -1,1 +1,4 @@
-cmodule_global("/home/lis05/Projects/mola/modules/test/libtest.so")
+import mola.whatisit as whatisit
+
+whatisit.whatisit()
+print(whatisit, whatisit.whatisit)
