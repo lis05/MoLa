@@ -26,6 +26,7 @@ Object *builtin__printer(size_t n_args, struct Object **args) {
         }
         case CHAR_TYPE : {
             printf("%c", obj->char_value);
+            break;
         }
         case FLOAT_TYPE : {
             printf("%lf", obj->float_value);

@@ -1,4 +1,4 @@
-import mola.whatisit as whatisit
+var s = "hah"
+s[1] = 15
 
-whatisit.whatisit()
-print(whatisit, whatisit.whatisit)
+print(s)

@@ -16,7 +16,7 @@ int64_t openCModule(char *path) {
         signalError(INTERNAL_ERROR_CODE, errstrfmt("Failed to dlopen %s: %s", path, dlerror()));
     }
 
-    envs[module_id] = envCreate(0, "CMODULE");
+    envs[module_id] = envGetById(envCreate(0, path));
 
     return module_id++;
 }

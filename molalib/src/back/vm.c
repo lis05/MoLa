@@ -2364,10 +2364,10 @@ static void exec_ACCESS(Instruction *instr) {
 
     Object *index = objectsStackTop();
     objectsStackPop();
-    Object *array = objectsStackTop();
+    Object *obj = objectsStackTop();
     objectsStackPop();
 
-    if (array->type != ARRAY_TYPE || index->type >= FLOAT_TYPE) {
+    if ((obj->type != ARRAY_TYPE && obj->type != STRING_TYPE) || index->type >= FLOAT_TYPE) {
         signalError(VALUE_ERROR_CODE, "Unsupported operation");
     }
 
@@ -2391,7 +2391,16 @@ static void exec_ACCESS(Instruction *instr) {
     }
     }
 
-    Object *res = arrayValueIndexAccess(array->value, x_int);
+    Object *res;
+
+    if (obj->type == ARRAY_TYPE) {
+        res = arrayValueIndexAccess(obj->value, x_int);
+    }
+    else {
+        char c = stringValueIndexAccess(obj->value, x_int);
+        res    = objectCreate(CHAR_TYPE, raw64(c));
+    }
+
     objectsStackPush(res);
 
     ipointer++;

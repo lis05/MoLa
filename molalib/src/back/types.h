@@ -6,6 +6,7 @@
 #include "cmap.h"
 #include "ident_map.h"
 
+
 // order is important for type promotion!
 enum Type {
     NULL_TYPE   = 0,
@@ -29,49 +30,11 @@ struct MolaFunctionValue;
 struct Object;
 struct Env;
 
-typedef struct StringValue {
-    size_t length;
-    char  *string;    // NULL terminated, length doesnt count the NULL character
+#include "types/array.h"
+#include "types/string.h"
 
-    uint32_t ref_count;
-    uint32_t gc_mark         : 1;
-    uint32_t is_gc_protected : 1;
-} StringValue;
 
-#define get_string(obj) ((StringValue *)((obj)->value))
 
-StringValue   *stringValueCreate(size_t length, char *string);
-StringValue   *stringValueCopy(StringValue *val);
-void           stringValueDestroy(StringValue *val);
-void           stringValueGCOnlyUnref(StringValue *val);
-void           stringValueGCDestroy(StringValue *val);
-char           stringValueIndexAccess(StringValue *val, int64_t index);
-struct Object *stringValueLookupField(StringValue *val, ident name);
-struct Object *stringValueLookupMethod(StringValue *val, ident name);
-int            stringCompare(StringValue *first, StringValue *second);    // like strcmp
-StringValue   *stringConcat(StringValue *first, StringValue *second);
-void           stringValueRef(StringValue *unit);
-void           stringValueUnref(StringValue *unit);
-
-typedef struct ArrayValue {
-    cvector_vector_type(struct Object *) data;
-
-    uint32_t ref_count;
-    uint32_t gc_mark         : 1;
-    uint32_t is_gc_protected : 1;
-} ArrayValue;
-
-#define get_array(obj) ((ArrayValue *)((obj)->value))
-
-ArrayValue    *arrayValueCreate();
-ArrayValue    *arrayValueCopy(ArrayValue *val);
-void           arrayValueDestroy(ArrayValue *val);
-void           arrayValueGCOnlyUnref(ArrayValue *val);
-void           arrayValueGCDestroy(ArrayValue *val);
-struct Object *arrayValueIndexAccess(ArrayValue *val, int64_t index);
-struct Object *arrayValueLookupMethod(ArrayValue *val, ident name);
-void           arrayValueRef(ArrayValue *unit);
-void           arrayValueUnref(ArrayValue *unit);
 
 typedef struct TypeValue {
     size_t   n_fields;

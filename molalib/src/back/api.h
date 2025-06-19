@@ -8,6 +8,7 @@
 #include "ident_map.h"
 #include "object.h"
 #include "scope.h"
+#include "stat.h"
 #include "types.h"
 #include "vm.h"
 #include "xmempool.h"
